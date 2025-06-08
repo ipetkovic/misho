@@ -75,7 +75,10 @@ import time
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from fastapi import FastAPI
 import httpx
+import core
+from core.sportbooking.api.jobs import JobsController
 from core.sportbooking.config import CONFIG
 from core.sportbooking.database import SqliteDatabase
 from core.sportbooking.database.model import Base
@@ -89,7 +92,7 @@ from core.sportbooking.domain.time_slot import TimeSlot
 from core.sportbooking.integration import SportBookingApiImpl
 from core.sportbooking.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
 from core.sportbooking.repository.job_notifications_repository import JobNotificationsRepositorySqlite
-from core.sportbooking.repository.jobs import JobsRepositorySqlite
+from core.sportbooking.repository.jobs import JobsRepository, JobsRepositorySqlite
 from core.sportbooking.repository.reservation_calendar import ReservationCalendarRepositorySqlite
 from core.sportbooking.repository.time_slot import TimeSlotRepositorySqlite
 from core.sportbooking.repository.user import UserRepositorySqlite
@@ -102,11 +105,13 @@ from core.sportbooking.service.reservation_service import ReservationService
 from core.sportbooking.service.reserve_job_executor import ReserveJobExecutor
 from core.sportbooking.service.session_token_fetch_service import SessionTokenFetchService
 from sqlalchemy.ext.asyncio import create_async_engine
+import core.sportbooking.api
+from aiohttp import web
 
 import logging
 
 
-async def run():
+async def start():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
@@ -235,12 +240,29 @@ async def run():
 
         # await jobs_repository.delete(1)
 
+        app = web.Application()
+
+        JobsController(jobs_repository).register_routes(app)
+
+        await start_http_server(app)
+
         await _sleep_forever()
+
+
+async def start_http_server(app: web.Application):
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, 'localhost', 8000)
+    await site.start()
 
 
 async def _sleep_forever():
     await asyncio.Event().wait()
 
 
+def asyncio_run():
+    asyncio.run(start())
+
+
 if __name__ == "__main__":
-    asyncio.run(run())
+    asyncio_run()

@@ -85,6 +85,7 @@ class JobsRepositorySqlite(JobsRepository):
 
     async def list_all(self, status: Status = None) -> list[Job]:
         async with self._sessionmaker() as session:
+            print("stipe")
             stmt = self._select()
 
             if status is not None:

@@ -1,20 +1,19 @@
 from core.sportbooking.repository.jobs import JobsRepository
 
-from fastapi import FastAPI
-
-app = FastAPI()
+from aiohttp import web
 
 
-class Jobs:
+class JobsController:
     def __init__(self, jobs_repository: JobsRepository):
-        pass
+        self.jobs_repository = jobs_repository
 
-    def handle(self, request: Request):
-        name = request.match_info.get('name', "Anonymous")
-        text = "Hello, " + name
-        return web.Response(text=text)
+    def register_routes(self, app: web.Application):
+        app.add_routes([
+            web.get('/jobs', self.handle),
+        ])
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+    async def handle(self, request):
+        print("jaje")
+        jobs = await self.jobs_repository.list_all()
+        print(jobs)
+        return web.Response(text=str(jobs))
