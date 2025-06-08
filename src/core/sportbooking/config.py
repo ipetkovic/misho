@@ -44,12 +44,12 @@ CONFIG = Config(
     ),
     reservation_monitoring=ReservationMonitoringConfig(
         username="Ivo Petkovic",
-        cron=CronTrigger(hour='*', minute='*', second='0, 10, 20, 30, 40, 50')
+        cron=CronTrigger(hour='*', minute='*/2', second='0')
     ),
     mailer_config=MailerConfig(
         hostname="smtp.gmail.com",
         port=587,
-        username=_MAIL_USERNAME
+        username=_MAIL_USERNAME,
         password=_MAIL_PASSWORD
     )
 
