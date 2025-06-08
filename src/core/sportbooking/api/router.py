@@ -13,12 +13,3 @@ class HttpApplication:
         name = request.match_info.get('name', "Anonymous")
         text = "Hello, " + name
         return web.Response(text=text)
-
-
-def application(
-    jobs_repository=JobsRepository  # Assuming JobsRepository is defined elsewhere
-
-):
-    app = web.Application()
-    app.add_routes([web.get('/jobs', handle),
-                    web.get('/{name}', handle)])

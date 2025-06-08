@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import datetime
 from enum import Enum
 
+from dataclasses_json import dataclass_json
+
 from core.sportbooking.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
 from core.sportbooking.domain.reservation_calendar import CourtId
 from core.sportbooking.domain.reserve_job import ReserveJob, ReserveJobCreate
@@ -21,6 +23,7 @@ class Status(Enum):
 JobType = TypeVar('JobType', ReserveJob, MonitoringJob)
 
 
+@dataclass_json
 @dataclass(frozen=True)
 class Job(Generic[JobType]):
     id: JobId

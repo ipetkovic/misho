@@ -1,14 +1,24 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import datetime
+
+from dataclasses_json import config, dataclass_json
+from marshmallow import fields
 
 from core.sportbooking.domain.hour_slot import HourSlot
 
 type TimeSlotId = int
 
 
+@dataclass_json
 @dataclass(frozen=True)
 class TimeSlot:
-    date: datetime.datetime
+    date: datetime.date = field(
+        metadata=config(
+            encoder=datetime.date.isoformat,
+            decoder=datetime.date.fromisoformat,
+            mm_field=fields.Date(format='iso')
+        )
+    )
     hour_slot: HourSlot
 
     def __str__(self):

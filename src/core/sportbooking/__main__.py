@@ -68,13 +68,14 @@
 
 
 import asyncio
-from datetime import timedelta
+from datetime import date, timedelta
 import datetime
 import time
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+import dataclasses_json
 from fastapi import FastAPI
 import httpx
 import core
@@ -116,6 +117,9 @@ async def start():
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
+
+    dataclasses_json.cfg.global_config.encoders[date] = date.isoformat
+    dataclasses_json.cfg.global_config.decoders[date] = date.fromisoformat
 
     logging.getLogger("core.sportbooking").setLevel(CONFIG.logging.level)
 
@@ -201,16 +205,16 @@ async def start():
         # for job in jobs:
         #     await jobs_repository.delete(job.id)
 
-        # dates = (
-        #     "2025-06-11",
-        #     "2025-06-12"
-        # )
+        dates = (
+            "2025-06-11",
+            "2025-06-12"
+        )
 
-        # dates = [datetime.date.fromisoformat(date) for date in dates]
+        dates = [datetime.date.fromisoformat(date) for date in dates]
 
-        # hour_slots = [
-        #     HourSlot(from_hour=16, to_hour=17)
-        # ]
+        hour_slots = [
+            HourSlot(from_hour=16, to_hour=17)
+        ]
 
         # for date in dates:
         #     for hour_slot in hour_slots:

@@ -17,6 +17,9 @@ from core.sportbooking.repository.time_slot import to_domain as time_slot_to_dom
 
 
 class JobsRepository:
+    async def find_by_id(self, job_id: JobId) -> Job | None:
+        raise NotImplementedError()
+
     async def list_all(self, status: Status = None) -> list[Job]:
         raise NotImplementedError()
 
@@ -24,6 +27,9 @@ class JobsRepository:
         raise NotImplementedError()
 
     async def update_job_status(self, job_id: JobId, status: Status) -> None:
+        raise NotImplementedError()
+
+    async def delete(self, job_id: JobId) -> None:
         raise NotImplementedError()
 
 
@@ -41,27 +47,29 @@ class JobsRepositorySqlite(JobsRepository):
                           for idx, court_id in enumerate(job.courts_by_priority)]
 
             monitoring_job = None
+            action = None
             match job.job_type:
                 case ReserveJobCreate():
-                    monitoring_job = dao.MonitoringJob(
-                        action=MonitoringAction.RESERVE)
-                case MonitoringJobCreate(action):
-                    monitoring_job = dao.MonitoringJob(action=action)
+                    action = MonitoringAction.RESERVE
+                case MonitoringJobCreate(act):
+                    action = act
 
             job_dao = dao.Job(
                 user_id=job.user_id,
                 time_slot_id=time_slot_id,
                 job_courts=job_courts,
-                monitoring_job=monitoring_job,
+                monitoring_job=dao.MonitoringJob(action=action),
             )
 
             session.add(job_dao)
+
+            print(job.job_type)
 
             await session.flush()
             for job_court in job_dao.job_courts:
                 notification_state = dao.JobNotificationState(
                     job_court_id=job_court.id,
-                    trigger_on_available=job.job_type.action == MonitoringAction.NOTIFY,
+                    trigger_on_available=action == MonitoringAction.NOTIFY,
                 )
                 session.add(notification_state)
 
@@ -85,14 +93,13 @@ class JobsRepositorySqlite(JobsRepository):
 
     async def list_all(self, status: Status = None) -> list[Job]:
         async with self._sessionmaker() as session:
-            print("stipe")
             stmt = self._select()
 
             if status is not None:
-                stmt = stmt  # .where(dao.Job.status == status)
+                stmt = stmt.where(dao.Job.status == status)
+
             result = await session.execute(stmt)
             jobs_dao = result.scalars().all()
-            print(jobs_dao)
             return [to_domain(job) for job in jobs_dao]
 
     async def find_by_id(self, job_id: JobId) -> Job | None:
@@ -117,6 +124,7 @@ class JobsRepositorySqlite(JobsRepository):
         stmt = self._select().where(dao.Job.id == job_id)
         result = await session.execute(stmt)
         job_dao = result.scalar_one_or_none()
+        print(job_dao)
         return to_domain(job_dao) if job_dao else None
 
     def _select(self) -> Select[Tuple]:
@@ -131,11 +139,9 @@ class JobsRepositorySqlite(JobsRepository):
 def to_domain(job_dao: dao.Job) -> Job:
     job_type = None
     print(job_dao.id)
-    if job_dao.monitoring_job:
-        job_type = MonitoringJob(
-            action=job_dao.monitoring_job.action)
-    elif job_dao.reserve_job:
-        job_type = ReserveJob()
+    print(job_dao.monitoring_job)
+    job_type = MonitoringJob(
+        action=job_dao.monitoring_job.action)
 
     return Job(
         id=job_dao.id,
