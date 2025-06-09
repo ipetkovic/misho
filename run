@@ -4,20 +4,30 @@ source .env
 source .venv/bin/activate
 
 output=""
+daemon=""
 
-#parse --output argument
+# Parse --output and --daemon options
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --output) output="$2"; shift ;;
+        --daemon) daemon="true" ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
-done    
+done
 
-# if output is not empty, redirect output to file
+cmd="python src/core/sportbooking"
+
 if [ -n "$output" ]; then
-    python src/core/sportbooking/ >> $output 2>&1
-else
-    python src/core/sportbooking
-fi  
+    cmd="$cmd >> \"$output\" 2>&1"
+fi
 
+if [ -n "$daemon" ]; then
+    cmd="nohup $cmd &"
+fi
+
+echo "Executing command: $cmd"
+# Execute the final command
+eval "$cmd"
+
+echo "Started process with PID $!"

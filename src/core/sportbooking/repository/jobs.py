@@ -154,5 +154,5 @@ def to_domain(job_dao: dao.Job) -> Job:
         courts_by_priority=tuple(
             court.court_id for court in job_dao.job_courts),
         created_at=job_dao.created_at,
-        status=Status.PENDING,
+        status=job_dao.status
     )

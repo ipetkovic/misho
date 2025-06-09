@@ -61,6 +61,7 @@ class JobsController:
 
     async def list_jobs(self, _):
         jobs = await self.jobs_repository.list_all()
+        print(jobs)
         jobs_json = to_json(JobsResult(jobs=jobs))
         print(jobs_json)
         return web.json_response(body=jobs_json)

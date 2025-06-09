@@ -59,6 +59,8 @@ class ReservationMonitoring:
 
     async def _check_for_available_job_reservation_slots(self):
         available_job_reservation_slots = await self._available_job_reservation_slot_repository.get_available_job_reservation_slots()
+        logging.info(
+            f"Found {len(available_job_reservation_slots)} available job reservation slots")
         jobs = {}
         for slot in available_job_reservation_slots:
             if slot.job not in jobs:
