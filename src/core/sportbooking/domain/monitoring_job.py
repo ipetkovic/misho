@@ -15,6 +15,7 @@ class MonitoringJob():
     action: MonitoringAction
 
 
+@dataclass_json
 @dataclass(frozen=True)
 class MonitoringJobCreate():
     action: MonitoringAction

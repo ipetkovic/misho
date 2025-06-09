@@ -35,12 +35,13 @@ class Job(Generic[JobType]):
     status: Status
 
 
-JobTypeCreate = TypeVar('JobTypeCreate', ReserveJobCreate, MonitoringJobCreate)
+# JobTypeCreate = TypeVar('JobTypeCreate', ReserveJobCreate, MonitoringJobCreate)
 
 
+@dataclass_json
 @dataclass
-class JobCreate(Generic[JobTypeCreate]):
+class JobCreate:
     user_id: UserId
     time_slot: TimeSlot
-    job_type: JobTypeCreate
+    job_type: MonitoringJobCreate
     courts_by_priority: list[CourtId]
