@@ -55,6 +55,6 @@ class UserTokenRepositorySqlite(UserTokenRepository):
 
 def _to_domain(user_token_dao=dao.UserToken) -> UserToken:
     return UserToken(
-        token=SessionToken(user_token_dao.token),
+        token=SessionToken(value=user_token_dao.token),
         updated_at=user_token_dao.updated_at
     )

@@ -17,6 +17,9 @@ from core.sportbooking.repository.time_slot import to_domain as time_slot_to_dom
 
 
 class JobsRepository:
+    async def insert(self, job: JobCreate) -> Job:
+        raise NotImplementedError()
+
     async def find_by_id(self, job_id: JobId) -> Job | None:
         raise NotImplementedError()
 
@@ -51,7 +54,7 @@ class JobsRepositorySqlite(JobsRepository):
             match job.job_type:
                 case ReserveJobCreate():
                     action = MonitoringAction.RESERVE
-                case MonitoringJobCreate(act):
+                case MonitoringJobCreate(action=act):
                     action = act
 
             job_dao = dao.Job(

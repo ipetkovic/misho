@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
+import pydantic
 
-@dataclass
-class SessionToken:
+
+class SessionToken(pydantic.BaseModel):
     value: str

@@ -3,6 +3,7 @@ import datetime
 from enum import Enum
 
 from dataclasses_json import dataclass_json
+import pydantic
 
 from core.sportbooking.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
 from core.sportbooking.domain.reservation_calendar import CourtId
@@ -23,25 +24,28 @@ class Status(Enum):
 JobType = TypeVar('JobType', ReserveJob, MonitoringJob)
 
 
-@dataclass_json
-@dataclass(frozen=True)
-class Job(Generic[JobType]):
+class Job(pydantic.BaseModel):
     id: JobId
     user_id: UserId
     time_slot: TimeSlot
-    courts_by_priority: tuple[CourtId]
+    courts_by_priority: tuple[CourtId, ...]
     job_type: JobType
     created_at: datetime.datetime
     status: Status
+
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
 
 # JobTypeCreate = TypeVar('JobTypeCreate', ReserveJobCreate, MonitoringJobCreate)
 
 
-@dataclass_json
-@dataclass
-class JobCreate:
+# @dataclass
+class JobCreate(pydantic.BaseModel):
     user_id: UserId
     time_slot: TimeSlot
     job_type: MonitoringJobCreate
     courts_by_priority: list[CourtId]
+
+    # extra = 'forbid'
+
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

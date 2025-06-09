@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+
+import pydantic
 from core.sportbooking.domain.reservation_slot import ReservationSlot
 
 type CourtId = int
 
 
-@dataclass
-class UserCourtReservation:
+class UserCourtReservation(pydantic.BaseModel):
     reserved_by: str | None
     reserved_by_user: bool
     link_for_reservation: str | None
@@ -15,9 +16,10 @@ class UserCourtReservation:
     def is_available(self) -> bool:
         return self.reserved_by is None
 
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
-@dataclass(frozen=True)
-class CourtReservation:
+
+class CourtReservation(pydantic.BaseModel):
     reserved_by: str | None
 
     @property
@@ -25,8 +27,7 @@ class CourtReservation:
         return self.reserved_by is None
 
 
-@dataclass
-class ReservationCalendar:
+class ReservationCalendar(pydantic.BaseModel):
     calendar: dict[ReservationSlot, CourtReservation]
 
     @staticmethod
@@ -53,6 +54,5 @@ class ReservationCalendar:
         return diff
 
 
-@dataclass
-class UserReservationCalendar:
+class UserReservationCalendar(pydantic.BaseModel):
     user_calendar: dict[ReservationSlot, UserCourtReservation]

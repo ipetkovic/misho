@@ -166,7 +166,8 @@ async def start():
 
         reserve_job_executor = ReserveJobExecutor(
             job_repository=jobs_repository,
-            reservation_service=reservation_service
+            reservation_service=reservation_service,
+            mail_service=mail_service,
         )
 
         reservation_scheduler = ReservationSchedulerImpl(

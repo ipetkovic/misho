@@ -2,4 +2,22 @@
 
 source .env
 source .venv/bin/activate
-python src/core/sportbooking/ >> log.log 2>&1
+
+output=""
+
+#parse --output argument
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --output) output="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done    
+
+# if output is not empty, redirect output to file
+if [ -n "$output" ]; then
+    python src/core/sportbooking/ >> $output 2>&1
+else
+    python src/core/sportbooking
+fi  
+

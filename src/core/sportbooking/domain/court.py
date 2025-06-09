@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 
+import pydantic
+
 type CourtId = int
 
 
-@dataclass
-class Court:
+class Court(pydantic.BaseModel):
     id: CourtId
     name: str

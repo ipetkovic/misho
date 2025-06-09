@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 import datetime
 
+import pydantic
+
 from core.sportbooking.domain.session_token import SessionToken
 
 
-@dataclass
-class UserToken:
+class UserToken(pydantic.BaseModel):
     token: SessionToken
     updated_at: datetime.datetime

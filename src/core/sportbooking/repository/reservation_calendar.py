@@ -154,9 +154,10 @@ def _to_domain(data: Sequence[dao.ReservationCalendar]) -> ReservationCalendar:
     for row in data:
         time_slot = row.time_slot
         reservation_slot = ReservationSlot(
-            time_slot_to_domain(time_slot),
-            row.court_id
+            time_slot=time_slot_to_domain(time_slot),
+            court=row.court_id
         )
 
-        calendar_dict[reservation_slot] = CourtReservation(row.reserved_by)
+        calendar_dict[reservation_slot] = CourtReservation(
+            reserved_by=row.reserved_by)
     return ReservationCalendar(calendar=calendar_dict)
