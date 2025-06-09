@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+source .env
+source .venv/bin/activate
+python src/core/sportbooking/ >> log.log 2>&1
