@@ -1,6 +1,6 @@
 import sqlite3
 
-from core.sportbooking.config import CONFIG
+from core.sportbooking.configs import CONFIG
 
 
 class SqliteDatabaseConnection:

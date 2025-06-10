@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import create_async_engine
-from core.sportbooking.config import CONFIG
+from core.sportbooking.configs import CONFIG
 from core.sportbooking.database.model import Base
 
 

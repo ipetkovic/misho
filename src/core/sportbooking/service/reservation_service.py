@@ -7,7 +7,7 @@ from core.sportbooking.integration import SportbookingApi
 from core.sportbooking.domain.reservation_calendar import CourtId, UserReservationCalendar
 from core.sportbooking.domain.session_token import SessionToken
 from core.sportbooking.service.session_token_fetch_service import SessionTokenFetchService
-from core.sportbooking.config import CONFIG
+from core.sportbooking.configs import CONFIG
 
 
 @dataclass
