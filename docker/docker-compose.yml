@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  sportbooking:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        MISHO_MAIL_USERNAME: ${MISHO_MAIL_USERNAME}
+        MISHO_MAIL_PASSWORD: ${MISHO_MAIL_PASSWORD}
+        MISHO_ENVIRONMENT: ${MISHO_ENVIRONMENT}
+    volumes:
+      - ./db:/root/db
