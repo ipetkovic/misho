@@ -36,7 +36,7 @@ class Config:
 
 
 CONFIG = Config(
-    database_path='sportbooking.db',
+    database_path='db/sportbooking.db',
     dummy_reservation=False,
     update_job_status=True,
     logging=LoggingConfig(
