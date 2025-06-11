@@ -10,6 +10,7 @@ import dataclasses_json
 from fastapi import FastAPI
 import httpx
 import core
+from core.sportbooking.api.auth import AuthMiddleware
 from core.sportbooking.api.jobs import JobsController
 from core.sportbooking.configs import CONFIG
 from core.sportbooking.database import SqliteDatabase
@@ -178,8 +179,9 @@ async def start():
 
         # await jobs_repository.delete(1)
 
-        app = web.Application()
+        auth = AuthMiddleware(user_repository=user_repository)
 
+        app = web.Application(middlewares=[auth.middleware])
         JobsController(jobs_repository).register_routes(app)
 
         await start_http_server(app)

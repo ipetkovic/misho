@@ -34,7 +34,7 @@ class JobNotifier:
         )
 
         await self._mail_service.send_email(
-            to="ivo.petkovic@gmail.com",
+            to=notification.job.user.email,
             subject="Sportbooking obavijest",
             body=msg
         )

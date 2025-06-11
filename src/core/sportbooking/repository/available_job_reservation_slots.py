@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from core.sportbooking.database.model import Job
 from sqlalchemy.orm import selectinload
 
 from dataclasses import dataclass
@@ -9,6 +8,7 @@ from sqlalchemy.ext.asyncio.session import async_sessionmaker
 
 from core.sportbooking.domain.court import CourtId
 import core.sportbooking.database.model as dao
+from core.sportbooking.domain.job import Job
 from core.sportbooking.repository import jobs
 
 
@@ -37,6 +37,7 @@ class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
                     .selectinload(dao.TimeSlot.hour_slot),
                     selectinload(dao.Job.job_courts),
                     selectinload(dao.Job.monitoring_job),
+                    selectinload(dao.Job.user),
                 )
                 .join(dao.JobCourt, dao.Job.id == dao.JobCourt.job_id)
                 .join(dao.MonitoringJob, dao.MonitoringJob.job_id == dao.Job.id)
@@ -57,5 +58,6 @@ class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
 
             result = await session.execute(stmt)
             rows = result.all()
+            print(rows)
             return [AvailableJobReservationSlot(
                 jobs.to_domain(row[0]), row[1]) for row in rows]

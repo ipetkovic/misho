@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import core.sportbooking.database.model as dao
 
 from core.sportbooking.domain.job import Job, JobCreate, JobId, ReserveJob, Status
+from core.sportbooking.repository.user import _to_domain as user_to_domain
 from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJob, MonitoringJobCreate
 from core.sportbooking.domain.reservation_slot import ReservationSlot
 from core.sportbooking.domain.reserve_job import ReserveJobCreate
@@ -136,6 +137,7 @@ class JobsRepositorySqlite(JobsRepository):
             .selectinload(dao.TimeSlot.hour_slot),
             selectinload(dao.Job.job_courts),
             selectinload(dao.Job.monitoring_job),
+            selectinload(dao.Job.user)
         )
 
 
@@ -148,7 +150,7 @@ def to_domain(job_dao: dao.Job) -> Job:
 
     return Job(
         id=job_dao.id,
-        user_id=job_dao.user_id,
+        user=user_to_domain(job_dao.user),
         time_slot=time_slot_to_domain(job_dao.time_slot),
         job_type=job_type,
         courts_by_priority=tuple(

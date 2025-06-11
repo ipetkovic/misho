@@ -191,8 +191,8 @@ def create_user_tokens_table_query() -> str:
 
 def insert_user() -> str:
     return """
-    INSERT INTO users (username, password, name) VALUES
-        ('Ivo Petkovic', 'i2802989', 'Petković_Ivo')
+    INSERT INTO users (username, password, name, app_token, email) VALUES
+        ('Ivo Petkovic', 'i2802989', 'Petković_Ivo', '4a7b99400983d2067a7c54f8d3cf7274', 'ivo.petkovic@gmail.com')
     ON CONFLICT DO NOTHING;
     """
 

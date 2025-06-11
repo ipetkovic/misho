@@ -4,15 +4,53 @@ import json
 
 from dataclasses_json import dataclass_json
 from pydantic_core import ErrorDetails
-from core.sportbooking.domain.job import Job, JobCreate, JobId, Status
-from core.sportbooking.domain.monitoring_job import MonitoringAction
+from core.sportbooking.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, JobType, Status
+from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
 from core.sportbooking.domain.reservation_calendar import CourtId
 from core.sportbooking.domain.time_slot import TimeSlot
+from core.sportbooking.domain.user import User
 from core.sportbooking.repository.jobs import JobsRepository
 
 from aiohttp import web
 
 import pydantic
+
+
+class Job(pydantic.BaseModel):
+    id: JobId
+    time_slot: TimeSlot
+    courts_by_priority: tuple[CourtId, ...]
+    job_type: JobType
+    created_at: datetime.datetime
+    status: Status
+
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
+
+
+class JobCreate(pydantic.BaseModel):
+    time_slot: TimeSlot
+    job_type: MonitoringJobCreate
+    courts_by_priority: list[CourtId]
+
+    # extra = 'forbid'
+
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
+
+
+def to_api_job(job: JobDomain) -> Job:
+    return Job(**job.model_dump(exclude={'user_id'}))
+
+
+def to_api_job_create(job_create: JobCreateDomain) -> JobCreate:
+    return JobCreate(**job_create.model_dump(exclude={'user_id'}))
+
+
+def from_api_job(job: Job, user: User) -> JobDomain:
+    return JobDomain(user=user, **job.model_dump())
+
+
+def from_api_job_create(job_create: JobCreate, user: User) -> JobCreateDomain:
+    return JobCreateDomain(user_id=user.id, **job_create.model_dump())
 
 
 class SuccessResult(pydantic.BaseModel):
@@ -62,7 +100,9 @@ class JobsController:
     async def list_jobs(self, _):
         jobs = await self.jobs_repository.list_all()
         print(jobs)
-        jobs_json = to_json(JobsResult(jobs=jobs))
+        jobs_domain = [to_api_job(job) for job in jobs]
+        print(jobs_domain)
+        jobs_json = to_json(JobsResult(jobs=jobs_domain))
         print(jobs_json)
         return web.json_response(body=jobs_json)
 
@@ -73,14 +113,17 @@ class JobsController:
             error = FailureResult(error=f"Job with id {job_id} not found")
             return web.json_response(status=404, body=to_json(error))
 
-        job_json = to_json(job)
+        job_json = to_json(to_api_job(job))
         return web.json_response(body=job_json)
 
     async def create_job(self, request: web.Request):
+        user = request['user']
         body = await request.json()
         job_create = from_json(body, JobCreate)
-        await self.jobs_repository.insert(job_create)
-        return web.json_response()
+        job_create_domain = from_api_job_create(job_create, user)
+        job_domain = await self.jobs_repository.insert(job_create_domain)
+        job_api = to_api_job(job_domain)
+        return web.json_response(body=to_json(job_api))
 
     async def delete_job(self, request: web.Request):
         job_id = int(request.match_info['job_id'])

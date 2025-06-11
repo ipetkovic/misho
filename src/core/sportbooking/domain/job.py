@@ -9,7 +9,7 @@ from core.sportbooking.domain.monitoring_job import MonitoringJob, MonitoringJob
 from core.sportbooking.domain.reservation_calendar import CourtId
 from core.sportbooking.domain.reserve_job import ReserveJob, ReserveJobCreate
 from core.sportbooking.domain.time_slot import TimeSlot, TimeSlotId
-from core.sportbooking.domain.user import UserId
+from core.sportbooking.domain.user import User, UserId
 from typing import TypeVar, Generic
 
 type JobId = int
@@ -26,7 +26,7 @@ JobType = TypeVar('JobType', ReserveJob, MonitoringJob)
 
 class Job(pydantic.BaseModel):
     id: JobId
-    user_id: UserId
+    user: User
     time_slot: TimeSlot
     courts_by_priority: tuple[CourtId, ...]
     job_type: JobType

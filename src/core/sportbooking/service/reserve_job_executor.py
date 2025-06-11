@@ -47,7 +47,7 @@ class ReserveJobExecutor:
 
                 try:
                     await self._reservation_service.reserve(
-                        user_id=job.user_id,
+                        user_id=job.user.id,
                         reservation_slot=ReservationSlot(
                             time_slot=job.time_slot, court=court_id)
                     )
@@ -82,7 +82,7 @@ class ReserveJobExecutor:
             body = f"Rezervacija za termin {job.time_slot} nije uspjela."
 
         await self._mail_service.send_email(
-            to="ivo.petkovic@gmail.com",
+            to=job.user.email,
             subject="Sportbooking obavijest",
             body=body
         )
