@@ -1,9 +1,10 @@
 version: "3.9"
 
 services:
-  sportbooking:
+  misho:
+    image: misho
     build:
-      context: ..
+      context: .
       dockerfile: Dockerfile
       args:
         MISHO_MAIL_USERNAME: ${MISHO_MAIL_USERNAME}
@@ -11,3 +12,5 @@ services:
         MISHO_ENVIRONMENT: ${MISHO_ENVIRONMENT}
     volumes:
       - ./db:/root/db
+    ports:
+      - "8000:8000"
