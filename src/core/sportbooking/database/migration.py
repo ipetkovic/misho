@@ -35,7 +35,8 @@ def insert_hour_slot() -> str:
         (16, 17),
         (17, 19),
         (19, 21),
-        (21, 23);
+        (21, 23)
+    ON CONFLICT DO NOTHING;
     """
 
 
@@ -66,7 +67,8 @@ def insert_courts_table_query() -> str:
         (5, 'Court 5'),
         (6, 'Court 6'),
         (7, 'Court 7'),
-        (8, 'Court 8');
+        (8, 'Court 8')
+    ON CONFLICT DO NOTHING;
     """
 
 
@@ -190,7 +192,8 @@ def create_user_tokens_table_query() -> str:
 def insert_user() -> str:
     return """
     INSERT INTO users (username, password, name) VALUES
-        ('Ivo Petkovic', 'i2802989', 'Petković_Ivo');
+        ('Ivo Petkovic', 'i2802989', 'Petković_Ivo')
+    ON CONFLICT DO NOTHING;
     """
 
 
@@ -222,32 +225,15 @@ def insert_user() -> str:
 #     );
 #     """
 
-
-if __name__ == "__main__":
+def migrate():
     with SqliteDatabase().connect() as context:
         context.cursor.execute(insert_hour_slot())
         context.cursor.execute(insert_courts_table_query())
         context.cursor.execute(insert_user())
 
-        # context.cursor.execute(create_users_table_query())
-        # context.cursor.execute(create_user_tokens_table_query())
-
-        # context.cursor.execute(create_hour_slot())
-        # context.cursor.execute(create_time_slot())
-        # context.cursor.execute(create_courts_table_query())
-        # context.cursor.execute(create_reservation_slots_table_query())
-        # context.cursor.execute(create_jobs_table_query())
-        # context.cursor.execute(create_job_courts_table_query())
-        # context.cursor.execute(create_reserve_job_table_query())
-        # context.cursor.execute(create_monitoring_job_table_query())
-        # context.cursor.execute(create_calendar_table_query())
-        # context.cursor.execute(create_monitoring_changes_table_query())
-
-        # context.cursor.execute(time_slot_unique_constraint())
-        # context.cursor.execute(jobs_unique_constraint())
-
-        # # context.cursor.execute(create_schedule_job_table_query())
-        # # # context.cursor.execute(alter_job_table_add_status_column_query())
-        # context.cursor.execute(create_reservation_calendar_table_query())
         context.connection.commit()
         print("Database migration completed successfully.")
+
+
+if __name__ == "__main__":
+    migrate()

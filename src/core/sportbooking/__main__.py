@@ -11,8 +11,10 @@ from fastapi import FastAPI
 import httpx
 import core
 from core.sportbooking.api.jobs import JobsController
-from core.sportbooking.config import CONFIG
+from core.sportbooking.configs import CONFIG
 from core.sportbooking.database import SqliteDatabase
+from core.sportbooking.database.create import create_tables
+from core.sportbooking.database.migration import migrate
 from core.sportbooking.database.model import Base
 from core.sportbooking.domain.hour_slot import HourSlot
 from core.sportbooking.domain.job import JobCreate
@@ -58,8 +60,8 @@ async def start():
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)
 
     async with httpx.AsyncClient() as http_client, engine.begin() as conn:
-
-        await conn.run_sync(Base.metadata.create_all)
+        await create_tables(engine)
+        migrate()
 
         sportbooking_api = SportBookingApiImpl(http_client)
 
@@ -188,7 +190,7 @@ async def start():
 async def start_http_server(app: web.Application):
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, 'localhost', 8000)
+    site = web.TCPSite(runner, '0.0.0.0', 8000)
     await site.start()
 
 

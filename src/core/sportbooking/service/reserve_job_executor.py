@@ -1,5 +1,5 @@
 import logging
-from core.sportbooking.config import CONFIG
+from core.sportbooking.configs import CONFIG
 from core.sportbooking.domain.job import Job, Status
 from core.sportbooking.domain.reservation_calendar import CourtId
 from core.sportbooking.domain.reservation_slot import ReservationSlot

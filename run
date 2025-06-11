@@ -1,33 +1,3 @@
 #!/bin/bash
 
-source .env
-source .venv/bin/activate
-
-output=""
-daemon=""
-
-# Parse --output and --daemon options
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --output) output="$2"; shift ;;
-        --daemon) daemon="true" ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
-    esac
-    shift
-done
-
-cmd="python src/core/sportbooking"
-
-if [ -n "$output" ]; then
-    cmd="$cmd >> \"$output\" 2>&1"
-fi
-
-if [ -n "$daemon" ]; then
-    cmd="nohup $cmd &"
-fi
-
-echo "Executing command: $cmd"
-# Execute the final command
-eval "$cmd"
-
-echo "Started process with PID $!"
+python src/core/sportbooking

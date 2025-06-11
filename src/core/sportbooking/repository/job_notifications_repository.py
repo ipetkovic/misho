@@ -30,7 +30,7 @@ class JobNotificationsRepositorySqlite(JobNotificationsRepository):
         self._sessionmaker = async_sessionmaker(
             bind=engine, expire_on_commit=False)
 
-    async def get_notifications(self):
+    async def get_notifications(self) -> list[JobNotification]:
         async with self._sessionmaker() as session:
             stmt = (
                 select(dao.JobNotificationState.id, dao.Job.id, dao.JobCourt.court_id,
