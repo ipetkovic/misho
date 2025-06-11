@@ -15,7 +15,7 @@ CONFIG_PROD = Config(
     ),
     reservation_monitoring=ReservationMonitoringConfig(
         username="Ivo Petkovic",
-        cron=CronTrigger(hour='*', minute='*/2', second='0')
+        cron=CronTrigger(hour='*', minute='*', second='0')
     ),
     mailer_config=MailerConfig(
         hostname="smtp.gmail.com",
