@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   misho:
-    image: misho
+    image: mojo28/misho
     build:
       context: .
       dockerfile: Dockerfile
