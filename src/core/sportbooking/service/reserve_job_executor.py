@@ -62,17 +62,18 @@ class ReserveJobExecutor:
 
             return result
 
+        reservation_slot = None
         try:
-            result = await reserve()
-            is_success = result is not None
-            await self._update_job_status(job, is_success)
-            await self._notify_user(job, result)
-            result = "succeeded" if is_success else "failed"
-            logging.info(f"Job {job.id} {result}.")
+            reservation_slot = await reserve()
         except Exception as e:
-            await self._update_job_status(job, False)
-            await self._notify_user(job, None)
-            print(f"Job failed with exception: {e}")
+            pass
+
+        is_success = reservation_slot is not None
+
+        result = "succeeded" if is_success else "failed"
+        logging.info(f"Job {job.id} {result}.")
+        await self._update_job_status(job, is_success)
+        await self._notify_user(job, reservation_slot)
 
     async def _notify_user(self, job: Job, reservation_slot: ReservationSlot | None):
         if (reservation_slot is not None):

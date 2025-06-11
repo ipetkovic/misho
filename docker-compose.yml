@@ -2,6 +2,9 @@ version: "3.9"
 
 services:
   misho:
+    env_file: ".env"
+    environment:
+      - TZ=Europe/Berlin
     image: mojo28/misho
     build:
       context: .

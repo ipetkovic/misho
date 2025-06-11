@@ -9,8 +9,4 @@ COPY src/ ./src
 COPY run run
 
 ENV PYTHONPATH=src/
-ENV MISHO_MAIL_USERNAME=ivo.petkovic@gmail.com
-ENV MISHO_MAIL_PASSWORD=your_password_here
-ENV MISHO_ENVIRONMENT=PROD
-
 CMD ["python", "src/core/sportbooking"]

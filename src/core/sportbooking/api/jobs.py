@@ -71,7 +71,7 @@ class JobsController:
         job = await self.jobs_repository.find_by_id(job_id)
         if not job:
             error = FailureResult(error=f"Job with id {job_id} not found")
-            raise web.json_response(status=404, body=to_json(error))
+            return web.json_response(status=404, body=to_json(error))
 
         job_json = to_json(job)
         return web.json_response(body=job_json)
