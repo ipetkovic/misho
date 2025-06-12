@@ -16,9 +16,9 @@ type JobId = int
 
 
 class Status(Enum):
-    PENDING = "pending"
-    SUCCESS = "success"
-    FAILED = "failed"
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
 
 
 JobType = TypeVar('JobType', ReserveJob, MonitoringJob)

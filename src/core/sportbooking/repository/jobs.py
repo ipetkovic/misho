@@ -24,6 +24,11 @@ class JobsRepository:
     async def find_by_id(self, job_id: JobId) -> Job | None:
         raise NotImplementedError()
 
+    async def find_by_time_slot(
+        self, time_slot: TimeSlot
+    ) -> Job | None:
+        raise NotImplementedError()
+
     async def list_all(self, status: Status = None) -> list[Job]:
         raise NotImplementedError()
 
@@ -109,6 +114,14 @@ class JobsRepositorySqlite(JobsRepository):
     async def find_by_id(self, job_id: JobId) -> Job | None:
         async with self._sessionmaker() as session:
             return await self._find_by_id(session, job_id)
+
+    async def find_by_time_slot(self, time_slot: TimeSlot) -> Job | None:
+        async with self._sessionmaker() as session:
+            time_slot_id = await find_time_slot_id(session, time_slot)
+            stmt = self._select().where(dao.Job.time_slot_id == time_slot_id)
+            result = await session.execute(stmt)
+            job_dao = result.scalar_one_or_none()
+            return to_domain(job_dao) if job_dao else None
 
     async def delete(self, job_id: JobId) -> None:
         async with self._sessionmaker() as session:
