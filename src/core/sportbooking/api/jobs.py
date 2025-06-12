@@ -4,12 +4,14 @@ import json
 
 from dataclasses_json import dataclass_json
 from pydantic_core import ErrorDetails, to_json
-from core.sportbooking.api.common import FailureResult, SuccessResult, from_json
+from core.sportbooking.api.common import FailureResult, SuccessResult, from_json, json_bad_request
 from core.sportbooking.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, JobType, Status
 from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
 from core.sportbooking.domain.reservation_calendar import CourtId
 from core.sportbooking.domain.time_slot import TimeSlot
 from core.sportbooking.domain.user import User
+from core.sportbooking.repository.court import CourtRepository
+from core.sportbooking.repository.hour_slot import HourSlotRepository, list_hour_slots
 from core.sportbooking.repository.jobs import JobsRepository
 
 from aiohttp import request, web
@@ -59,8 +61,15 @@ def from_api_job_create(job_create: JobCreate, user: User) -> JobCreateDomain:
 
 
 class JobsController:
-    def __init__(self, jobs_repository: JobsRepository):
+    def __init__(
+        self,
+        jobs_repository: JobsRepository,
+        hour_slots_repository: HourSlotRepository,
+        court_repository: CourtRepository
+    ):
         self.jobs_repository = jobs_repository
+        self._hour_slots_repository = hour_slots_repository
+        self._court_repository = court_repository
 
     def get_routes(self):
         return [
@@ -100,6 +109,8 @@ class JobsController:
         job_create = from_json(body, JobCreate)
         job_create_domain = from_api_job_create(job_create, user)
 
+        await self._validate_job_create(job_create=job_create_domain)
+
         job_for_time_slot = await self.jobs_repository.find_by_time_slot(job_create_domain.time_slot)
         if job_for_time_slot:
             error = FailureResult(
@@ -120,3 +131,18 @@ class JobsController:
             return Status(status)
         except ValueError:
             return None
+
+    async def _validate_job_create(self, job_create: JobCreate) -> bool:
+        hour_slots = await self._hour_slots_repository.list_hour_slots()
+
+        if job_create.time_slot.hour_slot not in hour_slots:
+            error = f"Invalid hour slot: {job_create.time_slot.hour_slot}. Available hour slots: {list(hour_slots)}"
+            raise json_bad_request(error)
+
+        courts = await self._court_repository.list_courts()
+        diff = set(job_create.courts_by_priority) - \
+            set(court.id for court in courts)
+
+        if diff:
+            error = f"Invalid courts: {diff}. Available courts: {[court.id for court in courts]}"
+            raise json_bad_request(error)

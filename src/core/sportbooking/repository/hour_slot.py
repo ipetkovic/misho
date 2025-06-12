@@ -1,10 +1,24 @@
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio import AsyncSession
 import core.sportbooking.database.model as dao
+from sqlalchemy.ext.asyncio.session import async_sessionmaker
 
 from core.sportbooking.domain.hour_slot import HourSlot, HourSlotId
+
+
+class HourSlotRepository:
+    def __init__(self, engine: AsyncEngine):
+        self._engine = engine
+        self._sessionmaker = async_sessionmaker(
+            bind=engine, expire_on_commit=False)
+
+    async def list_hour_slots(self) -> tuple[HourSlot]:
+        async with self._sessionmaker() as session:
+            hour_slots = await list_hour_slots(session)
+            return tuple(hour_slots.keys())
 
 
 async def list_hour_slots(session: AsyncSession) -> dict[HourSlot, HourSlotId]:

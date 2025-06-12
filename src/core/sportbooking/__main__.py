@@ -28,6 +28,8 @@ from core.sportbooking.domain.session_token import SessionToken
 from core.sportbooking.domain.time_slot import TimeSlot
 from core.sportbooking.integration import SportBookingApiImpl
 from core.sportbooking.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
+from core.sportbooking.repository.court import CourtRepository
+from core.sportbooking.repository.hour_slot import HourSlotRepository
 from core.sportbooking.repository.job_notifications_repository import JobNotificationsRepositorySqlite
 from core.sportbooking.repository.jobs import JobsRepository, JobsRepositorySqlite
 from core.sportbooking.repository.reservation_calendar import ReservationCalendarRepositorySqlite
@@ -127,7 +129,14 @@ async def start():
 
         auth = AuthMiddleware(user_repository=user_repository)
 
-        jobs_controller = JobsController(jobs_repository)
+        hour_slot_repository = HourSlotRepository(engine)
+        court_respository = CourtRepository(engine)
+
+        jobs_controller = JobsController(
+            jobs_repository=jobs_repository,
+            hour_slots_repository=hour_slot_repository,
+            court_repository=court_respository
+        )
         signup_controller = SignUpController(
             user_service=user_repository, sportbookin_api=sportbooking_api)
 

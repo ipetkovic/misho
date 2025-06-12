@@ -27,6 +27,11 @@ def from_json(body: any, cls: pydantic.BaseModel):
         raise validation_error(e)
 
 
+def json_bad_request(message: str) -> web.HTTPBadRequest:
+    json = to_json(FailureResult(error=message))
+    return web.HTTPBadRequest(text=json, content_type='application/json')
+
+
 def validation_error(e: pydantic.ValidationError) -> web.HTTPBadRequest:
     json = to_json(ValidationErrorResponse(errors=e.errors()))
-    return web.HTTPBadRequest(text=json)
+    return web.HTTPBadRequest(text=json, content_type='application/json')
