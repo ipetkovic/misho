@@ -53,9 +53,6 @@ async def start():
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
 
-    dataclasses_json.cfg.global_config.encoders[date] = date.isoformat
-    dataclasses_json.cfg.global_config.decoders[date] = date.fromisoformat
-
     logging.getLogger("core.sportbooking").setLevel(CONFIG.logging.level)
 
     engine = create_async_engine(
@@ -127,58 +124,6 @@ async def start():
                           trigger=CONFIG.reservation_monitoring.cron)
         scheduler.start()
 
-        # res = await jobs_repository.filter_by_reservation_slots(
-        #     [ReservationSlot(time_slot, 8)]
-        # )
-
-        # print(res)
-
-        # job = await jobs_repository.find_by_id(1)
-
-        # jobs = await jobs_repository.list_all()
-
-        # for job in jobs:
-        #     await jobs_repository.delete(job.id)
-
-        dates = (
-            "2025-06-11",
-            "2025-06-12"
-        )
-
-        dates = [datetime.date.fromisoformat(date) for date in dates]
-
-        hour_slots = [
-            HourSlot(from_hour=16, to_hour=17)
-        ]
-
-        # for date in dates:
-        #     for hour_slot in hour_slots:
-        #         await jobs_repository.insert(
-        #             JobCreate(
-        #                 user_id=1,
-        #                 time_slot=TimeSlot(date, hour_slot),
-        #                 job_type=MonitoringJobCreate(MonitoringAction.RESERVE),
-        #                 courts_by_priority=[4, 5, 6, 7],
-        #             )
-        #         )
-
-        # await jobs_repository.insert(
-        #     JobCreate(
-        #         user_id=1,
-        #         time_slot=TimeSlot(datetime.date.fromisoformat(
-        #             "2025-06-12"), HourSlot(from_hour=19, to_hour=21)),
-        #         job_type=ReserveJobCreate(),
-        #         courts_by_priority=[4, 5, 6, 7],
-        #     )
-        # )
-
-        # res = await job_notifications_repository.get_notifications()
-        # print(f"notifications: {res}")
-        # print("stipica")
-        # print(await jobs_repository.find_by_id(1))
-
-        # await jobs_repository.delete(1)
-
         auth = AuthMiddleware(user_repository=user_repository)
 
         http_app = HttpApplication(auth)
@@ -188,17 +133,9 @@ async def start():
         )
 
         await http_app.start_server()
-
-        print("HTTP server started")
+        logging.info("HTTP server started")
 
         await _sleep_forever()
-
-
-async def start_http_server(app: web.Application):
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8000)
-    await site.start()
 
 
 async def _sleep_forever():
