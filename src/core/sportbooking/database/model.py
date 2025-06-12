@@ -20,8 +20,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
     name: Mapped[str] = mapped_column(unique=True)
-    email: Mapped[str] = mapped_column(unique=True)
-    app_token: Mapped[str] = mapped_column(String(64), unique=True)
+    email: Mapped[str] = mapped_column(unique=True, nullable=True)
+    app_token: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=True)
 
 
 class UserToken(Base):

@@ -61,7 +61,6 @@ async def start():
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)
 
     async with httpx.AsyncClient() as http_client, engine.begin() as conn:
-        await create_tables(engine)
         migrate()
 
         sportbooking_api = SportBookingApiImpl(http_client)
