@@ -12,6 +12,7 @@ import httpx
 import core
 from core.sportbooking.api.auth import AuthMiddleware
 from core.sportbooking.api.jobs import JobsController
+from core.sportbooking.api.http_app import HttpApplication
 from core.sportbooking.configs import CONFIG
 from core.sportbooking.database import SqliteDatabase
 from core.sportbooking.database.create import create_tables
@@ -180,10 +181,15 @@ async def start():
 
         auth = AuthMiddleware(user_repository=user_repository)
 
+        http_app = HttpApplication(auth)
         app = web.Application(middlewares=[auth.middleware])
-        JobsController(jobs_repository).register_routes(app)
+        http_app.add_routes(
+            JobsController(jobs_repository).get_routes()
+        )
 
-        await start_http_server(app)
+        await http_app.start_server()
+
+        print("HTTP server started")
 
         await _sleep_forever()
 

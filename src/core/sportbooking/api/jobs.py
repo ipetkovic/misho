@@ -4,6 +4,7 @@ import json
 
 from dataclasses_json import dataclass_json
 from pydantic_core import ErrorDetails
+from core.sportbooking.api.common import SuccessResult
 from core.sportbooking.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, JobType, Status
 from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
 from core.sportbooking.domain.reservation_calendar import CourtId
@@ -37,6 +38,10 @@ class JobCreate(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
 
+class JobsResult(SuccessResult):
+    jobs: list[Job]
+
+
 def to_api_job(job: JobDomain) -> Job:
     return Job(**job.model_dump(exclude={'user_id'}))
 
@@ -53,49 +58,17 @@ def from_api_job_create(job_create: JobCreate, user: User) -> JobCreateDomain:
     return JobCreateDomain(user_id=user.id, **job_create.model_dump())
 
 
-class SuccessResult(pydantic.BaseModel):
-    pass
-
-
-class FailureResult(pydantic.BaseModel):
-    error: str
-
-
-class JobsResult(SuccessResult):
-    jobs: list[Job]
-
-
-class ValidationErrorResponse(pydantic.BaseModel):
-    errors: list[ErrorDetails]
-
-
-def to_json(obj: pydantic.BaseModel) -> str:
-    return obj.model_dump_json(indent=2)
-
-
-def from_json(body: any, cls: pydantic.BaseModel):
-    try:
-        return cls(**body)
-    except pydantic.ValidationError as e:
-        raise validation_error(e)
-
-
-def validation_error(e: pydantic.ValidationError) -> web.HTTPBadRequest:
-    json = to_json(ValidationErrorResponse(errors=e.errors()))
-    return web.HTTPBadRequest(text=json)
-
-
 class JobsController:
     def __init__(self, jobs_repository: JobsRepository):
         self.jobs_repository = jobs_repository
 
-    def register_routes(self, app: web.Application):
-        app.add_routes([
+    def get_routes(self):
+        return [
             web.get('/jobs', self.list_jobs),
             web.get('/jobs/{job_id:\d+}', self.get_job),
             web.post('/jobs', self.create_job),
             web.delete('/jobs/{job_id:\d+}', self.delete_job),
-        ])
+        ]
 
     async def list_jobs(self, request: web.Request):
         status = request.query.get('status', None)
@@ -106,13 +79,9 @@ class JobsController:
                     error=f"Invalid status: {status}. Supported values: PENDING, FAILED, SUCCESS")
                 return web.json_response(status=400, body=to_json(error))
 
-        print(f"Listing jobs with status: {status}")
         jobs = await self.jobs_repository.list_all(status=status)
-        print(jobs)
         jobs_domain = [to_api_job(job) for job in jobs]
-        print(jobs_domain)
         jobs_json = to_json(JobsResult(jobs=jobs_domain))
-        print(jobs_json)
         return web.json_response(body=jobs_json)
 
     async def get_job(self, request: web.Request):
