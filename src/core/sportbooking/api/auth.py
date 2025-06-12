@@ -9,6 +9,9 @@ class AuthMiddleware:
 
     @web.middleware
     async def middleware(self, request, handler):
+        if request.path == '/signup':
+            return await handler(request)
+
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith("Bearer "):
             return web.json_response({'error': 'Unauthorized'}, status=401)

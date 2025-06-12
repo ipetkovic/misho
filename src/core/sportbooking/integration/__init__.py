@@ -6,6 +6,7 @@ from core.sportbooking.domain.session_token import SessionToken
 from core.sportbooking.domain.reservation_calendar import UserReservationCalendar
 from core.sportbooking.integration.login import login as login_api
 from core.sportbooking.integration.reserve import reserve as reserve_api
+from core.sportbooking.integration.user_account import UserAccountInfo, get_account_info
 
 
 class SportbookingApi:
@@ -19,6 +20,9 @@ class SportbookingApi:
         raise NotImplementedError()
 
     async def reserve(self, token: SessionToken, reservation_input: reservation_input.ReservationQueryInput) -> None:
+        raise NotImplementedError()
+
+    async def get_user_account_info(self, token: SessionToken) -> UserAccountInfo:
         raise NotImplementedError()
 
 
@@ -37,3 +41,6 @@ class SportBookingApiImpl(SportbookingApi):
 
     async def reserve(self, token: SessionToken, reservation_input: reservation_input.ReservationQueryInput) -> None:
         return await reserve_api(self._http_client, token, reservation_input)
+
+    async def get_user_account_info(self, token: SessionToken) -> UserAccountInfo:
+        return await get_account_info(self._http_client, token)

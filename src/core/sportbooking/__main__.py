@@ -13,6 +13,7 @@ import core
 from core.sportbooking.api.auth import AuthMiddleware
 from core.sportbooking.api.jobs import JobsController
 from core.sportbooking.api.http_app import HttpApplication
+from core.sportbooking.api.signup import SignUpController
 from core.sportbooking.configs import CONFIG
 from core.sportbooking.database import SqliteDatabase
 from core.sportbooking.database.create import create_tables
@@ -126,10 +127,17 @@ async def start():
 
         auth = AuthMiddleware(user_repository=user_repository)
 
+        jobs_controller = JobsController(jobs_repository)
+        signup_controller = SignUpController(
+            user_service=user_repository, sportbookin_api=sportbooking_api)
+
         http_app = HttpApplication(auth)
         app = web.Application(middlewares=[auth.middleware])
+
         http_app.add_routes(
-            JobsController(jobs_repository).get_routes()
+            jobs_controller.get_routes()
+        ).add_routes(
+            signup_controller.get_routes()
         )
 
         await http_app.start_server()
