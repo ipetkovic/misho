@@ -30,7 +30,7 @@ class UserRepositorySqlite(UserRepository):
 
     async def create_user(self, user: UserCreate) -> tuple[User, AppToken]:
         async with self._sessionmaker() as session:
-            token = secrets.token_urlsafe(32)
+            token = secrets.token_hex(32)
             user_dao = dao.User(
                 username=user.username,
                 password=user.password,

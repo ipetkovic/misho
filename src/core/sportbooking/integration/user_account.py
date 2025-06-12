@@ -41,9 +41,11 @@ def _parse_response(response: Response) -> UserAccountInfo:
 
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
-    div = soup.find_next("div", class_="osobnipodaciimeiprezimefont1")
+    name = soup.find("font", class_="osobnipodaciimeiprezimefont1")
 
-    if not div:
+    if not name:
         raise Exception("Failed to parse account info")
 
-    return UserAccountInfo(div.text.strip())
+    name = name.text.strip()
+
+    return UserAccountInfo(name=name)

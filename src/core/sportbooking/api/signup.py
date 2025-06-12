@@ -1,5 +1,5 @@
 import pydantic
-from core.sportbooking.api.common import FailureResult, to_json
+from core.sportbooking.api.common import FailureResult, from_json, to_json
 from core.sportbooking.api.user import User
 from core.sportbooking.domain.user import UserCreate
 from core.sportbooking.integration import SportbookingApi
@@ -31,25 +31,28 @@ class SignUpController:
         ]
 
     async def sign_up(self, request: web.Request) -> UserRepository:
-        user_request = SignupRequest.model_validate(request.json())
+        body = await request.json()
+        json = from_json(body, SignupRequest)
+        user_request = SignupRequest.model_validate(json)
 
         existing_user = await self._user_service.get_user_by_username(user_request.username)
         if existing_user:
             error = FailureResult(
-                "Username already exists.")
+                error="Username already exists.")
             return web.json_response(status=400, body=to_json(error))
 
         try:
-            token = await self._sportbooking_api.login(
+            login_response = await self._sportbooking_api.login(
                 user_request.username, user_request.password)
         except Exception as e:
             error = FailureResult(
-                "Unable to login to Sportbooking with provided credentials.")
+                error="Unable to login to Sportbooking with provided credentials.")
             return web.json_response(status=400, body=to_json(error))
 
+        token = login_response.token
         user_info = await self._sportbooking_api.get_user_account_info(token)
 
-        result = await self._user_service.create_user(
+        user, app_token = await self._user_service.create_user(
             UserCreate(
                 name=user_info.name,
                 username=user_request.username,
@@ -58,14 +61,12 @@ class SignUpController:
             )
         )
 
-        user, token = result
-
         jobs_json = to_json(SignupResponse(
             user=User(
                 name=user.name,
                 username=user.username,
                 email=user.email,
             ),
-            token=token
+            token=app_token.token
         ))
         return web.json_response(body=jobs_json)
