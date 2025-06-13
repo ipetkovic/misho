@@ -9,7 +9,7 @@ from core.api.auth import AuthMiddleware
 from core.api.jobs import JobsController
 from core.api.http_app import HttpApplication
 from core.api.signup import SignUpController
-from core.configs import CONFIG
+from core.config import CONFIG
 from core.database.migration import migrate
 from core.integration.sportbooking_service import SportbookingServiceImpl
 from core.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite

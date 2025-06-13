@@ -7,7 +7,7 @@ from core.integration.sportbooking_service import SportbookingService
 from core.domain.reservation_calendar import CourtId, UserReservationCalendar
 from core.domain.session_token import SessionToken
 from core.service.session_token_fetch_service import SessionTokenFetchService
-from core.configs import CONFIG
+from core.config import CONFIG
 
 
 @dataclass

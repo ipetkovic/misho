@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import create_async_engine
-from core.configs import CONFIG
+from core.config import CONFIG
 from core.database.model import Base
 
 

@@ -1,6 +1,7 @@
 import os
-from core.config import Config, LoggingConfig, MailerConfig, ReservationMonitoringConfig
 from apscheduler.triggers.cron import CronTrigger
+
+from core.config.model import Config, LoggingConfig, MailerConfig, ReservationMonitoringConfig
 
 _MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME')
 _MAIL_PASSWORD = os.getenv('MISHO_MAIL_PASSWORD')

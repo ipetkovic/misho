@@ -1,7 +1,7 @@
 import datetime
 import logging
-from core.configs import CONFIG
-from core.config import ReservationMonitoringConfig
+from core.config import CONFIG
+from core.config.model import ReservationMonitoringConfig
 from core.integration.sportbooking_service import SportbookingService
 from sportbooking import SportbookingApi
 from core.domain.reservation_calendar import ReservationCalendar

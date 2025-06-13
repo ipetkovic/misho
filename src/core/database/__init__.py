@@ -1,6 +1,6 @@
 import sqlite3
 
-from core.configs import CONFIG
+from core.config import CONFIG
 
 
 class SqliteDatabaseConnection:

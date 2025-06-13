@@ -1,5 +1,5 @@
 import logging
-from core.configs import CONFIG
+from core.config import CONFIG
 from core.domain.job import Job, Status
 from core.domain.reservation_calendar import CourtId
 from core.domain.reservation_slot import ReservationSlot
