@@ -1,4 +1,4 @@
-from core.sportbooking.database import SqliteDatabase
+from core.database import SqliteDatabase
 from alembic.config import Config
 from alembic import command
 import os
@@ -39,7 +39,7 @@ def insert_courts_table_query() -> str:
 def run_migrations():
     # Adjust path to the root-level alembic.ini
     alembic_cfg = Config(os.path.join(
-        os.path.dirname(__file__), "../../../../alembic.ini"))
+        os.path.dirname(__file__), "../../../alembic.ini"))
     command.upgrade(alembic_cfg, "head")
 
 

@@ -3,13 +3,13 @@ import datetime
 from sqlalchemy import Engine, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
-from core.sportbooking.database import SqliteDatabase, SqliteDatabaseConnection
+from core.database import SqliteDatabase, SqliteDatabaseConnection
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.domain.user import UserId
-from core.sportbooking.domain.user_token import UserToken
-import core.sportbooking.database.model as dao
+from core.domain.session_token import SessionToken
+from core.domain.user import UserId
+from core.domain.user_token import UserToken
+import core.database.model as dao
 
 
 class UserTokenRepository:

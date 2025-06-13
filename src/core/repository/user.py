@@ -1,11 +1,11 @@
 
 from sqlalchemy import *
-from core.sportbooking.domain.app_token import AppToken
-from core.sportbooking.domain.user import User, UserCreate, UserId
+from core.domain.app_token import AppToken
+from core.domain.user import User, UserCreate, UserId
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine
 import secrets
-import core.sportbooking.database.model as dao
+import core.database.model as dao
 
 
 class UserRepository:

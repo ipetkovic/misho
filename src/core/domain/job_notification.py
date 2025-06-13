@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import pydantic
 
-from core.sportbooking.domain.job import Job
-from core.sportbooking.domain.reservation_slot import ReservationSlot
+from core.domain.job import Job
+from core.domain.reservation_slot import ReservationSlot
 
 type JobNotificationId = int
 

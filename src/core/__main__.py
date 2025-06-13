@@ -1,53 +1,39 @@
 import asyncio
-from datetime import date, timedelta
+from datetime import timedelta
 import datetime
-import time
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 
-import dataclasses_json
-from fastapi import FastAPI
 import httpx
-import core
-from core.sportbooking.api.auth import AuthMiddleware
-from core.sportbooking.api.jobs import JobsController
-from core.sportbooking.api.http_app import HttpApplication
-from core.sportbooking.api.signup import SignUpController
-from core.sportbooking.configs import CONFIG
-from core.sportbooking.database import SqliteDatabase
-from core.sportbooking.database.create import create_tables
-from core.sportbooking.database.migration import migrate
-from core.sportbooking.database.model import Base
-from core.sportbooking.domain.hour_slot import HourSlot
-from core.sportbooking.domain.job import JobCreate
-from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from core.sportbooking.domain.reserve_job import ReserveJobCreate
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.domain.time_slot import TimeSlot
-from sportbooking import SportBookingApiImpl
-from core.sportbooking.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
-from core.sportbooking.repository.court import CourtRepository
-from core.sportbooking.repository.hour_slot import HourSlotRepository
-from core.sportbooking.repository.job_notifications_repository import JobNotificationsRepositorySqlite
-from core.sportbooking.repository.jobs import JobsRepository, JobsRepositorySqlite
-from core.sportbooking.repository.reservation_calendar import ReservationCalendarRepositorySqlite
-from core.sportbooking.repository.time_slot import TimeSlotRepositorySqlite
-from core.sportbooking.repository.user import UserRepositorySqlite
-from core.sportbooking.repository.user_token import UserTokenRepositorySqlite
-from core.sportbooking.service.job_notifier import JobNotifier
-from core.sportbooking.service.mail_service import MailService
-from core.sportbooking.service.reservation_monitoring import ReservationMonitoring
-from core.sportbooking.service.reservation_scheduler import ReservationScheduler, ReservationSchedulerImpl
-from core.sportbooking.service.reservation_service import ReservationService
-from core.sportbooking.service.reserve_job_executor import ReserveJobExecutor
-from core.sportbooking.service.session_token_fetch_service import SessionTokenFetchService
+from core.api.auth import AuthMiddleware
+from core.api.jobs import JobsController
+from core.api.http_app import HttpApplication
+from core.api.signup import SignUpController
+from core.configs import CONFIG
+from core.database.migration import migrate
+from core.integration.sportbooking_service import SportbookingServiceImpl
+from core.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
+from core.repository.court import CourtRepository
+from core.repository.hour_slot import HourSlotRepository
+from core.repository.job_notifications_repository import JobNotificationsRepositorySqlite
+from core.repository.jobs import JobsRepositorySqlite
+from core.repository.reservation_calendar import ReservationCalendarRepositorySqlite
+from core.repository.time_slot import TimeSlotRepositorySqlite
+from core.repository.user import UserRepositorySqlite
+from core.repository.user_token import UserTokenRepositorySqlite
+from core.service.job_notifier import JobNotifier
+from core.service.mail_service import MailService
+from core.service.reservation_monitoring import ReservationMonitoring
+from core.service.reservation_scheduler import ReservationSchedulerImpl
+from core.service.reservation_service import ReservationService
+from core.service.reserve_job_executor import ReserveJobExecutor
+from core.service.session_token_fetch_service import SessionTokenFetchService
 from sqlalchemy.ext.asyncio import create_async_engine
-import core.sportbooking.api
 from aiohttp import web
 
 import logging
+
+import sportbooking
 
 
 async def start():
@@ -56,7 +42,7 @@ async def start():
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
 
-    logging.getLogger("core.sportbooking").setLevel(CONFIG.logging.level)
+    logging.getLogger("core").setLevel(CONFIG.logging.level)
 
     engine = create_async_engine(
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)
@@ -64,7 +50,10 @@ async def start():
     async with httpx.AsyncClient() as http_client, engine.begin() as conn:
         migrate()
 
-        sportbooking_api = SportBookingApiImpl(http_client)
+        sportbooking_api = sportbooking.create_sportbooking_api(http_client)
+
+        sportbooking_service = SportbookingServiceImpl(
+            sportbooking_api=sportbooking_api)
 
         user_repository = UserRepositorySqlite(engine)
 
@@ -81,7 +70,7 @@ async def start():
             engine)
 
         session_token_fetch_service = SessionTokenFetchService(
-            sportbooking_api=sportbooking_api,
+            sportbooking=sportbooking_service,
             user_repository=user_repository,
             user_token_repository=user_token_repository)
 
@@ -95,7 +84,7 @@ async def start():
             engine)
 
         reservation_service = ReservationService(
-            sportbooking_api=sportbooking_api,
+            sportbooking=sportbooking_service,
             session_token_fetch_service=session_token_fetch_service)
 
         reserve_job_executor = ReserveJobExecutor(
@@ -109,7 +98,7 @@ async def start():
 
         reservation_monitoring = ReservationMonitoring(
             reservation_config=CONFIG.reservation_monitoring,  # Replace with actual config
-            sportbooking_api=sportbooking_api,
+            sportbooking=sportbooking_service,
             user_repository=user_repository,
             reservation_calendar_repository=reservation_calendar_repository,
             jobs_repository=jobs_repository,
@@ -138,7 +127,7 @@ async def start():
             court_repository=court_respository
         )
         signup_controller = SignUpController(
-            user_service=user_repository, sportbookin_api=sportbooking_api)
+            user_service=user_repository, sportbooking=sportbooking_service)
 
         http_app = HttpApplication(auth)
         app = web.Application(middlewares=[auth.middleware])

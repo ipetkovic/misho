@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine
-from core.sportbooking.configs import CONFIG
-from core.sportbooking.database.model import Base
+from core.configs import CONFIG
+from core.database.model import Base
 
 
 async def create_tables(engine):

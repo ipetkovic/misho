@@ -1,18 +1,16 @@
 from dataclasses import dataclass
 import datetime
-import json
 
-from dataclasses_json import dataclass_json
-from pydantic_core import ErrorDetails, to_json
-from core.sportbooking.api.common import FailureResult, SuccessResult, from_json, json_bad_request
-from core.sportbooking.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, JobType, Status
-from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
-from core.sportbooking.domain.reservation_calendar import CourtId
-from core.sportbooking.domain.time_slot import TimeSlot
-from core.sportbooking.domain.user import User
-from core.sportbooking.repository.court import CourtRepository
-from core.sportbooking.repository.hour_slot import HourSlotRepository, list_hour_slots
-from core.sportbooking.repository.jobs import JobsRepository
+from pydantic_core import to_json
+from core.api.common import FailureResult, SuccessResult, from_json, json_bad_request
+from core.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, Status
+from core.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
+from core.domain.reservation_calendar import CourtId
+from core.domain.time_slot import TimeSlot
+from core.domain.user import User
+from core.repository.court import CourtRepository
+from core.repository.hour_slot import HourSlotRepository
+from core.repository.jobs import JobsRepository
 
 from aiohttp import request, web
 
@@ -23,7 +21,7 @@ class Job(pydantic.BaseModel):
     id: JobId
     time_slot: TimeSlot
     courts_by_priority: tuple[CourtId, ...]
-    job_type: JobType
+    job_type: MonitoringJob
     created_at: datetime.datetime
     status: Status
 

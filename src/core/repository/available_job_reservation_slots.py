@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 
-from core.sportbooking.domain.court import CourtId
-import core.sportbooking.database.model as dao
-from core.sportbooking.domain.job import Job
-from core.sportbooking.repository import jobs
+from core.domain.court import CourtId
+import core.database.model as dao
+from core.domain.job import Job
+from core.repository import jobs
 
 
 @dataclass(frozen=True)

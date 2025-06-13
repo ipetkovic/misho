@@ -44,4 +44,4 @@ def _parse_response(response: Response) -> LoginResponse:
         raise Exception("Login failed")
 
     token = response.headers['Set-Cookie'].split(';')[0]
-    return LoginResponse(token=token))
+    return LoginResponse(token=token)

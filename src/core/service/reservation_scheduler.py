@@ -1,10 +1,10 @@
 
 
 import asyncio
-from core.sportbooking.domain.job import Job
-from core.sportbooking.domain.reservation_calendar import CourtId
-from core.sportbooking.domain.time_slot import TimeSlot
-from core.sportbooking.service.reserve_job_executor import ReserveJobExecutor
+from core.domain.job import Job
+from core.domain.reservation_calendar import CourtId
+from core.domain.time_slot import TimeSlot
+from core.service.reserve_job_executor import ReserveJobExecutor
 
 
 class ReservationScheduler:

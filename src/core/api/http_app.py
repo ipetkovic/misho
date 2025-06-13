@@ -1,8 +1,8 @@
 from typing import Iterable
 from aiohttp import web
 
-from core.sportbooking.api.auth import AuthMiddleware
-from core.sportbooking.repository.jobs import JobsRepository
+from core.api.auth import AuthMiddleware
+from core.repository.jobs import JobsRepository
 from aiohttp.web_routedef import AbstractRouteDef
 
 

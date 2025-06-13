@@ -1,6 +1,6 @@
-from core.sportbooking.domain.job_notification import JobNotification
-from core.sportbooking.repository.job_notifications_repository import JobNotificationsRepository
-from core.sportbooking.service import mail_service
+from core.domain.job_notification import JobNotification
+from core.repository.job_notifications_repository import JobNotificationsRepository
+from core.service import mail_service
 
 
 class JobNotifier:

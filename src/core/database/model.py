@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.associationproxy import association_proxy
 import datetime
 
-from core.sportbooking.domain.job import Status
-from core.sportbooking.domain.monitoring_job import MonitoringAction
+from core.domain.job import Status
+from core.domain.monitoring_job import MonitoringAction
 
 
 class Base(AsyncAttrs, DeclarativeBase):

@@ -4,10 +4,10 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.orm import selectinload
-import core.sportbooking.database.model as dao
-from core.sportbooking.domain.time_slot import TimeSlot
-from core.sportbooking.repository.hour_slot import get_hour_slot, list_hour_slots
-from core.sportbooking.repository.hour_slot import to_domain as hour_slot_to_domain
+import core.database.model as dao
+from core.domain.time_slot import TimeSlot
+from core.repository.hour_slot import get_hour_slot, list_hour_slots
+from core.repository.hour_slot import to_domain as hour_slot_to_domain
 
 type TimeSlotId = int
 

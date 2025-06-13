@@ -1,6 +1,7 @@
 from httpx import AsyncClient, Request
 from sportbooking._internal.common import HOST, get_standard_headers
-from sportbooking.reservation_calendar import UserReservationCalendar, reservation_calendar_html_parser
+from sportbooking._internal.reservation_calendar import reservation_calendar_html_parser
+from sportbooking.reservation_calendar import UserReservationCalendar
 
 
 URL = HOST + '/main/cland.php'

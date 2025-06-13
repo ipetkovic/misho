@@ -1,23 +1,24 @@
 import datetime
 import logging
-from core.sportbooking.configs import CONFIG
-from core.sportbooking.config import ReservationMonitoringConfig
+from core.configs import CONFIG
+from core.config import ReservationMonitoringConfig
+from core.integration.sportbooking_service import SportbookingService
 from sportbooking import SportbookingApi
-from core.sportbooking.domain.reservation_calendar import ReservationCalendar
-from core.sportbooking.repository.available_job_reservation_slots import AvailableJobReservationSlotRepository
-from core.sportbooking.repository.jobs import JobsRepository
-from core.sportbooking.repository.reservation_calendar import ReservationCalendarRepository
-from core.sportbooking.repository.user import UserRepository
-from core.sportbooking.service.job_notifier import JobNotifier
-from core.sportbooking.service.reservation_scheduler import ReservationScheduler
-from core.sportbooking.service.session_token_fetch_service import SessionTokenFetchService
+from core.domain.reservation_calendar import ReservationCalendar
+from core.repository.available_job_reservation_slots import AvailableJobReservationSlotRepository
+from core.repository.jobs import JobsRepository
+from core.repository.reservation_calendar import ReservationCalendarRepository
+from core.repository.user import UserRepository
+from core.service.job_notifier import JobNotifier
+from core.service.reservation_scheduler import ReservationScheduler
+from core.service.session_token_fetch_service import SessionTokenFetchService
 
 
 class ReservationMonitoring:
     def __init__(
         self,
         reservation_config: ReservationMonitoringConfig,
-        sportbooking_api: SportbookingApi,
+        sportbooking: SportbookingService,
         user_repository: UserRepository,
         reservation_calendar_repository: ReservationCalendarRepository,
         reservation_scheduler: ReservationScheduler,
@@ -28,7 +29,7 @@ class ReservationMonitoring:
     ):
         self._config = reservation_config
         self._user_repository = user_repository
-        self._sportbooking_api = sportbooking_api
+        self._sportbooking = sportbooking
         self._reservation_calendar_repository = reservation_calendar_repository
         self._token_fetch_service = token_fetch_service
         self._jobs_repository = jobs_repository
@@ -85,7 +86,7 @@ class ReservationMonitoring:
     async def _fetch_calendar(self):
         user_id = await self._get_user_id()
         token = await self._token_fetch_service.get_token(user_id)
-        calendar = await self._sportbooking_api.get_reservation_calendar(token)
+        calendar = await self._sportbooking.get_reservation_calendar(token)
         return ReservationCalendar.from_user_reservation_calendar(calendar)
 
     async def _get_user_id(self):

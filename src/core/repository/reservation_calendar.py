@@ -1,13 +1,13 @@
 from dataclasses import dataclass
-from core.sportbooking.domain.reservation_calendar import CourtReservation, ReservationCalendar
+from core.domain.reservation_calendar import CourtReservation, ReservationCalendar
 from sqlalchemy import Sequence, delete, select, tuple_
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
-import core.sportbooking.database.model as dao
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from core.sportbooking.repository.time_slot import find_times_slots
-from core.sportbooking.repository.time_slot import to_domain as time_slot_to_domain
+import core.database.model as dao
+from core.domain.reservation_slot import ReservationSlot
+from core.repository.time_slot import find_times_slots
+from core.repository.time_slot import to_domain as time_slot_to_domain
 
 
 class ReservationCalendarRepository:

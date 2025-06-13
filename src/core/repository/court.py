@@ -5,10 +5,10 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
-import core.sportbooking.database.model as dao
+import core.database.model as dao
 
-from core.sportbooking.domain.court import Court
-from core.sportbooking.domain.hour_slot import HourSlot, HourSlotId
+from core.domain.court import Court
+from core.domain.hour_slot import HourSlot, HourSlotId
 
 
 class CourtRepository:

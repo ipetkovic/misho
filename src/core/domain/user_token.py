@@ -3,7 +3,7 @@ import datetime
 
 import pydantic
 
-from core.sportbooking.domain.session_token import SessionToken
+from core.domain.session_token import SessionToken
 
 
 class UserToken(pydantic.BaseModel):

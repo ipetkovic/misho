@@ -3,16 +3,16 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from core.sportbooking.domain.court import CourtId
-from core.sportbooking.domain.hour_slot import HourSlot
-from core.sportbooking.domain.job import JobId
-from core.sportbooking.domain.job_notification import JobNotificationId, JobNotification
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from core.sportbooking.domain.time_slot import TimeSlot
-import core.sportbooking.database.model as dao
+from core.domain.court import CourtId
+from core.domain.hour_slot import HourSlot
+from core.domain.job import JobId
+from core.domain.job_notification import JobNotificationId, JobNotification
+from core.domain.reservation_slot import ReservationSlot
+from core.domain.time_slot import TimeSlot
+import core.database.model as dao
 from sqlalchemy.orm import selectinload
-from core.sportbooking.repository.jobs import to_domain as job_to_domain
-from core.sportbooking.repository.time_slot import to_domain as time_to_domain
+from core.repository.jobs import to_domain as job_to_domain
+from core.repository.time_slot import to_domain as time_to_domain
 
 
 class JobNotificationsRepository:

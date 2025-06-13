@@ -5,16 +5,14 @@ from sqlalchemy import Select, Tuple, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-import core.sportbooking.database.model as dao
+import core.database.model as dao
 
-from core.sportbooking.domain.job import Job, JobCreate, JobId, ReserveJob, Status
-from core.sportbooking.repository.user import _to_domain as user_to_domain
-from core.sportbooking.domain.monitoring_job import MonitoringAction, MonitoringJob, MonitoringJobCreate
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from core.sportbooking.domain.reserve_job import ReserveJobCreate
-from core.sportbooking.domain.time_slot import TimeSlot
-from core.sportbooking.repository.time_slot import find_time_slot_id, find_times_slots
-from core.sportbooking.repository.time_slot import to_domain as time_slot_to_domain
+from core.domain.job import Job, JobCreate, JobId, Status
+from core.repository.user import _to_domain as user_to_domain
+from core.domain.monitoring_job import MonitoringAction, MonitoringJob, MonitoringJobCreate
+from core.domain.time_slot import TimeSlot
+from core.repository.time_slot import find_time_slot_id
+from core.repository.time_slot import to_domain as time_slot_to_domain
 
 
 class JobsRepository:
@@ -55,19 +53,11 @@ class JobsRepositorySqlite(JobsRepository):
             job_courts = [dao.JobCourt(court_id=court_id, priority=idx)
                           for idx, court_id in enumerate(job.courts_by_priority)]
 
-            monitoring_job = None
-            action = None
-            match job.job_type:
-                case ReserveJobCreate():
-                    action = MonitoringAction.RESERVE
-                case MonitoringJobCreate(action=act):
-                    action = act
-
             job_dao = dao.Job(
                 user_id=job.user_id,
                 time_slot_id=time_slot_id,
                 job_courts=job_courts,
-                monitoring_job=dao.MonitoringJob(action=action),
+                monitoring_job=dao.MonitoringJob(action=job.job_type.action),
             )
 
             session.add(job_dao)
@@ -78,7 +68,7 @@ class JobsRepositorySqlite(JobsRepository):
             for job_court in job_dao.job_courts:
                 notification_state = dao.JobNotificationState(
                     job_court_id=job_court.id,
-                    trigger_on_available=action == MonitoringAction.NOTIFY,
+                    trigger_on_available=job.job_type.action == MonitoringAction.NOTIFY,
                 )
                 session.add(notification_state)
 

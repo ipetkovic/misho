@@ -1,22 +1,22 @@
 import datetime
 import logging
-from sportbooking import SportbookingApi
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.repository.user import UserRepository
-from core.sportbooking.repository.user_token import UserTokenRepository
+from core.integration.sportbooking_service import SportbookingService
+from core.domain.session_token import SessionToken
+from core.repository.user import UserRepository
+from core.repository.user_token import UserTokenRepository
 
 
 class SessionTokenFetchService:
     def __init__(
         self,
-        sportbooking_api: SportbookingApi,
+        sportbooking: SportbookingService,
         user_repository: UserRepository,
         user_token_repository: UserTokenRepository,
         refresh_after_minutes: int = 20
     ):
         self._user_repository = user_repository
         self._user_token_repository = user_token_repository
-        self._sportbooking_api = sportbooking_api
+        self._sportbooking = sportbooking
         self._refresh_after_minutes = refresh_after_minutes
 
     async def get_token(self, user_id) -> SessionToken:
@@ -35,11 +35,10 @@ class SessionTokenFetchService:
         if not user:
             raise ValueError(f"User with ID {user_id} not found")
 
-        login_response = await self._sportbooking_api.login(user.username, user.password)
+        token = await self._sportbooking.login(user.username, user.password)
 
-        logging.debug(f"Login response for user {user_id}: {login_response}")
+        logging.debug(f"Login response for user {user_id}: {token}")
 
-        token = login_response.token
         await self._user_token_repository.set_user_token(user_id, token)
 
         return token

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import pydantic
 
-from core.sportbooking.domain.court import CourtId
-from core.sportbooking.domain.time_slot import TimeSlot
+from core.domain.court import CourtId
+from core.domain.time_slot import TimeSlot
 
 
 class ReservationSlot(pydantic.BaseModel):

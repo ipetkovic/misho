@@ -2,7 +2,7 @@ from asyncio.log import logger
 from email.message import EmailMessage
 import aiosmtplib
 
-from core.sportbooking.config import MailerConfig
+from core.config import MailerConfig
 
 
 class MailService:

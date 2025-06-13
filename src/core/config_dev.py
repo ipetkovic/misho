@@ -1,5 +1,5 @@
 import os
-from core.sportbooking.config import Config, LoggingConfig, MailerConfig, ReservationMonitoringConfig
+from core.config import Config, LoggingConfig, MailerConfig, ReservationMonitoringConfig
 from apscheduler.triggers.cron import CronTrigger
 
 _MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME')

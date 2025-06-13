@@ -5,19 +5,13 @@ from dataclasses_json import config, dataclass_json
 from marshmallow import fields
 import pydantic
 
-from core.sportbooking.domain.hour_slot import HourSlot
+from core.domain.hour_slot import HourSlot
 
 type TimeSlotId = int
 
 
 class TimeSlot(pydantic.BaseModel):
-    date: datetime.date  # = field(
-    # metadata=config(
-    #     encoder=datetime.date.isoformat,
-    #     decoder=datetime.date.fromisoformat,
-    #     mm_field=fields.Date(format='iso')
-    # )
-    # )
+    date: datetime.date
     hour_slot: HourSlot
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

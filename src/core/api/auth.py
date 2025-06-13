@@ -1,6 +1,6 @@
 from aiohttp import web
 
-from core.sportbooking.repository.user import UserRepository
+from core.repository.user import UserRepository
 
 
 class AuthMiddleware:

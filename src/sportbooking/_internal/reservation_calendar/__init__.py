@@ -1,9 +1,9 @@
 import datetime
 from httpx import AsyncClient
 import pydantic
-from sportbooking.reservation_calendar.reservation_calendar import get_reservation_calendar as get_reservation_calendar_api
 
-type CourtId = int
+from sportbooking.reservation_calendar import UserReservationCalendar
+from sportbooking._internal.reservation_calendar.reservation_calendar import get_reservation_calendar as get_reservation_calendar_api
 
 
 class HourSlot(pydantic.BaseModel):
@@ -20,27 +20,5 @@ class TimeSlot(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
 
-class ReservationSlot(pydantic.BaseModel):
-    time_slot: TimeSlot
-    court: CourtId
-
-    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
-
-
-class UserCourtReservation(pydantic.BaseModel):
-    reserved_by: str | None
-    reserved_by_user: bool
-    link_for_reservation: str | None
-    link_for_cancellation: str | None
-
-    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
-
-
-class UserReservationCalendar(pydantic.BaseModel):
-    user_calendar: dict[ReservationSlot, UserCourtReservation]
-
-    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
-
-
-async def _get_reservation_calendar(http_client: AsyncClient, token: str) -> UserReservationCalendar:
+async def get_reservation_calendar(http_client: AsyncClient, token: str) -> UserReservationCalendar:
     return await get_reservation_calendar_api(http_client, token)

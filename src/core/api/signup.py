@@ -1,9 +1,9 @@
 import pydantic
-from core.sportbooking.api.common import FailureResult, from_json, to_json
-from core.sportbooking.api.user import User
-from core.sportbooking.domain.user import UserCreate
-from sportbooking import SportbookingApi
-from core.sportbooking.repository.user import UserRepository
+from core.api.common import FailureResult, from_json, to_json
+from core.api.user import User
+from core.domain.user import UserCreate
+from core.integration.sportbooking_service import SportbookingService
+from core.repository.user import UserRepository
 from aiohttp import request, web
 
 
@@ -21,9 +21,9 @@ class SignupResponse(pydantic.BaseModel):
 
 
 class SignUpController:
-    def __init__(self, user_service: UserRepository, sportbookin_api: SportbookingApi):
+    def __init__(self, user_service: UserRepository, sportbooking: SportbookingService):
         self._user_service = user_service
-        self._sportbooking_api = sportbookin_api
+        self._sportbooking = sportbooking
 
     def get_routes(self):
         return [
@@ -42,19 +42,18 @@ class SignUpController:
             return web.json_response(status=400, body=to_json(error))
 
         try:
-            login_response = await self._sportbooking_api.login(
+            token = await self._sportbooking.login(
                 user_request.username, user_request.password)
         except Exception as e:
             error = FailureResult(
                 error="Unable to login to Sportbooking with provided credentials.")
             return web.json_response(status=400, body=to_json(error))
 
-        token = login_response.token
-        user_info = await self._sportbooking_api.get_user_account_info(token)
+        name = await self._sportbooking.get_user_account_name(token)
 
         user, app_token = await self._user_service.create_user(
             UserCreate(
-                name=user_info.name,
+                name=name,
                 username=user_request.username,
                 password=user_request.password,
                 email=user_request.email

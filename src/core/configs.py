@@ -1,7 +1,7 @@
 
 import os
-from core.sportbooking.config_dev import CONFIG_DEV
-from core.sportbooking.config_prod import CONFIG_PROD
+from core.config_dev import CONFIG_DEV
+from core.config_prod import CONFIG_PROD
 
 
 _ENV = os.getenv('MISHO_ENVIRONMENT')

@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 import datetime
 import logging
-from core.sportbooking.domain.hour_slot import HourSlot
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from sportbooking import SportbookingApi
-from core.sportbooking.domain.reservation_calendar import CourtId, UserReservationCalendar
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.service.session_token_fetch_service import SessionTokenFetchService
-from core.sportbooking.configs import CONFIG
+from core.domain.hour_slot import HourSlot
+from core.domain.reservation_slot import ReservationSlot
+from core.integration.sportbooking_service import SportbookingService
+from core.domain.reservation_calendar import CourtId, UserReservationCalendar
+from core.domain.session_token import SessionToken
+from core.service.session_token_fetch_service import SessionTokenFetchService
+from core.configs import CONFIG
 
 
 @dataclass
@@ -35,9 +35,9 @@ class ReservationRequestFailed(Exception):
 
 
 class ReservationService:
-    def __init__(self, sportbooking_api: SportbookingApi, session_token_fetch_service: SessionTokenFetchService):
+    def __init__(self, sportbooking: SportbookingService, session_token_fetch_service: SessionTokenFetchService):
         self._session_token_fetch_service = session_token_fetch_service
-        self._sportbooking_api = sportbooking_api
+        self._sportbooking = sportbooking
 
     async def reserve(self, user_id: int, reservation_slot: ReservationSlot) -> None:
         logging.debug(
@@ -75,14 +75,12 @@ class ReservationService:
     ) -> None:
         logging.debug(
             f"Reserving court {reservation_slot.court} for {reservation_slot.time_slot} at {link}")
-        input = await self._sportbooking_api.get_reservation_query_input(
-            user_token, link)
         if CONFIG.dummy_reservation:
             logging.info(
                 f"Dummy reservation for court {reservation_slot.court} on {reservation_slot.time_slot}")
         else:
             print("jaje")
-            await self._sportbooking_api.reserve(user_token, input)
+            await self._sportbooking.reserve(user_token, link)
             print("jaje2")
         await self._verify_reservation(user_token, reservation_slot)
 
@@ -96,4 +94,4 @@ class ReservationService:
                 raise ReservationRequestFailed(reservation_slot)
 
     async def refresh_reservation_calendar(self, token: SessionToken) -> UserReservationCalendar:
-        return await self._sportbooking_api.get_reservation_calendar(token)
+        return await self._sportbooking.get_reservation_calendar(token)

@@ -1,11 +1,11 @@
 import logging
-from core.sportbooking.configs import CONFIG
-from core.sportbooking.domain.job import Job, Status
-from core.sportbooking.domain.reservation_calendar import CourtId
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from core.sportbooking.repository.jobs import JobsRepository
-from core.sportbooking.service.mail_service import MailService
-from core.sportbooking.service.reservation_service import ReservationService
+from core.configs import CONFIG
+from core.domain.job import Job, Status
+from core.domain.reservation_calendar import CourtId
+from core.domain.reservation_slot import ReservationSlot
+from core.repository.jobs import JobsRepository
+from core.service.mail_service import MailService
+from core.service.reservation_service import ReservationService
 
 
 class ReserveJobExecutor:
