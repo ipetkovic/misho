@@ -3,7 +3,7 @@ import datetime
 import logging
 from core.domain.hour_slot import HourSlot
 from core.domain.reservation_slot import ReservationSlot
-from core.integration.sportbooking_service import SportbookingService
+from core.service.sportbooking_service import SportbookingService
 from core.domain.reservation_calendar import CourtId, UserReservationCalendar
 from core.domain.session_token import SessionToken
 from core.service.session_token_fetch_service import SessionTokenFetchService

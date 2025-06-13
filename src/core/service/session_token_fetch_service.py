@@ -1,6 +1,6 @@
 import datetime
 import logging
-from core.integration.sportbooking_service import SportbookingService
+from core.service.sportbooking_service import SportbookingService
 from core.domain.session_token import SessionToken
 from core.repository.user import UserRepository
 from core.repository.user_token import UserTokenRepository

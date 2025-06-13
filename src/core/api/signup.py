@@ -2,7 +2,7 @@ import pydantic
 from core.api.common import FailureResult, from_json, to_json
 from core.api.user import User
 from core.domain.user import UserCreate
-from core.integration.sportbooking_service import SportbookingService
+from core.service.sportbooking_service import SportbookingService
 from core.repository.user import UserRepository
 from aiohttp import request, web
 

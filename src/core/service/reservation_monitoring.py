@@ -2,7 +2,7 @@ import datetime
 import logging
 from core.config import CONFIG
 from core.config.model import ReservationMonitoringConfig
-from core.integration.sportbooking_service import SportbookingService
+from core.service.sportbooking_service import SportbookingService
 from sportbooking import SportbookingApi
 from core.domain.reservation_calendar import ReservationCalendar
 from core.repository.available_job_reservation_slots import AvailableJobReservationSlotRepository
