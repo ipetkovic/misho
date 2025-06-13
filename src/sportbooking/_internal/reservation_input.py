@@ -1,23 +1,20 @@
 from bs4 import BeautifulSoup
 from httpx import AsyncClient, Request, Response
-import core.sportbooking.integration.reservation_input as reservation_input
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.integration.common import *
+
+from sportbooking._internal.common import HOST, get_standard_headers
+from sportbooking.reservation_query_input import ReservationQueryInput
 
 URL = HOST + '/main/'
 
 
-type ReservationQueryInput = dict[str, str]
-
-
-async def get_reservation_query_input(http_client: AsyncClient, token: SessionToken, reservation_url: str) -> ReservationQueryInput:
+async def get_reservation_query_input(http_client: AsyncClient, token: str, reservation_url: str) -> ReservationQueryInput:
     response = await http_client.send(_request(token, reservation_url))
     return _parse_response(response)
 
 
-def _request(token: SessionToken, reservation_url: str) -> Request:
+def _request(token: str, reservation_url: str) -> Request:
     headers = get_standard_headers()
-    headers['Cookie'] = token.value
+    headers['Cookie'] = token
     headers['Referer'] = HOST + '/main/cland.php'
     headers['Sec-Fetch-Mode'] = 'navigate'
     headers['Sec-Fetch-Site'] = 'none'
@@ -49,11 +46,3 @@ def _parse_reservation_input(html: str):
         'value') for name in input_fields}
 
     return reservation_input
-
-
-# if __name__ == "__main__":
-#     token = SessionToken(value='PHPSESSID=53cde7d998502faaaffb4236320159c7')
-#     reservation_input = reservation_input.get_reservation_query_input(
-#         token, 'rezervacijaterena.php?bqw765t3r=762614492723484fa53be91b4933d536748a60458b9797')
-
-#     print(reservation_input)

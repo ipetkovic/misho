@@ -1,9 +1,6 @@
 from bs4 import BeautifulSoup, Tag
 import datetime
-from core.sportbooking.domain.hour_slot import HourSlot
-from core.sportbooking.domain.reservation_calendar import CourtId, UserCourtReservation, UserReservationCalendar
-from core.sportbooking.domain.reservation_slot import ReservationSlot
-from core.sportbooking.domain.time_slot import TimeSlot
+from sportbooking.reservation_calendar import CourtId, HourSlot, ReservationSlot, TimeSlot, UserCourtReservation, UserReservationCalendar
 
 
 def parse(html: str) -> UserReservationCalendar:

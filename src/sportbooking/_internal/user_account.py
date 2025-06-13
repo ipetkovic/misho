@@ -1,28 +1,21 @@
-
-
 from bs4 import BeautifulSoup
 from httpx import AsyncClient, Request, Response
-import pydantic
 
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.integration.common import HOST, get_standard_headers
-
-
-class UserAccountInfo(pydantic.BaseModel):
-    name: str
+from sportbooking._internal.common import HOST, get_standard_headers
+from sportbooking.user_account_info import UserAccountInfo
 
 
 URL = HOST + "/main/korisnickiracun.php"
 
 
-async def get_account_info(http_client: AsyncClient, token: SessionToken) -> UserAccountInfo:
+async def get_account_info(http_client: AsyncClient, token: str) -> UserAccountInfo:
     response = await http_client.send(_request(token))
     return _parse_response(response)
 
 
-def _request(token: SessionToken) -> Request:
+def _request(token: str) -> Request:
     headers = get_standard_headers()
-    headers['Cookie'] = token.value
+    headers['Cookie'] = token
     headers['Referer'] = HOST + '/main/cland.php'
     headers['Sec-Fetch-Mode'] = 'navigate'
     headers['Sec-Fetch-Site'] = 'none'

@@ -1,16 +1,12 @@
-import asyncio
-from dataclasses import dataclass
 from httpx import AsyncClient, Request
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.integration.common import *
-from core.sportbooking.integration.reservation_calendar import reservation_calendar_html_parser
-from core.sportbooking.domain.reservation_calendar import UserReservationCalendar
+from sportbooking._internal.common import HOST, get_standard_headers
+from sportbooking.reservation_calendar import UserReservationCalendar, reservation_calendar_html_parser
 
 
 URL = HOST + '/main/cland.php'
 
 
-async def get_reservation_calendar(client: AsyncClient, token: SessionToken) -> UserReservationCalendar:
+async def get_reservation_calendar(client: AsyncClient, token: str) -> UserReservationCalendar:
     """
     List all reservations for the user associated with the session token.
     """
@@ -32,9 +28,9 @@ async def get_reservation_calendar(client: AsyncClient, token: SessionToken) -> 
     return reservation_calendar_html_parser.parse(response.text)
 
 
-def _request(token: SessionToken) -> Request:
+def _request(token: str) -> Request:
     headers = get_standard_headers()
-    headers['Cookie'] = token.value
+    headers['Cookie'] = token
     headers['Referer'] = HOST + '/index.php'
 
     return Request(

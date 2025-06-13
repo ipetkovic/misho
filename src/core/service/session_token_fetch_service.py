@@ -1,6 +1,6 @@
 import datetime
 import logging
-from core.sportbooking.integration import SportbookingApi
+from sportbooking import SportbookingApi
 from core.sportbooking.domain.session_token import SessionToken
 from core.sportbooking.repository.user import UserRepository
 from core.sportbooking.repository.user_token import UserTokenRepository

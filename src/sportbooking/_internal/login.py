@@ -1,16 +1,9 @@
-from dataclasses import dataclass
 from urllib.parse import urlencode
 from httpx import Request, AsyncClient, Response
-
-from core.sportbooking.domain.session_token import SessionToken
-from core.sportbooking.integration.common import *
+from sportbooking._internal.common import HOST, get_standard_headers
+from sportbooking.login import LoginResponse
 
 URL = HOST + "/index.php"
-
-
-@dataclass
-class LoginResponse:
-    token: SessionToken
 
 
 async def login(client: AsyncClient, username: str, password: str) -> LoginResponse:
@@ -51,8 +44,4 @@ def _parse_response(response: Response) -> LoginResponse:
         raise Exception("Login failed")
 
     token = response.headers['Set-Cookie'].split(';')[0]
-    return LoginResponse(token=SessionToken(value=token))
-
-
-if __name__ == "__main__":
-    print(login("Ivo Petkovic", "i2802989"))
+    return LoginResponse(token=token))

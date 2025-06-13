@@ -26,7 +26,7 @@ from core.sportbooking.domain.reservation_slot import ReservationSlot
 from core.sportbooking.domain.reserve_job import ReserveJobCreate
 from core.sportbooking.domain.session_token import SessionToken
 from core.sportbooking.domain.time_slot import TimeSlot
-from core.sportbooking.integration import SportBookingApiImpl
+from sportbooking import SportBookingApiImpl
 from core.sportbooking.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
 from core.sportbooking.repository.court import CourtRepository
 from core.sportbooking.repository.hour_slot import HourSlotRepository
