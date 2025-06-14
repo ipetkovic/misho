@@ -45,6 +45,7 @@ class JobsController:
         ]
 
     async def list_jobs(self, request: web.Request):
+        user = request['user']
         status = request.query.get('status', None)
         status_enum = None
         if status is not None:
@@ -54,20 +55,21 @@ class JobsController:
                     f"Invalid status: {status}. Supported values: PENDING, FAILED, SUCCESS"
                 )
 
-        jobs = await self.jobs_repository.list_all(status=status_enum)
+        jobs = await self.jobs_repository.list_all(status=status_enum, user_id=user.id)
         jobs_domain = [to_api_job(job) for job in jobs]
         return success_response(JobsResult(jobs=jobs_domain))
 
     async def get_job(self, request: web.Request):
+        user: User = request['user']
         job_id = int(request.match_info['job_id'])
         job = await self.jobs_repository.find_by_id(job_id)
-        if not job:
+        if not job or job.user.id != user.id:
             return not_found(f"Job with id {job_id} not found")
 
         return success_response(to_api_job(job))
 
     async def create_job(self, request: web.Request):
-        user = request['user']
+        user: User = request['user']
         body = await request.json()
         job_create = from_json(body, JobCreate)
         job_create_domain = from_api_job_create(job_create, user)
@@ -85,7 +87,13 @@ class JobsController:
         return success_response(job_api)
 
     async def delete_job(self, request: web.Request):
+        user = request['user']
         job_id = int(request.match_info['job_id'])
+
+        job = await self.jobs_repository.find_by_id(job_id)
+        if not job or job.user.id != user.id:
+            return not_found(f"Job with id {job_id} not found")
+
         await self.jobs_repository.delete(job_id)
         return web.json_response()
 

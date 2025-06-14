@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import misho.database.model as dao
 
 from misho.domain.job import Job, JobCreate, JobId, Status
+from misho.domain.user import UserId
 from misho.repository.user import _to_domain as user_to_domain
 from misho.domain.monitoring_job import MonitoringAction, MonitoringJob, MonitoringJobCreate
 from misho.domain.time_slot import TimeSlot
@@ -90,12 +91,15 @@ class JobsRepositorySqlite(JobsRepository):
             print(jobs_dao)
             return [to_domain(job[0]) for job in jobs_dao]
 
-    async def list_all(self, status: Status = None) -> list[Job]:
+    async def list_all(self, status: Status = None, user_id: UserId = None) -> list[Job]:
         async with self._sessionmaker() as session:
             stmt = self._select()
 
             if status is not None:
                 stmt = stmt.where(dao.Job.status == status)
+
+            if user_id is not None:
+                stmt = stmt.where(dao.Job.user_id == user_id)
 
             result = await session.execute(stmt)
             jobs_dao = result.scalars().all()

@@ -5,6 +5,7 @@ import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import httpx
+from misho.controller.reservation_calendar import ReservationCalendarController
 from misho.http.auth import AuthMiddleware
 from misho.http.http_app import HttpApplication
 from misho.controller.jobs import JobsController
@@ -129,10 +130,15 @@ async def start():
         http_app = HttpApplication(auth)
         app = web.Application(middlewares=[auth.middleware])
 
+        reservation_calendar_controller = ReservationCalendarController(
+            sportbooking=sportbooking_service, session_token_fetch_service=session_token_fetch_service)
+
         http_app.add_routes(
             jobs_controller.get_routes()
         ).add_routes(
             signup_controller.get_routes()
+        ).add_routes(
+            reservation_calendar_controller.get_routes()
         )
 
         await http_app.start_server()

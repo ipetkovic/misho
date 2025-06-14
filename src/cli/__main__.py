@@ -1,5 +1,6 @@
 import typer
 from cli.job_cli import job_app
+from cli.reservation_calendar_cli import calendar_app
 
 app = typer.Typer(help="Misho CLI")
 
@@ -9,6 +10,7 @@ app = typer.Typer(
 )
 
 app.add_typer(job_app, name="job")
+app.add_typer(calendar_app, name="calendar")
 
 
 @app.callback(invoke_without_command=True)

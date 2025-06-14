@@ -56,3 +56,5 @@ class ReservationCalendar(pydantic.BaseModel):
 
 class UserReservationCalendar(pydantic.BaseModel):
     user_calendar: dict[ReservationSlot, UserCourtReservation]
+
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

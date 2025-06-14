@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import pydantic
 
 type UserId = int
