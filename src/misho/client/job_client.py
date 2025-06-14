@@ -6,13 +6,14 @@ from misho.domain.job import Status
 
 
 class JobClient:
-    def __init__(self, http_client: httpx.AsyncClient):
+    def __init__(self, http_client: httpx.AsyncClient, base_url: str):
         self._http_client = http_client
+        self._base_url = base_url
 
     async def list_jobs(self, authorization: Authorization, status: Status = None) -> list[Job] | Error:
         request = httpx.Request(
             method="GET",
-            url="/jobs",
+            url=self._base_url + "/jobs",
             headers={"Authorization": authorization.to_header()},
             params={"status": status.value} if status else None
         )
@@ -22,12 +23,12 @@ class JobClient:
             error = Error.from_json(response.text)
             return error
 
-        return JobsResult(**response.json())
+        return JobsResult(**response.json()).jobs
 
     async def get_job(self, authorization: Authorization, job_id: int) -> Job | Error:
         request = httpx.Request(
             method="GET",
-            url=f"/jobs/{job_id}",
+            url=self._base_url + f"/jobs/{job_id}",
             headers={"Authorization": authorization.to_header()}
         )
         response = await self._http_client.send(request)
@@ -41,9 +42,12 @@ class JobClient:
     async def create_job(self, authorization: Authorization, job_create: JobCreate) -> Job | Error:
         request = httpx.Request(
             method="POST",
-            url="/jobs",
-            headers={"Authorization": authorization.to_header()},
-            json=job_create.model_dump_json()
+            url=self._base_url + "/jobs",
+            headers={
+                "Authorization": authorization.to_header(),
+                "Content-Type": "application/json"
+            },
+            json=job_create.model_dump(mode="json")
         )
         response = await self._http_client.send(request)
 
@@ -56,7 +60,7 @@ class JobClient:
     async def delete_job(self, authorization: Authorization, job_id: int) -> None | Error:
         request = httpx.Request(
             method="DELETE",
-            url=f"/jobs/{job_id}",
+            url=self._base_url + f"/jobs/{job_id}",
             headers={"Authorization": authorization.to_header()}
         )
         response = await self._http_client.send(request)
