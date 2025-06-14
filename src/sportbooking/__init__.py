@@ -47,7 +47,7 @@ class SportbookingApi(SportbookingApiInterface):
         return await _get_account_info_api(self._http_client, token)
 
     async def __aenter__(self):
-        return self._http_client
+        return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self._http_client.aclose()

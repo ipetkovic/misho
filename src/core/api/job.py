@@ -24,6 +24,10 @@ class JobCreate(pydantic.BaseModel):
     job_type: MonitoringJobCreate
     courts_by_priority: list[CourtId]
 
-    # extra = 'forbid'
+    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
+
+
+class JobsResult(pydantic.BaseModel):
+    jobs: list[Job]
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

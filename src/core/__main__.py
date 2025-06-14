@@ -5,8 +5,8 @@ import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import httpx
-from core.controller.auth import AuthMiddleware
-from core.controller.http_app import HttpApplication
+from core.http.auth import AuthMiddleware
+from core.http.http_app import HttpApplication
 from core.controller.jobs import JobsController
 from core.controller.signup import SignUpController
 from core.config import CONFIG
@@ -114,8 +114,6 @@ async def start():
                           trigger=CONFIG.reservation_monitoring.cron)
         scheduler.start()
 
-        auth = AuthMiddleware(user_repository=user_repository)
-
         hour_slot_repository = HourSlotRepository(engine)
         court_respository = CourtRepository(engine)
 
@@ -127,6 +125,7 @@ async def start():
         signup_controller = SignUpController(
             user_service=user_repository, sportbooking=sportbooking_service)
 
+        auth = AuthMiddleware(user_repository=user_repository)
         http_app = HttpApplication(auth)
         app = web.Application(middlewares=[auth.middleware])
 

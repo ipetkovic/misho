@@ -1,25 +1,12 @@
-from dataclasses import dataclass
-import datetime
-
-from pydantic_core import to_json
-from core.api.job import Job, JobCreate
-from core.controller.common import FailureResult, SuccessResult, from_json, json_bad_request
+from core.api.job import Job, JobCreate, JobsResult
+from core.controller.common import bad_request, from_json, not_found, success_response
 from core.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, Status
-from core.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
-from core.domain.reservation_calendar import CourtId
-from core.domain.time_slot import TimeSlot
 from core.domain.user import User
 from core.repository.court import CourtRepository
 from core.repository.hour_slot import HourSlotRepository
 from core.repository.jobs import JobsRepository
 
-from aiohttp import request, web
-
-import pydantic
-
-
-class JobsResult(SuccessResult):
-    jobs: list[Job]
+from aiohttp import web
 
 
 def to_api_job(job: JobDomain) -> Job:
@@ -59,45 +46,43 @@ class JobsController:
 
     async def list_jobs(self, request: web.Request):
         status = request.query.get('status', None)
+        status_enum = None
         if status is not None:
-            status = self._convert_status(status)
-            if status is None:
-                error = FailureResult(
-                    error=f"Invalid status: {status}. Supported values: PENDING, FAILED, SUCCESS")
-                return web.json_response(status=400, body=to_json(error))
+            status_enum = self._convert_status(status)
+            if status_enum is None:
+                return bad_request(
+                    f"Invalid status: {status}. Supported values: PENDING, FAILED, SUCCESS"
+                )
 
-        jobs = await self.jobs_repository.list_all(status=status)
+        jobs = await self.jobs_repository.list_all(status=status_enum)
         jobs_domain = [to_api_job(job) for job in jobs]
-        jobs_json = to_json(JobsResult(jobs=jobs_domain))
-        return web.json_response(body=jobs_json)
+        return success_response(JobsResult(jobs=jobs_domain))
 
     async def get_job(self, request: web.Request):
         job_id = int(request.match_info['job_id'])
         job = await self.jobs_repository.find_by_id(job_id)
         if not job:
-            error = FailureResult(error=f"Job with id {job_id} not found")
-            return web.json_response(status=404, body=to_json(error))
+            return not_found(f"Job with id {job_id} not found")
 
-        job_json = to_json(to_api_job(job))
-        return web.json_response(body=job_json)
+        return success_response(to_api_job(job))
 
     async def create_job(self, request: web.Request):
         user = request['user']
         body = await request.json()
-        job_create = from_json(body, JobCreateDomain)
+        job_create = from_json(body, JobCreate)
         job_create_domain = from_api_job_create(job_create, user)
 
         await self._validate_job_create(job_create=job_create_domain)
 
         job_for_time_slot = await self.jobs_repository.find_by_time_slot(job_create_domain.time_slot)
         if job_for_time_slot:
-            error = FailureResult(
-                error=f"Job for time slot {job_create_domain.time_slot} already exists (id: {job_for_time_slot.id}). Either delete previous job or change time slot.")
-            return web.json_response(status=400, body=to_json(error))
+            return bad_request(
+                f"Job for time slot {job_create_domain.time_slot} already exists (id: {job_for_time_slot.id}). Either delete previous job or change time slot."
+            )
 
         job_domain = await self.jobs_repository.insert(job_create_domain)
         job_api = to_api_job(job_domain)
-        return web.json_response(body=to_json(job_api))
+        return success_response(job_api)
 
     async def delete_job(self, request: web.Request):
         job_id = int(request.match_info['job_id'])
@@ -114,8 +99,9 @@ class JobsController:
         hour_slots = await self._hour_slots_repository.list_hour_slots()
 
         if job_create.time_slot.hour_slot not in hour_slots:
-            error = f"Invalid hour slot: {job_create.time_slot.hour_slot}. Available hour slots: {list(hour_slots)}"
-            raise json_bad_request(error)
+            hour_slots_pretty = ', '.join(str(slot) for slot in hour_slots)
+            error = f"Invalid hour slot: {job_create.time_slot.hour_slot}. Available hour slots: {hour_slots_pretty}"
+            raise bad_request(error)
 
         courts = await self._court_repository.list_courts()
         diff = set(job_create.courts_by_priority) - \
@@ -123,4 +109,4 @@ class JobsController:
 
         if diff:
             error = f"Invalid courts: {diff}. Available courts: {[court.id for court in courts]}"
-            raise json_bad_request(error)
+            raise bad_request(error)

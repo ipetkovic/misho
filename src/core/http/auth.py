@@ -1,6 +1,17 @@
 from aiohttp import web
 
+from core.api import Unauthorized
 from core.repository.user import UserRepository
+
+
+def unauthorized_error() -> web.HTTPUnauthorized:
+    error = Unauthorized(error="Unauthorized")
+    print(error)
+    json = error.model_dump_json(indent=2)
+    return web.HTTPUnauthorized(
+        text=json,
+        content_type='application/json'
+    )
 
 
 class AuthMiddleware:
@@ -13,15 +24,20 @@ class AuthMiddleware:
             return await handler(request)
 
         auth_header = request.headers.get('Authorization')
+
+        print(auth_header)
+
         if not auth_header or not auth_header.startswith("Bearer "):
-            return web.json_response({'error': 'Unauthorized'}, status=401)
+            return unauthorized_error()
 
         token = auth_header[len("Bearer "):]
         token = token.strip()
         user = await self._user_repository.get_user_by_auth_token(token)
 
+        print(user)
+
         if user is None:
-            return web.json_response({'error': 'Unauthorized'}, status=401)
+            return unauthorized_error()
 
         request['user'] = user
         return await handler(request)

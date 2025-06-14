@@ -1,14 +1,17 @@
 from typing import Iterable
 from aiohttp import web
 
-from core.controller.auth import AuthMiddleware
+from core.http.auth import AuthMiddleware
+from core.http.internal_error import internal_error_middleware
 from core.repository.jobs import JobsRepository
 from aiohttp.web_routedef import AbstractRouteDef
 
 
 class HttpApplication:
     def __init__(self, auth_middleware: AuthMiddleware):
-        self._app = web.Application(middlewares=[auth_middleware.middleware])
+        self._app = web.Application(
+            middlewares=[auth_middleware.middleware, internal_error_middleware]
+        )
 
     def add_routes(self, routes: Iterable[AbstractRouteDef]):
         self._app.add_routes(routes)
