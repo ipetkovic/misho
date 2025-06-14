@@ -9,7 +9,7 @@ from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_pri
 from cli.date_or_weekday import parse_date_or_weekday
 from misho.api import Error, NotFound
 from misho.api.job import Job, JobCreate
-from misho.api.reservation_calendar import Slot
+from misho.api.reservation_calendar import DayReservation
 from misho.client.job_client import JobClient
 from misho.client.reservation_calendar_client import ReservationCalendarClient
 from misho.domain.hour_slot import HourSlot
@@ -59,41 +59,42 @@ def get_calendar(
 
         calendar = {date: calendar[date]}
 
-    typer.echo(calendar)
+    for date, calendar in calendar.items():
+        rendered = format_calendar_for_day(date, calendar)
+        typer.echo(rendered)
 
 
-def format_jobs_table(calendar: dict[datetime.date, list[Slot]]) -> str:
-    table = Table(title="Reservation Calendar", show_lines=True)
+def format_calendar_for_day(date: datetime.date, calendar: DayReservation) -> str:
+    day_of_week = date.strftime("%A")
+    table = Table(
+        title=f"Reservation Calendar - {day_of_week} {date.strftime("%d.%m.%Y")}", show_lines=True)
 
-    courts = {slot.court_id for slots in calendar.values() for slot in slots}
+    courts = [court_info.court_id for court_info in calendar.slots[0].courts]
 
     table.add_column("Time")
-    # table.add_column("Date")
-    # table.add_column("Day")
-    # table.add_column("Time Slot")
-
     for court in courts:
         table.add_column(f"Court {court}", justify="center")
 
-    for date, slots in calendar.items():
+    for slot in calendar.slots:
+        hour = f'{slot.hour_slot.from_hour}:00 - {slot.hour_slot.to_hour}:00'
+        courts = slot.courts
 
-    for job in jobs:
-        courts_str = ", ".join(str(court) for court in job.courts_by_priority)
-        created_at_str = job.created_at.strftime("%Y-%m-%d %H:%M")
-        table.add_row(
-            str(job.id),
-            str(job.time_slot.date),
-            job.time_slot.date.strftime("%A"),
-            str(job.time_slot.hour_slot),
-            courts_str,
-            str(job.job_type.action.name),
-            created_at_str,
-            status_styled(job.status),
-        )
-    # Render table to string
+        columns = [
+            hour] + [slot_name_styled(court.reserved_by, court.reserved_by_user) for court in courts]
+        table.add_row(*columns)
+
     with console.capture() as capture:
         console.print(table)
     return capture.get()
+
+
+def slot_name_styled(reserved_by: str | None, reserved_by_user: bool) -> str:
+    if reserved_by is None:
+        return "[dim]Available[/dim]"
+    elif reserved_by_user:
+        return f"[green]{reserved_by}[/green]"
+    else:
+        return f"[red]{reserved_by}[/red]"
 
 
 def status_styled(status: Status) -> str:

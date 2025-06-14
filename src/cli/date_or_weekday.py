@@ -19,6 +19,11 @@ WEEKDAYS = {
     "sun": 6
 }
 
+RESOLVED = {
+    'today': datetime.date.today(),
+    'tomorrow': datetime.date.today() + datetime.timedelta(days=1)
+}
+
 
 def parse_date_or_weekday(value: str) -> datetime.date:
     # Try parse as date DD.MM.YYYY
@@ -27,11 +32,14 @@ def parse_date_or_weekday(value: str) -> datetime.date:
     except ValueError:
         pass
 
+    if value.strip().lower() in RESOLVED:
+        return RESOLVED[value.strip().lower()]
+
     # Try parse as weekday
     weekday = value.strip().lower()
     if weekday not in WEEKDAYS:
         raise typer.BadParameter(
-            f"Must be a date DD.MM.YYYY or weekday name (e.g. Monday), got '{value}'"
+            f"Must be a date DD.MM.YYYY or weekday name (e.g. Monday/Today/Tomorrow), got '{value}'"
         )
 
     today = datetime.date.today()
