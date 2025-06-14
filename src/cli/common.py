@@ -1,5 +1,6 @@
 import httpx
 
+from cli.config import CONFIG
 from misho.client import Authorization
 
 
@@ -8,7 +9,14 @@ HTTP_CLIENT = httpx.AsyncClient(
 
 
 def get_authorization() -> Authorization:
-    return Authorization(token="4a7b99400983d2067a7c54f8d3cf7274")
+    return Authorization(token=CONFIG.token)
+
+
+def misho_base_url() -> str:
+    """
+    Returns the base URL for the Misho API.
+    """
+    return CONFIG.host_url + ":" + str(CONFIG.host_port)
 
 
 def get_default_courts_by_priority() -> list[int]:

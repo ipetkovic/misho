@@ -5,8 +5,9 @@ from click import Parameter
 import typer
 import typer.utils
 
-from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority
+from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority, misho_base_url
 from cli.date_or_weekday import parse_date_or_weekday
+from cli.reserve_id import ReserveId
 from misho.api import Error, NotFound
 from misho.api.job import Job, JobCreate
 from misho.api.reservation_calendar import CourtInfo, DayReservation
@@ -26,10 +27,12 @@ console = Console()
 
 
 calendar_app = typer.Typer(help="Commands related to reservation calendar")
+
 calendar_client = ReservationCalendarClient(http_client=HTTP_CLIENT,
-                                            base_url="http://localhost:8000")
+                                            base_url=misho_base_url())
+
 job_client = JobClient(http_client=HTTP_CLIENT,
-                       base_url="http://localhost:8000")
+                       base_url=misho_base_url())
 
 
 @calendar_app.callback(invoke_without_command=True)
@@ -44,7 +47,7 @@ def callback(ctx: typer.Context):
     help="Get the reservation calendar"
 )
 def get_calendar(
-    day: str = typer.Option(None,
+    day: str = typer.Option(None, "-d", "--day",
                             help="Date for the job in DD.MM.YYYY format or weekday name (e.g. Monday)"),
 ):
     date = None
@@ -81,9 +84,10 @@ def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs:
 
     courts = [court_info.court_id for court_info in calendar.slots[0].courts]
 
-    table.add_column("Time")
+    table.add_column("Time", justify="right")
     for court in courts:
         table.add_column(f"Court {court}", justify="center")
+    table.add_column("Link", justify="center")
 
     for slot in calendar.slots:
         job = next(
@@ -95,8 +99,12 @@ def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs:
         hour = f'{slot.hour_slot.from_hour}:00 - {slot.hour_slot.to_hour}:00'
         courts = slot.courts
 
+        job_create_link = ReserveId.from_time_slot(
+            TimeSlot(date=date, hour_slot=slot.hour_slot)
+        )
+
         columns = [
-            hour] + [slot_name_styled(job, court) for court in courts]
+            hour] + [slot_name_styled(job, court) for court in courts] + [job_create_link.id]
         table.add_row(*columns)
 
     with console.capture() as capture:

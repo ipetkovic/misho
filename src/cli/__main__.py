@@ -1,4 +1,5 @@
 import typer
+from cli.config import CONFIG
 from cli.job_cli import job_app
 from cli.reservation_calendar_cli import calendar_app
 
@@ -15,6 +16,11 @@ app.add_typer(calendar_app, name="calendar")
 
 @app.callback(invoke_without_command=True)
 def callback(ctx: typer.Context):
+    if CONFIG.token is None:
+        typer.echo(
+            "❌ Access key is not defined. You can define it by setting MISHO_ACCESS_KEY environment variable", err=True)
+        raise typer.Exit(code=1)
+
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()

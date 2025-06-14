@@ -11,4 +11,4 @@ COPY alembic/ alembic/
 COPY run run
 
 ENV PYTHONPATH=src/
-CMD ["python", "src/core/sportbooking"]
+CMD ["python", "src/misho"]

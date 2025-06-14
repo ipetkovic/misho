@@ -5,8 +5,10 @@ from click import Parameter
 import typer
 import typer.utils
 
-from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority
+from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority, misho_base_url
+from cli.config import CONFIG
 from cli.date_or_weekday import parse_date_or_weekday
+from cli.reserve_id import ReserveId
 from misho.api import Error, NotFound
 from misho.api.job import Job, JobCreate
 from misho.client.job_client import JobClient
@@ -24,7 +26,7 @@ console = Console()
 
 job_app = typer.Typer(help="Commands related to jobs")
 job_client = JobClient(http_client=HTTP_CLIENT,
-                       base_url="http://localhost:8000")
+                       base_url=misho_base_url())
 
 
 @job_app.command(
@@ -62,12 +64,13 @@ class Action(Enum):
     help="Create a new job to reserve when slot becomes available or notify about reservations",
 )
 def create_job(
-    day: str = typer.Argument(...,
-                              help="Date for the job in DD.MM.YYYY format or weekday name (e.g. Monday)"),
-    from_hour: int = typer.Argument(
-        ..., help="Start hour of the time slot (0-23)"),
-    to_hour: int = typer.Argument(
-        ...,  help="End hour of the time slot (0-23)"),
+    day: str = typer.Option(None, "-d", "--day",
+                            help="Date for the job in DD.MM.YYYY format or weekday name (e.g. Monday). Must be provided together with hour option."),
+    hour: tuple[int, int] = typer.Option(None, "-h", "--hour",
+                                         help="Start and end hour of the time slot, e.g. '10 11' for 10:00-11:00. Must be provided together with day option."),
+    link: str = typer.Option(
+        None, "-l", "--link",
+        help="Reservation slot link. If provided, day and hour options are ignored."),
     action: Action = typer.Argument(
         ..., help="Either 'reserve' or 'notify'"),
     courts: list[int] = typer.Option(
@@ -76,7 +79,20 @@ def create_job(
         help=f"List of court IDs by priority to reserve. Default: {get_default_courts_by_priority()}",
     ),
 ):
-    date = parse_date_or_weekday(day)
+    if link is not None:
+        time_slot = ReserveId(id=link).to_time_slot()
+        date = time_slot.date
+        from_hour = time_slot.hour_slot.from_hour
+        to_hour = time_slot.hour_slot.to_hour
+    else:
+
+        if day is None or hour is None:
+            typer.secho(
+                "Both day and hour options must be provided together, or use link", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+
+        date = parse_date_or_weekday(day)
+        from_hour, to_hour = hour
 
     match action:
         case Action.RESERVE:
