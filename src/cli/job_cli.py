@@ -21,7 +21,7 @@ from misho.domain.time_slot import TimeSlot
 console = Console()
 
 
-job_app = typer.Typer(help="Commands related to jobs")
+job_app = typer.Typer(help="Commands related to jobs", no_args_is_help=True)
 job_client = JobClient(http_client=HTTP_CLIENT,
                        base_url="http://localhost:8000")
 
@@ -99,7 +99,6 @@ def create_job(
 def delete_job(
     job_id: int = typer.Argument(..., help="ID of the job to delete")
 ):
-
     job_found = asyncio.run(
         _delete_job(job_id=job_id)
     )
