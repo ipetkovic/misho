@@ -6,6 +6,7 @@ import typer
 import typer.utils
 
 from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority
+from cli.date_or_weekday import parse_date_or_weekday
 from misho.api import Error, NotFound
 from misho.api.job import Job, JobCreate
 from misho.client.job_client import JobClient
@@ -135,49 +136,6 @@ async def _delete_job(job_id: int) -> bool:
 
     await job_client.delete_job(authorization=get_authorization(), job_id=job_id)
     return False
-
-WEEKDAYS = {
-    "monday": 0,
-    "mon": 0,
-    "tuesday": 1,
-    "tue": 1,
-    "wednesday": 2,
-    "wed": 2,
-    "thursday": 3,
-    "thu": 3,
-    "friday": 4,
-    "fri": 4,
-    "saturday": 5,
-    "sat": 5,
-    "sunday": 6,
-    "sun": 6
-}
-
-
-def parse_date_or_weekday(value: str) -> datetime.date:
-    # Try parse as date DD.MM.YYYY
-    try:
-        return datetime.datetime.strptime(value, "%d.%m.%Y").date()
-    except ValueError:
-        pass
-
-    # Try parse as weekday
-    weekday = value.strip().lower()
-    if weekday not in WEEKDAYS:
-        raise typer.BadParameter(
-            f"Must be a date DD.MM.YYYY or weekday name (e.g. Monday), got '{value}'"
-        )
-
-    today = datetime.date.today()
-    target_weekday = WEEKDAYS[weekday]
-    days_ahead = target_weekday - today.weekday()
-    if days_ahead <= 0:  # Target day already passed this week, get next week's
-        days_ahead += 7
-    return today + datetime.timedelta(days=days_ahead)
-
-
-def render_job(job):
-    typer.echo(f"Job ID: {job.id}, Name: {job.name}, Status: {job.status}")
 
 
 def format_jobs_table(jobs: list[Job]) -> str:

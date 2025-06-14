@@ -1,7 +1,9 @@
+import datetime
 import pydantic
-from misho.api.reservation_calendar import Slot, UserReservationCalendar
+from misho.api.reservation_calendar import CourtInfo, DayReservation, HourSlotReservation, UserReservationCalendar
 from misho.controller.common import bad_request, from_json, success_response
 from misho.api.user import User
+from misho.domain.hour_slot import HourSlot
 from misho.domain.reservation_calendar import UserReservationCalendar as UserReservationCalendarDomain
 from misho.domain.user import UserCreate
 from misho.service.session_token_fetch_service import SessionTokenFetchService
@@ -29,7 +31,7 @@ class ReservationCalendarController:
 
 
 def from_domain(calendar: UserReservationCalendarDomain) -> UserReservationCalendar:
-    calendar_api = {}
+    transformed: dict[datetime.date, dict[HourSlot, list[CourtInfo]]] = {}
     for reservation_slot, reservation in calendar.user_calendar.items():
         date = reservation_slot.time_slot.date
         hour_slot = reservation_slot.time_slot.hour_slot
@@ -38,16 +40,26 @@ def from_domain(calendar: UserReservationCalendarDomain) -> UserReservationCalen
         reserved_by = reservation.reserved_by
         reserved_by_user = reservation.reserved_by_user
 
-        if date not in calendar_api:
-            calendar_api[date] = []
+        if date not in transformed:
+            transformed[date] = {}
 
-        calendar_api[date].append(
-            Slot(
-                hour_slot=hour_slot,
+        calendar_day = transformed[date]
+
+        if hour_slot not in calendar_day:
+            calendar_day[hour_slot] = []
+
+        transformed[date][hour_slot].append(
+            CourtInfo(
                 court_id=court_id,
                 reserved_by=reserved_by,
                 reserved_by_user=reserved_by_user,
             )
         )
+
+    calendar_api: dict[datetime.date, DayReservation] = {}
+    for date, slots in transformed.items():
+        hour_slot_reservation = [HourSlotReservation(hour_slot=hour_slot, courts=courts)
+                                 for hour_slot, courts in slots.items()]
+        calendar_api[date] = DayReservation(slots=hour_slot_reservation)
 
     return UserReservationCalendar(calendar=calendar_api)
