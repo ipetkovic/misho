@@ -1,7 +1,7 @@
 from typing import Iterable
 from aiohttp import web
 
-from core.api.auth import AuthMiddleware
+from core.controller.auth import AuthMiddleware
 from core.repository.jobs import JobsRepository
 from aiohttp.web_routedef import AbstractRouteDef
 

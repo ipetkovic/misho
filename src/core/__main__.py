@@ -5,10 +5,10 @@ import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import httpx
-from core.api.auth import AuthMiddleware
-from core.api.http_app import HttpApplication
-from core.api.jobs import JobsController
-from core.api.signup import SignUpController
+from core.controller.auth import AuthMiddleware
+from core.controller.http_app import HttpApplication
+from core.controller.jobs import JobsController
+from core.controller.signup import SignUpController
 from core.config import CONFIG
 from core.database.migration import migrate
 from core.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
@@ -47,10 +47,8 @@ async def start():
     engine = create_async_engine(
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)
 
-    async with httpx.AsyncClient() as http_client, engine.begin() as conn:
+    async with sportbooking.SportbookingApi() as sportbooking_api, engine.begin() as conn:
         migrate()
-
-        sportbooking_api = sportbooking.create_sportbooking_api(http_client)
 
         sportbooking_service = SportbookingServiceImpl(
             sportbooking_api=sportbooking_api)

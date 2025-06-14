@@ -1,6 +1,6 @@
 import pydantic
-from core.api.common import FailureResult, from_json, to_json
-from core.api.user import User
+from core.controller.common import FailureResult, from_json, to_json
+from core.controller.user import User
 from core.domain.user import UserCreate
 from core.service.sportbooking_service import SportbookingService
 from core.repository.user import UserRepository

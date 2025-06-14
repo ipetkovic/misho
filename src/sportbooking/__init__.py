@@ -10,7 +10,7 @@ from sportbooking._internal.user_account import get_account_info as _get_account
 from sportbooking._internal.reservation_input import get_reservation_query_input as _get_reservation_query_input_api
 
 
-class SportbookingApi:
+class SportbookingApiInterface:
     async def login(self, username: str, password: str) -> LoginResponse:
         raise NotImplementedError()
 
@@ -27,9 +27,9 @@ class SportbookingApi:
         raise NotImplementedError()
 
 
-class _SportBookingApiImpl(SportbookingApi):
-    def __init__(self, http_client: httpx.AsyncClient):
-        self._http_client = http_client
+class SportbookingApi(SportbookingApiInterface):
+    def __init__(self):
+        self._http_client = httpx.AsyncClient()
 
     async def login(self, username: str, password: str) -> LoginResponse:
         return await _login_api(self._http_client, username, password)
@@ -46,6 +46,8 @@ class _SportBookingApiImpl(SportbookingApi):
     async def get_user_account_info(self, token: str) -> UserAccountInfo:
         return await _get_account_info_api(self._http_client, token)
 
+    async def __aenter__(self):
+        return self._http_client
 
-def create_sportbooking_api(http_client: httpx.AsyncClient) -> SportbookingApi:
-    return _SportBookingApiImpl(http_client)
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self._http_client.aclose()

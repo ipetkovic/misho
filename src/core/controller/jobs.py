@@ -2,7 +2,8 @@ from dataclasses import dataclass
 import datetime
 
 from pydantic_core import to_json
-from core.api.common import FailureResult, SuccessResult, from_json, json_bad_request
+from core.api.job import Job, JobCreate
+from core.controller.common import FailureResult, SuccessResult, from_json, json_bad_request
 from core.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, Status
 from core.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
 from core.domain.reservation_calendar import CourtId
@@ -15,27 +16,6 @@ from core.repository.jobs import JobsRepository
 from aiohttp import request, web
 
 import pydantic
-
-
-class Job(pydantic.BaseModel):
-    id: JobId
-    time_slot: TimeSlot
-    courts_by_priority: tuple[CourtId, ...]
-    job_type: MonitoringJob
-    created_at: datetime.datetime
-    status: Status
-
-    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
-
-
-class JobCreate(pydantic.BaseModel):
-    time_slot: TimeSlot
-    job_type: MonitoringJobCreate
-    courts_by_priority: list[CourtId]
-
-    # extra = 'forbid'
-
-    model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
 
 class JobsResult(SuccessResult):
@@ -104,7 +84,7 @@ class JobsController:
     async def create_job(self, request: web.Request):
         user = request['user']
         body = await request.json()
-        job_create = from_json(body, JobCreate)
+        job_create = from_json(body, JobCreateDomain)
         job_create_domain = from_api_job_create(job_create, user)
 
         await self._validate_job_create(job_create=job_create_domain)
