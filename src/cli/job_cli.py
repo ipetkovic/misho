@@ -6,7 +6,7 @@ import typer
 import typer.utils
 
 from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority
-from misho.api import Error
+from misho.api import Error, NotFound
 from misho.api.job import Job, JobCreate
 from misho.client.job_client import JobClient
 from misho.domain.hour_slot import HourSlot
@@ -21,21 +21,30 @@ from misho.domain.time_slot import TimeSlot
 console = Console()
 
 
-job_app = typer.Typer(help="Commands related to jobs", no_args_is_help=True)
+job_app = typer.Typer(help="Commands related to jobs")
 job_client = JobClient(http_client=HTTP_CLIENT,
                        base_url="http://localhost:8000")
 
 
-@job_app.command("list")
+@job_app.command(
+    "list",
+    help="List all jobs with optional filtering by status"
+)
 def list_jobs(
     status: Status = typer.Option(None, help="Filter jobs by status")
 ):
     jobs = asyncio.run(
         job_client.list_jobs(authorization=get_authorization(), status=status)
     )
-    # print(f"Retrieved {len(jobs)} jobs")
     rendered = format_jobs_table(jobs)
     typer.echo(rendered)
+
+
+@job_app.callback(invoke_without_command=True)
+def callback(ctx: typer.Context):
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+        raise typer.Exit()
 
 
 def parse_date(date_str: str) -> datetime.date:
@@ -47,13 +56,17 @@ class Action(Enum):
     NOTIFY = "notify"
 
 
-@job_app.command("create")
+@job_app.command(
+    "create",
+    help="Create a new job to reserve when slot becomes available or notify about reservations",
+)
 def create_job(
     day: str = typer.Argument(...,
                               help="Date for the job in DD.MM.YYYY format or weekday name (e.g. Monday)"),
-    hour_slot: tuple[int, int] = typer.Argument(
-        ...,  help="From hour and to hour"),
-
+    from_hour: int = typer.Argument(
+        ..., help="Start hour of the time slot (0-23)"),
+    to_hour: int = typer.Argument(
+        ...,  help="End hour of the time slot (0-23)"),
     action: Action = typer.Argument(
         ..., help="Either 'reserve' or 'notify'"),
     courts: list[int] = typer.Option(
@@ -73,7 +86,7 @@ def create_job(
     job_create = JobCreate(
         time_slot=TimeSlot(
             date=date,
-            hour_slot=HourSlot(from_hour=hour_slot[0], to_hour=hour_slot[1])
+            hour_slot=HourSlot(from_hour=from_hour, to_hour=to_hour)
         ),
         job_type=MonitoringJobCreate(action=monitoring_action),
         courts_by_priority=courts
@@ -95,15 +108,18 @@ def create_job(
     typer.echo(format_jobs_table([job]))
 
 
-@job_app.command("delete")
+@job_app.command(
+    "delete",
+    help="Delete a job by its ID"
+)
 def delete_job(
     job_id: int = typer.Argument(..., help="ID of the job to delete")
 ):
-    job_found = asyncio.run(
+    not_found = asyncio.run(
         _delete_job(job_id=job_id)
     )
 
-    if not job_found:
+    if not_found:
         typer.echo(f"Job with ID {job_id} not found.")
         raise typer.Exit(code=1)
 
@@ -111,13 +127,14 @@ def delete_job(
 
 
 async def _delete_job(job_id: int) -> bool:
-    job = await job_client.get_job(authorization=get_authorization(), job_id=job_id)
+    job_or_error = await job_client.get_job(authorization=get_authorization(), job_id=job_id)
 
-    if job is None:
-        return False
+    if isinstance(job_or_error, Error):
+        if isinstance(job_or_error.root, NotFound):
+            return True
 
     await job_client.delete_job(authorization=get_authorization(), job_id=job_id)
-    return True
+    return False
 
 WEEKDAYS = {
     "monday": 0,
