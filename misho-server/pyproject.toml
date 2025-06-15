@@ -1,6 +1,6 @@
 [project]
 name = "misho-server"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -19,6 +19,7 @@ dependencies = [
     "sportbooking",
     "sqlalchemy>=2.0.41",
 ]
+classifiers = ["Private :: Do Not Upload"]
 
 [project.scripts]
 misho-server = "misho_server:main"

@@ -12,8 +12,8 @@ MISHO_CLI_KEY = os.environ.get('MISHO_ACCESS_KEY', None)
 
 
 CONFIG = CliConfig(
-    # host_url="http://ec2-52-57-94-53.eu-central-1.compute.amazonaws.com",
-    host_url="http://localhost",
+    host_url="http://ec2-52-57-94-53.eu-central-1.compute.amazonaws.com",
+    # host_url="http://localhost",
     host_port=8000,
     token=MISHO_CLI_KEY
 )

@@ -2,7 +2,8 @@
 name = "misho"
 version = "0.1.0"
 dependencies = [
-    "lxml>=5.4.0",
+    "paramiko>=3.5.1",
+    "scp>=0.15.0",
 ]
 
 [tool.uv.workspace]

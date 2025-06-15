@@ -1,3 +1,4 @@
+import logging
 from misho_server.database import SqliteDatabase
 from alembic.config import Config
 from alembic import command
@@ -38,8 +39,10 @@ def insert_courts_table_query() -> str:
 
 def run_migrations():
     # Adjust path to the root-level alembic.ini
-    alembic_cfg = Config(os.path.join(
-        os.path.dirname(__file__), "../../../alembic.ini"))
+    alembic_ini_path = os.path.join(
+        os.path.dirname(__file__), "../alembic.ini")
+    logging.debug(f"Using alembic.ini at: {alembic_ini_path}")
+    alembic_cfg = Config(alembic_ini_path)
     command.upgrade(alembic_cfg, "head")
 
 
