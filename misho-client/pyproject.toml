@@ -1,0 +1,21 @@
+[project]
+name = "misho-client"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Ivo Petkovic", email = "ivo.petkovic@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+  "requests",
+  "pydantic",
+  "misho-api",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+misho-api = { workspace = true }

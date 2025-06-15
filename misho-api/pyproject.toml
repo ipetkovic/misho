@@ -1,0 +1,16 @@
+[project]
+name = "misho-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Ivo Petkovic", email = "ivo.petkovic@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

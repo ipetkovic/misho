@@ -1,0 +1,10 @@
+[project]
+name = "misho"
+version = "0.1.0"
+
+[tool.uv.workspace]
+members = [
+    "misho-api",
+    "misho-client",
+    "misho-cli",
+]

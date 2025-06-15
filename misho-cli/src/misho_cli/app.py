@@ -26,5 +26,5 @@ def callback(ctx: typer.Context):
         raise typer.Exit()
 
 
-if __name__ == "__main__":
+def run():
     app()
