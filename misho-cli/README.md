@@ -52,14 +52,20 @@ This will detect your shell and install the appropriate completion script so you
 
 # Examples
 
-Example usage for monitoring time slot:
+Example usage for monitoring or reserving time slot:
 
 ```bash
 misho_cli job create --day tomorrow --hour 19 21 notify
 ```
 
 ```bash
-misho_cli job create --day Tue --hour 19 21 notify
+misho_cli job create --day Tue --hour 19 21 reserve
+```
+
+Listing current jobs:
+
+```bash
+misho_cli job list
 ```
 
 Example usage for getting reservation calendar:
