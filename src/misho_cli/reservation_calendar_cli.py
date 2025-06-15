@@ -1,9 +1,9 @@
 import datetime
 import typer
 
-from cli.common import get_authorization, misho_base_url
-from cli.date_or_weekday import parse_date_or_weekday
-from cli.reserve_id import ReserveId
+from misho_cli.common import get_authorization, misho_base_url
+from misho_cli.date_or_weekday import parse_date_or_weekday
+from misho_cli.reserve_id import ReserveId
 from misho_api import Error, NotFound
 from misho_api.job import JobApi, JobCreateApi, StatusApi
 from misho_api.reservation_calendar import CourtInfo, DayReservation

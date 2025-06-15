@@ -2,10 +2,10 @@ import datetime
 from enum import Enum
 import typer
 
-from cli.common import get_authorization, get_default_courts_by_priority, misho_base_url
-from cli.config import CONFIG
-from cli.date_or_weekday import parse_date_or_weekday
-from cli.reserve_id import ReserveId
+from misho_cli.common import get_authorization, get_default_courts_by_priority, misho_base_url
+from misho_cli.config import CONFIG
+from misho_cli.date_or_weekday import parse_date_or_weekday
+from misho_cli.reserve_id import ReserveId
 from misho_api import Error, NotFound
 from misho_api.hour_slot import HourSlotApi
 from misho_api.job import ActionApi, JobApi, JobCreateApi, StatusApi

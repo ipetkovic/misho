@@ -1,4 +1,5 @@
 #!/bin/bash
-export PYTHONPATH=src/
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PYTHONPATH=$DIR/src/
 
-python src/cli "$@"
+python src/misho_cli "$@"

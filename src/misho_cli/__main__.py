@@ -1,7 +1,7 @@
 import typer
-from cli.config import CONFIG
-from cli.job_cli import job_app
-from cli.reservation_calendar_cli import calendar_app
+from misho_cli.config import CONFIG
+from misho_cli.job_cli import job_app
+from misho_cli.reservation_calendar_cli import calendar_app
 
 app = typer.Typer(help="Misho CLI")
 

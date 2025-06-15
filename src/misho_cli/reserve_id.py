@@ -1,7 +1,4 @@
-
-
 import datetime
-
 import pydantic
 
 from misho_api.hour_slot import HourSlotApi

@@ -4,7 +4,6 @@ import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-import httpx
 from misho.controller.reservation_calendar import ReservationCalendarController
 from misho.http.auth import AuthMiddleware
 from misho.http.http_app import HttpApplication

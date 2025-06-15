@@ -1,4 +1,4 @@
-from cli.config import CONFIG
+from misho_cli.config import CONFIG
 from misho_client import Authorization
 
 
