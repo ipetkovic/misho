@@ -8,9 +8,9 @@ import typer.utils
 from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority, misho_base_url
 from cli.date_or_weekday import parse_date_or_weekday
 from cli.reserve_id import ReserveId
-from misho.api import Error, NotFound
-from misho.api.job import Job, JobCreate
-from misho.api.reservation_calendar import CourtInfo, DayReservation
+from misho_api import Error, NotFound
+from misho_api.job import JobApi, JobCreateApi
+from misho_api.reservation_calendar import CourtInfo, DayReservation
 from misho.client.job_client import JobClient
 from misho.client.reservation_calendar_client import ReservationCalendarClient
 from misho.domain.hour_slot import HourSlot
@@ -22,6 +22,7 @@ from rich.console import Console
 from misho.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
 from misho.domain.reservation_calendar import CourtId
 from misho.domain.time_slot import TimeSlot
+from misho_api.time_slot import TimeSlotApi
 
 console = Console()
 
@@ -77,7 +78,7 @@ async def _get_calendar_and_current_jobs():
     return calendar.calendar, jobs
 
 
-def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs: list[Job]) -> str:
+def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs: list[JobApi]) -> str:
     day_of_week = date.strftime("%A")
     table = Table(
         title=f"Reservation Calendar - {day_of_week} {date.strftime("%d.%m.%Y")}", show_lines=True)
@@ -100,7 +101,7 @@ def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs:
         courts = slot.courts
 
         job_create_link = ReserveId.from_time_slot(
-            TimeSlot(date=date, hour_slot=slot.hour_slot)
+            TimeSlotApi(date=date, hour_slot=slot.hour_slot)
         )
 
         columns = [
@@ -112,13 +113,13 @@ def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs:
     return capture.get()
 
 
-def job_render(job: Job | None, court_id: CourtId) -> str:
+def job_render(job: JobApi | None, court_id: CourtId) -> str:
     if job is None or court_id not in job.courts_by_priority:
         return ''
     return f'\n[yellow]{job.job_type.action.name} ({job.id})[/yellow]'
 
 
-def slot_name_styled(job: Job | None, court: CourtInfo) -> str:
+def slot_name_styled(job: JobApi | None, court: CourtInfo) -> str:
     if court.reserved_by is None:
         return "[dim]Available[/dim]" + job_render(job, court.court_id)
     elif court.reserved_by_user:

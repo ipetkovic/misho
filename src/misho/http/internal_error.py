@@ -1,10 +1,7 @@
-
-
 import logging
 from aiohttp import web
-import json
 
-from misho.api import InternalError
+from misho_api import InternalError
 from misho.controller.common import to_json
 
 

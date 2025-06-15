@@ -1,6 +1,6 @@
 import httpx
-from misho.api import Error
-from misho.api.job import Job, JobCreate, JobsResult
+from misho_api import Error
+from misho_api.job import JobApi, JobCreateApi, JobListApi
 from misho.client import Authorization
 from misho.domain.job import Status
 
@@ -10,7 +10,7 @@ class JobClient:
         self._http_client = http_client
         self._base_url = base_url
 
-    async def list_jobs(self, authorization: Authorization, status: Status = None) -> list[Job] | Error:
+    async def list_jobs(self, authorization: Authorization, status: Status = None) -> list[JobApi] | Error:
         request = httpx.Request(
             method="GET",
             url=self._base_url + "/jobs",
@@ -23,9 +23,9 @@ class JobClient:
             error = Error.from_json(response.text)
             return error
 
-        return JobsResult(**response.json()).jobs
+        return JobListApi(**response.json()).jobs
 
-    async def get_job(self, authorization: Authorization, job_id: int) -> Job | Error:
+    async def get_job(self, authorization: Authorization, job_id: int) -> JobApi | Error:
         request = httpx.Request(
             method="GET",
             url=self._base_url + f"/jobs/{job_id}",
@@ -37,9 +37,9 @@ class JobClient:
             error = Error.from_json(response.text)
             return error
 
-        return Job(**response.json())
+        return JobApi(**response.json())
 
-    async def create_job(self, authorization: Authorization, job_create: JobCreate) -> Job | Error:
+    async def create_job(self, authorization: Authorization, job_create: JobCreateApi) -> JobApi | Error:
         request = httpx.Request(
             method="POST",
             url=self._base_url + "/jobs",
@@ -55,7 +55,7 @@ class JobClient:
             error = Error.from_json(response.text)
             return error
 
-        return Job(**response.json())
+        return JobApi(**response.json())
 
     async def delete_job(self, authorization: Authorization, job_id: int) -> None | Error:
         request = httpx.Request(

@@ -9,8 +9,9 @@ from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_pri
 from cli.config import CONFIG
 from cli.date_or_weekday import parse_date_or_weekday
 from cli.reserve_id import ReserveId
-from misho.api import Error, NotFound
-from misho.api.job import Job, JobCreate
+from misho_api import Error, NotFound
+from misho_api.hour_slot import HourSlotApi
+from misho_api.job import ActionApi, JobApi, JobCreateApi
 from misho.client.job_client import JobClient
 from misho.domain.hour_slot import HourSlot
 from misho.domain.job import Status
@@ -20,6 +21,7 @@ from rich.console import Console
 
 from misho.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
 from misho.domain.time_slot import TimeSlot
+from misho_api.time_slot import TimeSlotApi
 
 console = Console()
 
@@ -96,16 +98,16 @@ def create_job(
 
     match action:
         case Action.RESERVE:
-            monitoring_action = MonitoringAction.RESERVE
+            job_action = ActionApi.RESERVE
         case Action.NOTIFY:
-            monitoring_action = MonitoringAction.NOTIFY
+            job_action = ActionApi.NOTIFY
 
-    job_create = JobCreate(
-        time_slot=TimeSlot(
+    job_create = JobCreateApi(
+        time_slot=TimeSlotApi(
             date=date,
-            hour_slot=HourSlot(from_hour=from_hour, to_hour=to_hour)
+            hour_slot=HourSlotApi(from_hour=from_hour, to_hour=to_hour)
         ),
-        job_type=MonitoringJobCreate(action=monitoring_action),
+        action=job_action,
         courts_by_priority=courts
     )
 
@@ -154,7 +156,7 @@ async def _delete_job(job_id: int) -> bool:
     return False
 
 
-def format_jobs_table(jobs: list[Job]) -> str:
+def format_jobs_table(jobs: list[JobApi]) -> str:
     table = Table(title="Jobs List")
     table.add_column("ID", style="cyan", no_wrap=True)
     table.add_column("Date")
@@ -174,7 +176,7 @@ def format_jobs_table(jobs: list[Job]) -> str:
             job.time_slot.date.strftime("%A"),
             str(job.time_slot.hour_slot),
             courts_str,
-            str(job.job_type.action.name),
+            str(job.action.name),
             created_at_str,
             status_styled(job.status),
         )

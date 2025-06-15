@@ -1,10 +1,8 @@
 
-from typing import Union
 import pydantic
-from pydantic_core import ErrorDetails
 from aiohttp import web
 
-from misho.api import BadRequest, NotFound, ValidationErrorResponse
+from misho_api import BadRequest, NotFound, ValidationErrorResponse
 
 
 def to_json(obj: pydantic.BaseModel) -> str:

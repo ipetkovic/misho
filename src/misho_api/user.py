@@ -1,7 +1,7 @@
 import pydantic
 
 
-class User(pydantic.BaseModel):
+class UserApi(pydantic.BaseModel):
     name: str
     username: str
     email: str

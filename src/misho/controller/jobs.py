@@ -1,4 +1,9 @@
-from misho.api.job import Job, JobCreate, JobsResult
+from misho.controller.transformers import time_slot_from_api, time_slot_to_api
+from misho.domain.hour_slot import HourSlot
+from misho.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
+from misho.domain.time_slot import TimeSlot
+from misho_api.hour_slot import HourSlotApi
+from misho_api.job import JobApi, JobCreateApi, JobListApi
 from misho.controller.common import bad_request, from_json, not_found, success_response
 from misho.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, Status
 from misho.domain.user import User
@@ -8,21 +13,7 @@ from misho.repository.jobs import JobsRepository
 
 from aiohttp import web
 
-
-def to_api_job(job: JobDomain) -> Job:
-    return Job(**job.model_dump(exclude={'user_id'}))
-
-
-def to_api_job_create(job_create: JobCreateDomain) -> JobCreate:
-    return JobCreate(**job_create.model_dump(exclude={'user_id'}))
-
-
-def from_api_job(job: Job, user: User) -> JobDomain:
-    return JobDomain(user=user, **job.model_dump())
-
-
-def from_api_job_create(job_create: JobCreate, user: User) -> JobCreateDomain:
-    return JobCreateDomain(user_id=user.id, **job_create.model_dump())
+from misho_api.time_slot import TimeSlotApi
 
 
 class JobsController:
@@ -57,7 +48,7 @@ class JobsController:
 
         jobs = await self.jobs_repository.list_all(status=status_enum, user_id=user.id)
         jobs_domain = [to_api_job(job) for job in jobs]
-        return success_response(JobsResult(jobs=jobs_domain))
+        return success_response(JobListApi(jobs=jobs_domain))
 
     async def get_job(self, request: web.Request):
         user: User = request['user']
@@ -71,7 +62,9 @@ class JobsController:
     async def create_job(self, request: web.Request):
         user: User = request['user']
         body = await request.json()
-        job_create = from_json(body, JobCreate)
+        print(f"Job create request: {body}")
+        job_create = from_json(body, JobCreateApi)
+        print(f"Job create request: {job_create}")
         job_create_domain = from_api_job_create(job_create, user)
 
         await self._validate_job_create(job_create=job_create_domain)
@@ -103,7 +96,7 @@ class JobsController:
         except ValueError:
             return None
 
-    async def _validate_job_create(self, job_create: JobCreate) -> bool:
+    async def _validate_job_create(self, job_create: JobCreateApi) -> bool:
         hour_slots = await self._hour_slots_repository.list_hour_slots()
 
         if job_create.time_slot.hour_slot not in hour_slots:
@@ -118,3 +111,47 @@ class JobsController:
         if diff:
             error = f"Invalid courts: {diff}. Available courts: {[court.id for court in courts]}"
             raise bad_request(error)
+
+
+def to_api_job(job: JobDomain) -> JobApi:
+    job_api = JobApi(
+        id=job.id,
+        time_slot=time_slot_to_api(job.time_slot),
+        courts_by_priority=job.courts_by_priority,
+        action=job.job_type.action.value,
+        created_at=job.created_at,
+        status=job.status.value
+    )
+    return job_api
+
+
+def to_api_job_create(job_create: JobCreateDomain) -> JobCreateApi:
+    job_create_api = JobCreateApi(
+        time_slot=time_slot_to_api(job_create.time_slot),
+        action=job_create.job_type.action.value,
+        courts_by_priority=list(job_create.courts_by_priority)
+    )
+    return job_create_api
+
+
+def from_api_job(job: JobApi, user: User) -> JobDomain:
+    job_domain = JobDomain(
+        id=job.id,
+        user=user,
+        time_slot=time_slot_from_api(job.time_slot),
+        courts_by_priority=job.courts_by_priority,
+        job_type=MonitoringJob(action=job.action.value),
+        created_at=job.created_at,
+        status=Status(job.status.value),
+    )
+    return job_domain
+
+
+def from_api_job_create(job_create: JobCreateApi, user: User) -> JobCreateDomain:
+    job_create_domain = JobCreateDomain(
+        user_id=user.id,
+        time_slot=time_slot_from_api(job_create.time_slot),
+        job_type=MonitoringJobCreate(action=job_create.action.value),
+        courts_by_priority=tuple(job_create.courts_by_priority)
+    )
+    return job_create_domain

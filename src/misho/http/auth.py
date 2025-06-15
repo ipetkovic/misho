@@ -1,6 +1,6 @@
 from aiohttp import web
 
-from misho.api import Unauthorized
+from misho_api import Unauthorized
 from misho.repository.user import UserRepository
 
 

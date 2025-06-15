@@ -1,6 +1,6 @@
 import pydantic
 from misho.controller.common import bad_request, from_json, success_response
-from misho.api.user import User
+from misho_api.user import UserApi
 from misho.domain.user import UserCreate
 from misho.service.sportbooking_service import SportbookingService
 from misho.repository.user import UserRepository
@@ -14,7 +14,7 @@ class SignupRequest(pydantic.BaseModel):
 
 
 class SignupResponse(pydantic.BaseModel):
-    user: User
+    user: UserApi
     token: str
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
@@ -59,7 +59,7 @@ class SignUpController:
         )
 
         response = SignupResponse(
-            user=User(
+            user=UserApi(
                 name=user.name,
                 username=user.username,
                 email=user.email,

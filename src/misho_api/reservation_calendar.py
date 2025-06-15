@@ -1,14 +1,10 @@
-
-
 import datetime
 import pydantic
-
-from misho.domain.hour_slot import HourSlot
-from misho.domain.reservation_calendar import CourtId
+from misho_api.hour_slot import HourSlotApi
 
 
 class CourtInfo(pydantic.BaseModel):
-    court_id: CourtId
+    court_id: int
     reserved_by: str | None = None
     reserved_by_user: bool = False
 
@@ -16,7 +12,7 @@ class CourtInfo(pydantic.BaseModel):
 
 
 class HourSlotReservation(pydantic.BaseModel):
-    hour_slot: HourSlot
+    hour_slot: HourSlotApi
     courts: list[CourtInfo]
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
@@ -28,7 +24,7 @@ class DayReservation(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
 
-class UserReservationCalendar(pydantic.BaseModel):
+class UserReservationCalendarApi(pydantic.BaseModel):
     calendar: dict[datetime.date, DayReservation]
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

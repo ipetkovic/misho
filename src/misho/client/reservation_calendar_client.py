@@ -2,8 +2,8 @@
 
 import httpx
 
-from misho.api import Error
-from misho.api.reservation_calendar import UserReservationCalendar
+from misho_api import Error
+from misho_api.reservation_calendar import UserReservationCalendarApi
 from misho.client import Authorization
 from misho.domain.job import Status
 
@@ -13,7 +13,7 @@ class ReservationCalendarClient:
         self._http_client = http_client
         self._base_url = base_url
 
-    async def get_calendar(self, authorization: Authorization, status: Status = None) -> UserReservationCalendar | Error:
+    async def get_calendar(self, authorization: Authorization, status: Status = None) -> UserReservationCalendarApi | Error:
         request = httpx.Request(
             method="GET",
             url=self._base_url + "/calendar",
@@ -25,4 +25,4 @@ class ReservationCalendarClient:
             error = Error.from_json(response.text)
             return error
 
-        return UserReservationCalendar(**response.json())
+        return UserReservationCalendarApi(**response.json())

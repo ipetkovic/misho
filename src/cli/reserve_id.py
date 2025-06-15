@@ -3,15 +3,16 @@
 import datetime
 
 import pydantic
-from misho.domain.hour_slot import HourSlot
-from misho.domain.time_slot import TimeSlot
+
+from misho_api.hour_slot import HourSlotApi
+from misho_api.time_slot import TimeSlotApi
 
 
 class ReserveId(pydantic.BaseModel):
     id: str
 
     @classmethod
-    def from_time_slot(cls, time_slot: TimeSlot) -> 'ReserveId':
+    def from_time_slot(cls, time_slot: TimeSlotApi) -> 'ReserveId':
         """
         Create a ReserveId from a time slot string.
         The time slot should be in the format 'YYYY-MM-DD HH:MM'.
@@ -25,7 +26,7 @@ class ReserveId(pydantic.BaseModel):
         id = encode(int(combined))
         return cls(id=id)
 
-    def to_time_slot(self) -> TimeSlot:
+    def to_time_slot(self) -> TimeSlotApi:
         decoded = str(decode(self.id))
         date = decoded[:8]
         hour_from = decoded[8:10]
@@ -35,9 +36,9 @@ class ReserveId(pydantic.BaseModel):
         from_parsed = int(hour_from)
         to_parsed = int(hour_to)
 
-        return TimeSlot(
+        return TimeSlotApi(
             date=date_parsed,
-            hour_slot=HourSlot(
+            hour_slot=HourSlotApi(
                 from_hour=from_parsed, to_hour=to_parsed
             )
         )

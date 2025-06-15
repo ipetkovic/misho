@@ -1,8 +1,7 @@
 import datetime
-import pydantic
-from misho.api.reservation_calendar import CourtInfo, DayReservation, HourSlotReservation, UserReservationCalendar
+from misho.controller.transformers import hour_slot_to_api
+from misho_api.reservation_calendar import CourtInfo, DayReservation, HourSlotReservation, UserReservationCalendarApi
 from misho.controller.common import bad_request, from_json, success_response
-from misho.api.user import User
 from misho.domain.hour_slot import HourSlot
 from misho.domain.reservation_calendar import UserReservationCalendar as UserReservationCalendarDomain
 from misho.domain.user import UserCreate
@@ -22,7 +21,7 @@ class ReservationCalendarController:
             web.get('/calendar', self.get_calendar),
         ]
 
-    async def get_calendar(self, request: web.Request) -> UserReservationCalendar:
+    async def get_calendar(self, request: web.Request) -> UserReservationCalendarApi:
         user = request['user']
         token = await self._session_token_fetch_service.get_token(user.id)
         calendar = await self._sportbooking.get_reservation_calendar(token)
@@ -30,7 +29,7 @@ class ReservationCalendarController:
         return success_response(calendar_api)
 
 
-def from_domain(calendar: UserReservationCalendarDomain) -> UserReservationCalendar:
+def from_domain(calendar: UserReservationCalendarDomain) -> UserReservationCalendarApi:
     transformed: dict[datetime.date, dict[HourSlot, list[CourtInfo]]] = {}
     for reservation_slot, reservation in calendar.user_calendar.items():
         date = reservation_slot.time_slot.date
@@ -58,8 +57,8 @@ def from_domain(calendar: UserReservationCalendarDomain) -> UserReservationCalen
 
     calendar_api: dict[datetime.date, DayReservation] = {}
     for date, slots in transformed.items():
-        hour_slot_reservation = [HourSlotReservation(hour_slot=hour_slot, courts=courts)
+        hour_slot_reservation = [HourSlotReservation(hour_slot=hour_slot_to_api(hour_slot), courts=courts)
                                  for hour_slot, courts in slots.items()]
         calendar_api[date] = DayReservation(slots=hour_slot_reservation)
 
-    return UserReservationCalendar(calendar=calendar_api)
+    return UserReservationCalendarApi(calendar=calendar_api)
