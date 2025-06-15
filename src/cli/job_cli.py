@@ -1,34 +1,24 @@
-import asyncio
 import datetime
 from enum import Enum
-from click import Parameter
 import typer
-import typer.utils
 
-from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority, misho_base_url
+from cli.common import get_authorization, get_default_courts_by_priority, misho_base_url
 from cli.config import CONFIG
 from cli.date_or_weekday import parse_date_or_weekday
 from cli.reserve_id import ReserveId
 from misho_api import Error, NotFound
 from misho_api.hour_slot import HourSlotApi
-from misho_api.job import ActionApi, JobApi, JobCreateApi
-from misho.client.job_client import JobClient
-from misho.domain.hour_slot import HourSlot
-from misho.domain.job import Status
-
+from misho_api.job import ActionApi, JobApi, JobCreateApi, StatusApi
 from rich.table import Table
 from rich.console import Console
-
-from misho.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
-from misho.domain.time_slot import TimeSlot
 from misho_api.time_slot import TimeSlotApi
+from misho_client.job_client import JobClient
 
 console = Console()
 
 
 job_app = typer.Typer(help="Commands related to jobs")
-job_client = JobClient(http_client=HTTP_CLIENT,
-                       base_url=misho_base_url())
+job_client = JobClient(base_url=misho_base_url())
 
 
 @job_app.command(
@@ -36,11 +26,10 @@ job_client = JobClient(http_client=HTTP_CLIENT,
     help="List all jobs with optional filtering by status"
 )
 def list_jobs(
-    status: Status = typer.Option(None, help="Filter jobs by status")
+    status: StatusApi = typer.Option(None, help="Filter jobs by status")
 ):
-    jobs = asyncio.run(
-        job_client.list_jobs(authorization=get_authorization(), status=status)
-    )
+    jobs = job_client.list_jobs(
+        authorization=get_authorization(), status=status)
     rendered = format_jobs_table(jobs)
     typer.echo(rendered)
 
@@ -111,10 +100,8 @@ def create_job(
         courts_by_priority=courts
     )
 
-    job_or_error = asyncio.run(
-        job_client.create_job(
-            authorization=get_authorization(), job_create=job_create)
-    )
+    job_or_error = job_client.create_job(
+        authorization=get_authorization(), job_create=job_create)
 
     if isinstance(job_or_error, Error):
         error = job_or_error
@@ -134,26 +121,16 @@ def create_job(
 def delete_job(
     job_id: int = typer.Argument(..., help="ID of the job to delete")
 ):
-    not_found = asyncio.run(
-        _delete_job(job_id=job_id)
-    )
-
-    if not_found:
-        typer.echo(f"Job with ID {job_id} not found.")
-        raise typer.Exit(code=1)
-
-    typer.echo(f"Job with ID {job_id} successfully deleted.")
-
-
-async def _delete_job(job_id: int) -> bool:
-    job_or_error = await job_client.get_job(authorization=get_authorization(), job_id=job_id)
+    job_or_error = job_client.get_job(
+        authorization=get_authorization(), job_id=job_id)
 
     if isinstance(job_or_error, Error):
         if isinstance(job_or_error.root, NotFound):
-            return True
+            typer.echo(f"Job with ID {job_id} not found.")
+            raise typer.Exit(code=1)
 
-    await job_client.delete_job(authorization=get_authorization(), job_id=job_id)
-    return False
+    job_client.delete_job(authorization=get_authorization(), job_id=job_id)
+    typer.echo(f"Job with ID {job_id} successfully deleted.")
 
 
 def format_jobs_table(jobs: list[JobApi]) -> str:
@@ -186,7 +163,7 @@ def format_jobs_table(jobs: list[JobApi]) -> str:
     return capture.get()
 
 
-def status_styled(status: Status) -> str:
+def status_styled(status: StatusApi) -> str:
     status_text = str(status.name)
     if status_text == "FAILED":
         status_styled = f"[red]{status_text}[/red]"

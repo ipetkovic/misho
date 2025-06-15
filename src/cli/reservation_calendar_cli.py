@@ -1,39 +1,25 @@
-import asyncio
 import datetime
-from enum import Enum
-from click import Parameter
 import typer
-import typer.utils
 
-from cli.common import HTTP_CLIENT, get_authorization, get_default_courts_by_priority, misho_base_url
+from cli.common import get_authorization, misho_base_url
 from cli.date_or_weekday import parse_date_or_weekday
 from cli.reserve_id import ReserveId
 from misho_api import Error, NotFound
-from misho_api.job import JobApi, JobCreateApi
+from misho_api.job import JobApi, JobCreateApi, StatusApi
 from misho_api.reservation_calendar import CourtInfo, DayReservation
-from misho.client.job_client import JobClient
-from misho.client.reservation_calendar_client import ReservationCalendarClient
-from misho.domain.hour_slot import HourSlot
-from misho.domain.job import Status
 
 from rich.table import Table
 from rich.console import Console
 
-from misho.domain.monitoring_job import MonitoringAction, MonitoringJobCreate
-from misho.domain.reservation_calendar import CourtId
-from misho.domain.time_slot import TimeSlot
 from misho_api.time_slot import TimeSlotApi
+from misho_client.job_client import JobClient
+from misho_client.reservation_calendar_client import ReservationCalendarClient
 
 console = Console()
-
-
 calendar_app = typer.Typer(help="Commands related to reservation calendar")
 
-calendar_client = ReservationCalendarClient(http_client=HTTP_CLIENT,
-                                            base_url=misho_base_url())
-
-job_client = JobClient(http_client=HTTP_CLIENT,
-                       base_url=misho_base_url())
+calendar_client = ReservationCalendarClient(base_url=misho_base_url())
+job_client = JobClient(base_url=misho_base_url())
 
 
 @calendar_app.callback(invoke_without_command=True)
@@ -55,9 +41,9 @@ def get_calendar(
     if day:
         date = parse_date_or_weekday(day)
 
-    calendar, jobs = asyncio.run(
-        _get_calendar_and_current_jobs()
-    )
+    calendar = calendar_client.get_calendar(
+        authorization=get_authorization()).calendar
+    jobs = job_client.list_jobs(authorization=get_authorization())
 
     if date is not None:
         if date not in calendar:
@@ -69,13 +55,6 @@ def get_calendar(
     for date, calendar in calendar.items():
         rendered = format_calendar_for_day(date, calendar, jobs)
         typer.echo(rendered)
-
-
-async def _get_calendar_and_current_jobs():
-    calendar = await calendar_client.get_calendar(authorization=get_authorization())
-    jobs = await job_client.list_jobs(authorization=get_authorization())
-
-    return calendar.calendar, jobs
 
 
 def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs: list[JobApi]) -> str:
@@ -113,7 +92,7 @@ def format_calendar_for_day(date: datetime.date, calendar: DayReservation, jobs:
     return capture.get()
 
 
-def job_render(job: JobApi | None, court_id: CourtId) -> str:
+def job_render(job: JobApi | None, court_id: int) -> str:
     if job is None or court_id not in job.courts_by_priority:
         return ''
     return f'\n[yellow]{job.job_type.action.name} ({job.id})[/yellow]'
@@ -128,7 +107,7 @@ def slot_name_styled(job: JobApi | None, court: CourtInfo) -> str:
         return f"[red]{court.reserved_by}[/red]" + job_render(job, court.court_id)
 
 
-def status_styled(status: Status) -> str:
+def status_styled(status: StatusApi) -> str:
     status_text = str(status.name)
     if status_text == "FAILED":
         status_styled = f"[red]{status_text}[/red]"

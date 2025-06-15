@@ -1,11 +1,5 @@
-import httpx
-
 from cli.config import CONFIG
-from misho.client import Authorization
-
-
-HTTP_CLIENT = httpx.AsyncClient(
-    timeout=httpx.Timeout(10.0, connect=5.0))
+from misho_client import Authorization
 
 
 def get_authorization() -> Authorization:

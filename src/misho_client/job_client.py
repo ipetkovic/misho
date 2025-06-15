@@ -1,23 +1,23 @@
-import httpx
+import requests
 from misho_api import Error
-from misho_api.job import JobApi, JobCreateApi, JobListApi
-from misho.client import Authorization
-from misho.domain.job import Status
+from misho_api.job import JobApi, JobCreateApi, JobListApi, StatusApi
+from misho_client import Authorization
 
 
 class JobClient:
-    def __init__(self, http_client: httpx.AsyncClient, base_url: str):
-        self._http_client = http_client
+    def __init__(self, base_url: str):
         self._base_url = base_url
 
-    async def list_jobs(self, authorization: Authorization, status: Status = None) -> list[JobApi] | Error:
-        request = httpx.Request(
+    def list_jobs(self, authorization: Authorization, status: StatusApi = None) -> list[JobApi] | Error:
+        request = requests.Request(
             method="GET",
             url=self._base_url + "/jobs",
             headers={"Authorization": authorization.to_header()},
             params={"status": status.value} if status else None
         )
-        response = await self._http_client.send(request)
+
+        with requests.Session() as session:
+            response = session.send(request.prepare())
 
         if response.status_code != 200:
             error = Error.from_json(response.text)
@@ -25,13 +25,15 @@ class JobClient:
 
         return JobListApi(**response.json()).jobs
 
-    async def get_job(self, authorization: Authorization, job_id: int) -> JobApi | Error:
-        request = httpx.Request(
+    def get_job(self, authorization: Authorization, job_id: int) -> JobApi | Error:
+        request = requests.Request(
             method="GET",
             url=self._base_url + f"/jobs/{job_id}",
             headers={"Authorization": authorization.to_header()}
         )
-        response = await self._http_client.send(request)
+
+        with requests.Session() as session:
+            response = session.send(request.prepare())
 
         if response.status_code != 200:
             error = Error.from_json(response.text)
@@ -39,8 +41,8 @@ class JobClient:
 
         return JobApi(**response.json())
 
-    async def create_job(self, authorization: Authorization, job_create: JobCreateApi) -> JobApi | Error:
-        request = httpx.Request(
+    def create_job(self, authorization: Authorization, job_create: JobCreateApi) -> JobApi | Error:
+        request = requests.Request(
             method="POST",
             url=self._base_url + "/jobs",
             headers={
@@ -49,7 +51,9 @@ class JobClient:
             },
             json=job_create.model_dump(mode="json")
         )
-        response = await self._http_client.send(request)
+
+        with requests.Session() as session:
+            response = session.send(request.prepare())
 
         if response.status_code != 200:
             error = Error.from_json(response.text)
@@ -57,13 +61,15 @@ class JobClient:
 
         return JobApi(**response.json())
 
-    async def delete_job(self, authorization: Authorization, job_id: int) -> None | Error:
-        request = httpx.Request(
+    def delete_job(self, authorization: Authorization, job_id: int) -> None | Error:
+        request = requests.Request(
             method="DELETE",
             url=self._base_url + f"/jobs/{job_id}",
             headers={"Authorization": authorization.to_header()}
         )
-        response = await self._http_client.send(request)
+
+        with requests.Session() as session:
+            response = session.send(request.prepare())
 
         if response.status_code != 200:
             error = Error.from_json(response.text)

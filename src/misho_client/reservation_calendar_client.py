@@ -1,25 +1,22 @@
-
-
-import httpx
-
+import requests
 from misho_api import Error
 from misho_api.reservation_calendar import UserReservationCalendarApi
-from misho.client import Authorization
-from misho.domain.job import Status
+from misho_client import Authorization
 
 
 class ReservationCalendarClient:
-    def __init__(self, http_client: httpx.AsyncClient, base_url: str):
-        self._http_client = http_client
+    def __init__(self, base_url: str):
         self._base_url = base_url
 
-    async def get_calendar(self, authorization: Authorization, status: Status = None) -> UserReservationCalendarApi | Error:
-        request = httpx.Request(
+    def get_calendar(self, authorization: Authorization) -> UserReservationCalendarApi | Error:
+        request = requests.Request(
             method="GET",
             url=self._base_url + "/calendar",
             headers={"Authorization": authorization.to_header()},
         )
-        response = await self._http_client.send(request)
+
+        with requests.Session() as session:
+            response = session.send(request.prepare())
 
         if response.status_code != 200:
             error = Error.from_json(response.text)
