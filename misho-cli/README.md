@@ -22,13 +22,19 @@ pipx install mischo_cli
 
 Before using the CLI, make sure to set the required environment variable with your access token.
 
-For MacOS/Linux:
+MacOS/Linux:
 
 ```bash
 export MISHO_ACCESS_KEY=your_token_here
 ```
 
-For Windows:
+Windows CMD:
+
+```bat
+set MISHO_ACCESS_KEY=your_token_here
+```
+
+Windows Poweshell:
 
 ```Powershell
 $env:MISHO_ACCESS_KEY = "your_token_here"
