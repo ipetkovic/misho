@@ -8,7 +8,16 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "aiohttp>=3.12.13",
+    "aiosmtplib>=4.0.1",
+    "aiosqlite>=0.21.0",
+    "alembic>=1.16.1",
+    "apscheduler>=3.11.0",
+    "greenlet>=3.2.3",
     "misho-api",
+    "pydantic[email]>=2.11.7",
+    "sportbooking",
+    "sqlalchemy>=2.0.41",
 ]
 
 [project.scripts]
@@ -20,3 +29,4 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 misho-api = { workspace = true }
+sportbooking = { workspace = true }

@@ -1,6 +1,9 @@
 [project]
 name = "misho"
 version = "0.1.0"
+dependencies = [
+    "lxml>=5.4.0",
+]
 
 [tool.uv.workspace]
 members = [

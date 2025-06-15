@@ -1,7 +1,4 @@
-from dataclasses import dataclass
 from enum import Enum
-
-from dataclasses_json import dataclass_json
 import pydantic
 
 

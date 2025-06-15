@@ -1,10 +1,5 @@
-from dataclasses import dataclass, field
 import datetime
-
-from dataclasses_json import config, dataclass_json
-from marshmallow import fields
 import pydantic
-
 from misho_server.domain.hour_slot import HourSlot
 
 type TimeSlotId = int
