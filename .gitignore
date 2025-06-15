@@ -5,3 +5,5 @@ __pycache__
 .env
 dist/
 sportbooking.db
+.python-version
+build/
