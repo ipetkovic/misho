@@ -2,4 +2,4 @@
 
 TODO...
 
-More info on Misho CLI can be found [Misho CLI documentation](./misho-cli/README.md).
+More info on Misho CLI can be found in [Misho CLI documentation](./misho-cli/README.md).
