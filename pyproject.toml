@@ -7,4 +7,6 @@ members = [
     "misho-api",
     "misho-client",
     "misho-cli",
+    "sportbooking",
+    "misho-server",
 ]
