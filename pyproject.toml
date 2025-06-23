@@ -13,4 +13,5 @@ members = [
     "misho-cli",
     "sportbooking",
     "misho-server",
+    "misho-bot",
 ]
