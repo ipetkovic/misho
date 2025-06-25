@@ -262,7 +262,7 @@ async def handle_open_ai_response(response: ChatCompletion, update: Update, cont
             tool_choice="auto"
         )
 
-        handle_open_ai_response(response, update, context)
+        await handle_open_ai_response(response, update, context)
 
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -294,7 +294,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tool_choice="auto"
     )
 
-    handle_open_ai_response(response, update, context)
+    await handle_open_ai_response(response, update, context)
 
 
 def main():
