@@ -1,7 +1,10 @@
 from datetime import datetime
 import json
 import logging
+from misho_client import Authorization
+from misho_client.job_client import JobClient
 import openai
+from openai.types.chat import ChatCompletion
 from telegram import Update
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -159,6 +162,108 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 user_messages = []
 
+job_client = JobClient(
+    "http://ec2-52-57-94-53.eu-central-1.compute.amazonaws.com:8000")
+
+authorization = Authorization(token=os.environ.get("MISHO_ACCESS_KEY", None))
+
+
+def handle_tool_call(tool_call):
+    func_name = tool_call.function.name
+    args = json.loads(tool_call.function.arguments)
+
+    print(f"Function call: {func_name} with arguments: {args}")
+
+    if func_name == "create_job":
+        print(f"Creating job with args: {args}")
+        result = job_client.create_job(
+            authorization=authorization,
+            job_create=JobCreateApi(**args)
+        )
+
+        print(str(result))
+
+        user_messages.append({
+            "role": "assistant",
+            "tool_calls": [tool_call]  # Required to include tool call
+        })
+
+        user_messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": str(result)
+            }
+        )
+
+    elif func_name == "list_jobs":
+        print(f"Listing jobs with filter: {args.get('status', 'all')}")
+
+        result = job_client.list_jobs(
+            authorization=authorization
+        )
+
+        print(str(result))
+
+        user_messages.append({
+            "role": "assistant",
+            "tool_calls": [tool_call]  # Required to include tool call
+        })
+
+        user_messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": str(result)
+            }
+        )
+
+    elif func_name == "delete_job":
+        print(f"Deleting job with ID: {args['job_id']}")
+
+        result = job_client.delete_job(
+            authorization=authorization,
+            job_id=args['job_id']
+        )
+
+        print(str(result))
+
+        user_messages.append({
+            "role": "assistant",
+            "tool_calls": [tool_call]  # Required to include tool call
+        })
+
+        user_messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": str(result)
+            }
+        )
+
+
+async def handle_open_ai_response(response: ChatCompletion, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    choice = response.choices[0]
+
+    if choice.finish_reason == "stop":
+        message = choice.message
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message.content)
+
+    elif choice.finish_reason == "tool_calls":
+        tool_calls = choice.message.tool_calls
+
+        for tool_call in tool_calls:
+            handle_tool_call(tool_call)
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=user_messages,
+            tools=[create_job_tool, list_jobs_tool, delete_job_tool],
+            tool_choice="auto"
+        )
+
+        handle_open_ai_response(response, update, context)
+
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message.text
@@ -189,9 +294,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tool_choice="auto"
     )
 
-    open_ai_message = response.choices[0].message
-    print(open_ai_message)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=open_ai_message.content)
+    handle_open_ai_response(response, update, context)
 
 
 def main():
