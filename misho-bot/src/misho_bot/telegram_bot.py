@@ -41,11 +41,13 @@ async def handle_message(open_ai_clients: dict[str, OpenAiUserClient], update: U
 
     response = open_ai_client.handle_user_message(message)
 
+    print(open_ai_client._messages)
+
     if response is not None:
         await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 
-def main():
+def run():
     open_ai_client = OpenAI()
     job_client = JobClient(_MISHO_SERVER_URL)
 
@@ -62,12 +64,12 @@ def main():
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
 
-    async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def message_handler_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = await handle_message(open_ai_clients, update, context)
         return result
 
     message_handler = MessageHandler(
-        filters.TEXT & (~filters.COMMAND), handle_message)
+        filters.TEXT & (~filters.COMMAND), message_handler_callback)
     application.add_handler(message_handler)
 
     application.run_polling()

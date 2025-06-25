@@ -60,7 +60,7 @@ class OpenAiUserClient:
                 authorization=self._authorization,
                 job_create=JobCreateApi(**args)
             )
-            self._tool_call_append(result)
+            self._tool_call_append(tool_call, result)
 
         elif func_name == "list_jobs":
             result = self._job_client.list_jobs(
