@@ -16,7 +16,7 @@ def create_ssh_client(host, port, username, key_file=None, password=None):
     return ssh
 
 
-def deploy(host, username, docker_compose_path, key_file, tag):
+def deploy(host, username, docker_compose_path, key_file, app, tag):
     print("🔗 Establishing SSH connection...")
     print(f"Host: {host}, User: {username}, Key: {key_file}")
     ssh = create_ssh_client(host, 22, username, key_file)
@@ -30,7 +30,7 @@ def deploy(host, username, docker_compose_path, key_file, tag):
 
     commands = [
         f"docker pull {tag}",
-        "docker-compose up -d misho"
+        f"docker-compose up -d {app}"
     ]
 
     for cmd in commands:
@@ -48,14 +48,19 @@ def deploy(host, username, docker_compose_path, key_file, tag):
 def main():
     parser = argparse.ArgumentParser(description="Deploy Misho app via SSH.")
     parser.add_argument("ssh_key", help="Path to private key file")
+    parser.add_argument("app", help="Application (misho, misho-bot)")
     parser.add_argument(
         "--host", default='ec2-52-57-94-53.eu-central-1.compute.amazonaws.com', help="Remote host")
     parser.add_argument("--username", default='ec2-user', help="SSH username")
-    parser.add_argument("--tag", default="mojo28/misho:latest")
+    parser.add_argument("--tag", default="latest")
     parser.add_argument("--compose", default=f"{_SCRIPT_DIR}/docker-compose.yml",
                         help=f"Path to docker-compose.yml (default: {_SCRIPT_DIR}/docker-compose.yml)")
-
     args = parser.parse_args()
+
+    tag = {
+        'misho-server': 'mojo28/misho',
+        'misho-bot': 'mojo28/misho-bot'
+    }[args.app] + ':' + args.tag
 
     if not os.path.isfile(args.compose):
         print(f"❌ File not found: {args.compose}")
@@ -66,7 +71,8 @@ def main():
         username=args.username,
         docker_compose_path=args.compose,
         key_file=args.ssh_key,
-        tag=args.tag
+        app=args.app,
+        tag=tag
     )
 
 

@@ -39,7 +39,7 @@ async def handle_message(open_ai_clients: dict[str, OpenAiUserClient], update: U
     if not open_ai_client or message is None:
         return None
 
-    response = open_ai_client.handle_user_message(message)
+    response = await open_ai_client.handle_user_message(message)
 
     print(open_ai_client._messages)
 

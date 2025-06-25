@@ -1,5 +1,7 @@
-from datetime import datetime
+import asyncio
+from datetime import datetime, timedelta
 import json
+import logging
 from misho_bot import open_ai_tools
 from misho_client import Authorization
 from misho_client.job_client import JobClient
@@ -16,15 +18,25 @@ class OpenAiUserClient:
         job_client: JobClient,
         authorization: Authorization
     ):
+        self._last_message_timestamp = None
         self._messages = [self._system_message()]
         self._open_ai_client = open_ai_client
         self._job_client = job_client
         self._authorization = authorization
+        self._clear_context_after_seconds = 60 * 10  # 10 minutes
+        self._lock = asyncio.Lock()
+        self._context_cleanup_task_started = False
 
-    def handle_user_message(self, user_message: str) -> str | None:
-        self._messages.append({"role": "user", "content": user_message})
-        response = self._ask_openai()
-        return self._handle_open_ai_response(response)
+    async def handle_user_message(self, user_message: str) -> str | None:
+        if not self._context_cleanup_task_started:
+            asyncio.create_task(self._start_context_cleanup_loop())
+            self._context_cleanup_task_started = True
+
+        async with self._lock:
+            self._messages.append({"role": "user", "content": user_message})
+            response = self._ask_openai()
+            self._last_message_timestamp = datetime.now()
+            return self._handle_open_ai_response(response)
 
     def _ask_openai(self):
         return self._open_ai_client.chat.completions.create(
@@ -88,6 +100,20 @@ class OpenAiUserClient:
                 "content": str(result)
             }
         )
+
+    async def _start_context_cleanup_loop(self):
+        while True:
+            await asyncio.sleep(30)
+            async with self._lock:
+                if (
+                    self._last_message_timestamp and
+                    datetime.now() - self._last_message_timestamp > timedelta(seconds=self._clear_context_after_seconds)
+                ):
+                    self._clear_context()
+
+    def _clear_context(self):
+        logging.info("Clearing context due to inactivity.")
+        self._messages = [self._system_message()]
 
     def _system_message(self):
         return {
