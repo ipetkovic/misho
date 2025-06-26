@@ -48,3 +48,44 @@ def parse_date_or_weekday(value: str) -> datetime.date:
     if days_ahead < 0:  # Target day already passed this week, get next week's
         days_ahead += 7
     return today + datetime.timedelta(days=days_ahead)
+{
+  "@timestamp": "2025-06-26T07:30:02.284Z",
+  "message": "Sending request",
+  "logger_name": "de.codept.commons.http.WsClientLive",
+  "thread_name": "ZScheduler-Worker-0",
+  "level": "INFO",
+  "level_value": 20000,
+  "application.home": "/opt/docker",
+  "context": {
+    "payload": "",
+    "payloadSize": 0,
+    "format": "STORELOGIX",
+    "warehouse": {
+      "id": "WH_DE_10026",
+      "name": "Storelogix"
+    },
+    "flow": "STOCK_UPDATE",
+    "url": "https://kl-rest-test.storelogix.de:40040/REST/inventory/stock",
+    "skus": [],
+    "queryParams": {
+      "Receiver": [
+        "RESTSERVER"
+      ],
+      "Client": [
+        "3PL-000"
+      ]
+    },
+    "headers": {
+      "Content-Type": [
+        "application/xml"
+      ],
+      "Accept": [
+        "application/xml"
+      ]
+    },
+    "method": "GET",
+    "requestId": "c581a356-dcca-4085-8698-8c969e8be19b",
+    "auth": "StorelogixAuth",
+    "additionalTags": {}
+  }
+}

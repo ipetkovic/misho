@@ -23,6 +23,6 @@ CONFIG_PROD = Config(
         port=587,
         username=_MAIL_USERNAME,
         password=_MAIL_PASSWORD
-    )
-
+    ),
+    notification_webhook_url="localhost:8001/notifications"
 )

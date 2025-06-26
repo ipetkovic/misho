@@ -1,12 +1,13 @@
 from misho_server.domain.job_notification import JobNotification
 from misho_server.repository.job_notifications_repository import JobNotificationsRepository
 from misho_server.service import mail_service
+from misho_server.service.notification_service import NotificationService
 
 
 class JobNotifier:
-    def __init__(self, job_notifications_repository: JobNotificationsRepository, mail_service: mail_service.MailService):
+    def __init__(self, job_notifications_repository: JobNotificationsRepository, notification_service: NotificationService):
         self._job_notifications_repository = job_notifications_repository
-        self._mail_service = mail_service
+        self._notification_service = notification_service
 
     async def handle(self):
         """
@@ -33,8 +34,6 @@ class JobNotifier:
             else f"rezerviran od strane: {notification.reserved_by}"
         )
 
-        await self._mail_service.send_email(
-            to=notification.job.user.email,
-            subject="Sportbooking obavijest",
-            body=msg
+        await self._notification_service.send_notification(
+            user=notification.user, message=msg
         )

@@ -5,6 +5,7 @@ from misho_server.domain.reservation_calendar import CourtId
 from misho_server.domain.reservation_slot import ReservationSlot
 from misho_server.repository.jobs import JobsRepository
 from misho_server.service.mail_service import MailService
+from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_service import ReservationService
 
 
@@ -13,11 +14,12 @@ class ReserveJobExecutor:
         self,
         job_repository: JobsRepository,
         reservation_service: ReservationService,
-        mail_service: MailService,  # Optional, can be used for notifications
+        # Optional, can be used for notifications
+        notification_service: NotificationService,
     ):
         self._job_repository = job_repository
         self._reservation_service = reservation_service
-        self._mail_service = mail_service
+        self._notification_service = notification_service
 
     async def execute(self, job: Job, court_pool: set[CourtId] = None):
 
@@ -81,10 +83,9 @@ class ReserveJobExecutor:
         else:
             body = f"Rezervacija za termin {job.time_slot} nije uspjela."
 
-        await self._mail_service.send_email(
-            to=job.user.email,
-            subject="Sportbooking obavijest",
-            body=body
+        await self._notification_service.send_notification(
+            user=job.user,
+            message=body
         )
 
     async def _update_job_status(self, job: Job, is_success: bool):

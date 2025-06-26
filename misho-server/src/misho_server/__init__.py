@@ -4,6 +4,7 @@ import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+import httpx
 from misho_server.controller.reservation_calendar import ReservationCalendarController
 from misho_server.http.auth import AuthMiddleware
 from misho_server.http.http_app import HttpApplication
@@ -22,6 +23,7 @@ from misho_server.repository.user import UserRepositorySqlite
 from misho_server.repository.user_token import UserTokenRepositorySqlite
 from misho_server.service.job_notifier import JobNotifier
 from misho_server.service.mail_service import MailService
+from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_monitoring import ReservationMonitoring
 from misho_server.service.reservation_scheduler import ReservationSchedulerImpl
 from misho_server.service.reservation_service import ReservationService
@@ -43,6 +45,8 @@ async def start():
     )
 
     logging.getLogger("core").setLevel(CONFIG.logging.level)
+
+    print(CONFIG.database_path)
 
     engine = create_async_engine(
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)
@@ -74,9 +78,17 @@ async def start():
 
         mail_service = MailService(CONFIG.mailer_config)
 
+        http_client = httpx.AsyncClient()
+
+        notification_service = NotificationService(
+            http_client=http_client,
+            mail_service=mail_service,
+            notification_webhook_url=CONFIG.notification_webhook_url
+        )
+
         job_notifier = JobNotifier(
             job_notifications_repository=job_notifications_repository,
-            mail_service=mail_service)
+            notification_service=notification_service)
 
         available_job_reservation_slot_repository = AvailableJobReservationSlotRepositorySqlite(
             engine)
@@ -88,7 +100,7 @@ async def start():
         reserve_job_executor = ReserveJobExecutor(
             job_repository=jobs_repository,
             reservation_service=reservation_service,
-            mail_service=mail_service,
+            notification_service=notification_service
         )
 
         reservation_scheduler = ReservationSchedulerImpl(
