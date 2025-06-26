@@ -114,6 +114,7 @@ class OpenAiUserClient:
     def _clear_context(self):
         logging.info("Clearing context due to inactivity.")
         self._messages = [self._system_message()]
+        self._last_message_timestamp = None
 
     def _system_message(self):
         return {
