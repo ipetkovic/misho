@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "aiohttp>=3.12.13",
     "misho-client",
     "openai>=1.91.0",
     "python-telegram-bot>=22.1",

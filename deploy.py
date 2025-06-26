@@ -57,10 +57,12 @@ def main():
                         help=f"Path to docker-compose.yml (default: {_SCRIPT_DIR}/docker-compose.yml)")
     args = parser.parse_args()
 
-    tag = {
-        'misho-server': 'mojo28/misho',
-        'misho-bot': 'mojo28/misho-bot'
-    }[args.app] + ':' + args.tag
+    service_name = {
+        'misho-server': 'misho',
+        'misho-bot': 'misho-bot'
+    }
+
+    tag = 'mojo28/' + service_name[args.app] + ':' + args.tag
 
     if not os.path.isfile(args.compose):
         print(f"❌ File not found: {args.compose}")
@@ -71,7 +73,7 @@ def main():
         username=args.username,
         docker_compose_path=args.compose,
         key_file=args.ssh_key,
-        app=args.app,
+        app=service_name[args.app],
         tag=tag
     )
 

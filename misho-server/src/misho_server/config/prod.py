@@ -24,5 +24,5 @@ CONFIG_PROD = Config(
         username=_MAIL_USERNAME,
         password=_MAIL_PASSWORD
     ),
-    notification_webhook_url="localhost:8001/notifications"
+    notification_webhook_url="http://misho-bot:8001/notifications"
 )

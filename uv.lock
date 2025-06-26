@@ -734,6 +734,7 @@ name = "misho-bot"
 version = "0.1.0"
 source = { editable = "misho-bot" }
 dependencies = [
+    { name = "aiohttp" },
     { name = "misho-client" },
     { name = "openai" },
     { name = "python-telegram-bot" },
@@ -741,6 +742,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiohttp", specifier = ">=3.12.13" },
     { name = "misho-client", editable = "misho-client" },
     { name = "openai", specifier = ">=1.91.0" },
     { name = "python-telegram-bot", specifier = ">=22.1" },

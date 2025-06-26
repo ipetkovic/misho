@@ -12,6 +12,7 @@ class NotificationService:
     def __init__(self, http_client: AsyncClient, mail_service: MailService, notification_webhook_url: str | None):
         self._mail_service = mail_service
         self._http_client = http_client
+        print(f"Notification webhook URL: {notification_webhook_url}")
         self._webhook_url = notification_webhook_url
 
     async def send_notification(self, user: User, message: str) -> None:

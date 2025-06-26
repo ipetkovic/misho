@@ -29,3 +29,5 @@ services:
       args:
         TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
         MISHO_ACCESS_KEY: ${MISHO_ACCESS_KEY}
+    ports:
+      - "8001:8001"
