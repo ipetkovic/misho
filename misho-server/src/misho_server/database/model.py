@@ -162,3 +162,19 @@ class JobNotificationState(Base):
         "JobCourt", back_populates="notification_state"
     )
     job: Mapped[Job] = association_proxy("job_court", "job")
+
+
+class UserTelegramIntegration(Base):
+    __tablename__ = 'user_telegram_notifications'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    username: Mapped[str] = mapped_column(unique=True)
+    chat_id: Mapped[int] = mapped_column(unique=True, nullable=True)
+    enable_notifications: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    user: Mapped[User] = relationship(User)
