@@ -91,12 +91,12 @@ class JobsRepositorySqlite(JobsRepository):
             print(jobs_dao)
             return [to_domain(job[0]) for job in jobs_dao]
 
-    async def list_all(self, status: Status = None, user_id: UserId = None) -> list[Job]:
+    async def list_all(self, statuses: list[Status] | None = None, user_id: UserId = None) -> list[Job]:
         async with self._sessionmaker() as session:
             stmt = self._select()
 
-            if status is not None:
-                stmt = stmt.where(dao.Job.status == status)
+            if statuses is not None:
+                stmt = stmt.where(dao.Job.status.in_(statuses))
 
             if user_id is not None:
                 stmt = stmt.where(dao.Job.user_id == user_id)
