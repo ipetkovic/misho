@@ -42,13 +42,17 @@ class JobsService:
     async def list_jobs(self, statuses: list[Status] | None = None, user_id: UserId = None) -> list[Job]:
         self._jobs_repository.list_all(statuses=statuses, user_id=user_id)
 
-    async def get_job(self, job_id: int) -> Job | None:
-        self._jobs_repository.find_by_id(job_id)
+    async def get_job(self, job_id: int, user_id: UserId | None) -> Job | None:
+        job = await self._jobs_repository.find_by_id(job_id)
 
-    async def delete_job(self, job_id: int) -> bool:
+        if not job or (user_id and job.user.id != user_id):
+            return None
+        return job
+
+    async def delete_job(self, job_id: int, user_id: UserId | None) -> bool:
         job = await self.get_job(job_id)
 
-        if not job:
+        if not job or (user_id and job.user.id != user_id):
             return False
 
         await self._jobs_repository.delete(job_id)

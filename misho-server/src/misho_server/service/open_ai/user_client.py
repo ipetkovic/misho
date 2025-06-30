@@ -2,7 +2,10 @@ import asyncio
 from datetime import datetime, timedelta
 import json
 import logging
-from misho_bot import open_ai_tools
+from misho_server.domain.job import JobCreate
+from misho_server.domain.user import UserId
+from misho_server.service.jobs_service import JobsService
+from misho_server.service.open_ai import tools
 from misho_client import Authorization
 from misho_client.job_client import JobClient
 from openai import OpenAI
@@ -15,14 +18,14 @@ class OpenAiUserClient:
     def __init__(
         self,
         open_ai_client: OpenAI,
-        job_client: JobClient,
-        authorization: Authorization
+        jobs_service: JobsService,
+        user_id: UserId
     ):
         self._last_message_timestamp = None
         self._messages = [self._system_message()]
         self._open_ai_client = open_ai_client
-        self._job_client = job_client
-        self._authorization = authorization
+        self._jobs_service = jobs_service
+        self._user_id = user_id
         self._clear_context_after_seconds = 60 * 10  # 10 minutes
         self._lock = asyncio.Lock()
         self._context_cleanup_task_started = False
@@ -42,7 +45,7 @@ class OpenAiUserClient:
         return self._open_ai_client.chat.completions.create(
             model="gpt-4o",
             messages=self._messages,
-            tools=open_ai_tools.get_tools(),
+            tools=tools.get_tools(),
             tool_choice="auto"
         )
 
@@ -68,22 +71,20 @@ class OpenAiUserClient:
         print(f"Function call: {func_name} with arguments: {args}")
 
         if func_name == "create_job":
-            result = self._job_client.create_job(
-                authorization=self._authorization,
-                job_create=JobCreateApi(**args)
+            args['user_id'] = self._user_id
+            result = self._jobs_service.create_job(
+                job_create=JobCreate(**args)
             )
             self._tool_call_append(tool_call, result)
 
         elif func_name == "list_jobs":
-            result = self._job_client.list_jobs(
-                authorization=self._authorization
-            )
+            result = self._jobs_service.list_jobs(user_id=self._user_id)
             self._tool_call_append(tool_call, result)
 
         elif func_name == "delete_job":
-            result = self._job_client.delete_job(
-                authorization=self._authorization,
-                job_id=args['job_id']
+            result = self._jobs_service.delete_job(
+                job_id=args['job_id'],
+                user_id=self._user_id
             )
             self._tool_call_append(tool_call, result)
 

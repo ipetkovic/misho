@@ -51,7 +51,8 @@ class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
                     and_(
                         dao.MonitoringJob.action == dao.MonitoringAction.RESERVE,
                         dao.ReservationCalendar.reserved_by == None,
-                        dao.Job.status == dao.Status.PENDING,
+                        dao.Job.status.in_(
+                            [dao.Status.PENDING, dao.Status.FAILED]),
                     )
                 )
             )
