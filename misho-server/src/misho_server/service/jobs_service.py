@@ -51,7 +51,7 @@ class JobsService:
         return job
 
     async def delete_job(self, job_id: int, user_id: UserId | None) -> bool:
-        job = await self.get_job(job_id)
+        job = await self.get_job(job_id, user_id)
 
         if not job or (user_id and job.user.id != user_id):
             return False
@@ -77,6 +77,6 @@ class JobsService:
 
         job_for_time_slot = await self._jobs_repository.find_by_time_slot(job_create.time_slot)
         if job_for_time_slot:
-            return JobAlreadyExists(
+            raise JobAlreadyExists(
                 f"Job for time slot {job_create.time_slot} already exists (id: {job_for_time_slot.id}). Either delete previous job or change time slot."
             )

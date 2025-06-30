@@ -3,7 +3,6 @@ from enum import Enum
 
 import pydantic
 
-from misho_server.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
 from misho_server.domain.reservation_calendar import CourtId
 from misho_server.domain.time_slot import TimeSlot
 from misho_server.domain.user import User, UserId
@@ -17,12 +16,17 @@ class Status(Enum):
     FAILED = "FAILED"
 
 
+class JobAction(Enum):
+    RESERVE = "RESERVE"
+    NOTIFY = "NOTIFY"
+
+
 class Job(pydantic.BaseModel):
     id: JobId
     user: User
     time_slot: TimeSlot
     courts_by_priority: tuple[CourtId, ...]
-    job_type: MonitoringJob
+    action: JobAction
     created_at: datetime.datetime
     status: Status
 
@@ -32,7 +36,7 @@ class Job(pydantic.BaseModel):
 class JobCreate(pydantic.BaseModel):
     user_id: UserId
     time_slot: TimeSlot
-    job_type: MonitoringJobCreate
+    action: JobAction
     courts_by_priority: list[CourtId]
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

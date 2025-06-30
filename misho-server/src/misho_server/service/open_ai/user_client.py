@@ -64,6 +64,7 @@ class OpenAiUserClient:
             for tool_call in tool_calls:
                 await self._handle_tool_call(tool_call)
 
+            response = self._ask_openai()
             open_ai_response = await self._handle_open_ai_response(response)
             return open_ai_response
 
@@ -73,23 +74,33 @@ class OpenAiUserClient:
 
         print(f"Function call: {func_name} with arguments: {args}")
 
+        async def call(cr):
+            try:
+                result = await cr
+                return result
+            except Exception as e:
+                return str(e)
+
         if func_name == "create_job":
             args['user_id'] = self._user_id
-            result = await self._jobs_service.create_job(
-                job_create=JobCreate(**args)
+            result = await call(
+                self._jobs_service.create_job(
+                    job_create=JobCreate(**args)
+                )
             )
+
             self._tool_call_append(tool_call, result)
 
         elif func_name == "list_jobs":
-            result = await self._jobs_service.list_jobs(user_id=self._user_id)
+            result = await call(self._jobs_service.list_jobs(user_id=self._user_id))
             print(f"List jobs result: {result}")
             self._tool_call_append(tool_call, result)
 
         elif func_name == "delete_job":
-            result = await self._jobs_service.delete_job(
+            result = await call(self._jobs_service.delete_job(
                 job_id=args['job_id'],
                 user_id=self._user_id
-            )
+            ))
             self._tool_call_append(tool_call, result)
 
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):

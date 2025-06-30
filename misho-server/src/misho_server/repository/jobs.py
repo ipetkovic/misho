@@ -7,10 +7,9 @@ from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import misho_server.database.model as dao
 
-from misho_server.domain.job import Job, JobCreate, JobId, Status
+from misho_server.domain.job import Job, JobAction, JobCreate, JobId, Status
 from misho_server.domain.user import UserId
 from misho_server.repository.user import to_domain as user_to_domain
-from misho_server.domain.monitoring_job import MonitoringAction, MonitoringJob, MonitoringJobCreate
 from misho_server.domain.time_slot import TimeSlot
 from misho_server.repository.time_slot import find_time_slot_id
 from misho_server.repository.time_slot import to_domain as time_slot_to_domain
@@ -58,18 +57,16 @@ class JobsRepositorySqlite(JobsRepository):
                 user_id=job.user_id,
                 time_slot_id=time_slot_id,
                 job_courts=job_courts,
-                monitoring_job=dao.MonitoringJob(action=job.job_type.action),
+                monitoring_job=dao.MonitoringJob(action=job.action),
             )
 
             session.add(job_dao)
-
-            print(job.job_type)
 
             await session.flush()
             for job_court in job_dao.job_courts:
                 notification_state = dao.JobNotificationState(
                     job_court_id=job_court.id,
-                    trigger_on_available=job.job_type.action == MonitoringAction.NOTIFY,
+                    trigger_on_available=job.action == JobAction.NOTIFY,
                 )
                 session.add(notification_state)
 
@@ -149,17 +146,14 @@ class JobsRepositorySqlite(JobsRepository):
 
 
 def to_domain(job_dao: dao.Job) -> Job:
-    job_type = None
     print(job_dao.id)
     print(job_dao.monitoring_job)
-    job_type = MonitoringJob(
-        action=job_dao.monitoring_job.action)
 
     return Job(
         id=job_dao.id,
         user=user_to_domain(job_dao.user),
         time_slot=time_slot_to_domain(job_dao.time_slot),
-        job_type=job_type,
+        action=job_dao.monitoring_job.action.value,
         courts_by_priority=tuple(
             court.court_id for court in job_dao.job_courts),
         created_at=job_dao.created_at,

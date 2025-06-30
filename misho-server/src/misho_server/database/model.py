@@ -5,8 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.associationproxy import association_proxy
 import datetime
 
-from misho_server.domain.job import Status
-from misho_server.domain.monitoring_job import MonitoringAction
+from misho_server.domain.job import JobAction, Status
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -129,7 +128,7 @@ class MonitoringJob(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"))
-    action: Mapped[MonitoringAction] = mapped_column(Enum(MonitoringAction))
+    action: Mapped[JobAction] = mapped_column(Enum(JobAction))
 
     job: Mapped[Job] = relationship(
         Job, back_populates="monitoring_job")

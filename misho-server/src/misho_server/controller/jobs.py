@@ -1,12 +1,9 @@
 from misho_server.controller.transformers import time_slot_from_api, time_slot_to_api
-from misho_server.domain.monitoring_job import MonitoringJob, MonitoringJobCreate
 from misho_server.service.jobs_service import JobsService, JobsServiceError
 from misho_api.job import JobApi, JobCreateApi, JobListApi
 from misho_server.controller.common import bad_request, from_json, not_found, success_response
 from misho_server.domain.job import Job as JobDomain, JobCreate as JobCreateDomain, JobId, Status
 from misho_server.domain.user import User
-from misho_server.repository.court import CourtRepository
-from misho_server.repository.hour_slot import HourSlotRepository
 
 from aiohttp import web
 
@@ -107,7 +104,7 @@ def from_api_job(job: JobApi, user: User) -> JobDomain:
         user=user,
         time_slot=time_slot_from_api(job.time_slot),
         courts_by_priority=job.courts_by_priority,
-        job_type=MonitoringJob(action=job.action.value),
+        action=job.action.value,
         created_at=job.created_at,
         status=Status(job.status.value),
     )
@@ -118,7 +115,7 @@ def from_api_job_create(job_create: JobCreateApi, user: User) -> JobCreateDomain
     job_create_domain = JobCreateDomain(
         user_id=user.id,
         time_slot=time_slot_from_api(job_create.time_slot),
-        job_type=MonitoringJobCreate(action=job_create.action.value),
+        action=job_create.action.value,
         courts_by_priority=tuple(job_create.courts_by_priority)
     )
     return job_create_domain
