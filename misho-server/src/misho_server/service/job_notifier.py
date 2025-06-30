@@ -35,5 +35,5 @@ class JobNotifier:
         )
 
         await self._notification_service.send_notification(
-            user=notification.user, message=msg
+            user=notification.job.user, message=msg
         )

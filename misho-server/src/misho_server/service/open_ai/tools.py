@@ -63,7 +63,7 @@ list_jobs_tool = {
         "description": (
             "Show a list of current jobs. Optionally filter by status. "
             "Possible status values: PENDING, FAILED, SUCCESS."
-        )
+        ),
     }
 }
 
