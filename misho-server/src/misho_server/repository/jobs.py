@@ -9,7 +9,7 @@ import misho_server.database.model as dao
 
 from misho_server.domain.job import Job, JobCreate, JobId, Status
 from misho_server.domain.user import UserId
-from misho_server.repository.user import _to_domain as user_to_domain
+from misho_server.repository.user import to_domain as user_to_domain
 from misho_server.domain.monitoring_job import MonitoringAction, MonitoringJob, MonitoringJobCreate
 from misho_server.domain.time_slot import TimeSlot
 from misho_server.repository.time_slot import find_time_slot_id
@@ -28,7 +28,7 @@ class JobsRepository:
     ) -> Job | None:
         raise NotImplementedError()
 
-    async def list_all(self, status: Status = None) -> list[Job]:
+    async def list_all(self, statuses: list[Status] | None = None, user_id: UserId = None) -> list[Job]:
         raise NotImplementedError()
 
     async def get_reservation_jobs_for_date(self, date: datetime.date) -> list[Job]:

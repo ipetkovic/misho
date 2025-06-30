@@ -5,6 +5,7 @@ from misho_server.config.model import Config, LoggingConfig, MailerConfig, Reser
 
 _MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME')
 _MAIL_PASSWORD = os.getenv('MISHO_MAIL_PASSWORD')
+_TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 
 CONFIG_PROD = Config(
@@ -24,5 +25,5 @@ CONFIG_PROD = Config(
         username=_MAIL_USERNAME,
         password=_MAIL_PASSWORD
     ),
-    notification_webhook_url="http://misho-bot:8001/notifications"
+    telegram_bot_token=_TELEGRAM_TOKEN
 )

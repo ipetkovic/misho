@@ -39,7 +39,8 @@ class OpenAiUserClient:
             self._messages.append({"role": "user", "content": user_message})
             response = self._ask_openai()
             self._last_message_timestamp = datetime.now()
-            return self._handle_open_ai_response(response)
+            response = await self._handle_open_ai_response(response)
+            return response
 
     def _ask_openai(self):
         return self._open_ai_client.chat.completions.create(
@@ -49,8 +50,10 @@ class OpenAiUserClient:
             tool_choice="auto"
         )
 
-    def _handle_open_ai_response(self, response: ChatCompletion) -> str | None:
+    async def _handle_open_ai_response(self, response: ChatCompletion) -> str | None:
         choice = response.choices[0]
+
+        print(choice)
 
         if choice.finish_reason == "stop":
             return choice.message.content
@@ -59,12 +62,12 @@ class OpenAiUserClient:
             tool_calls = choice.message.tool_calls
 
             for tool_call in tool_calls:
-                self._handle_tool_call(tool_call)
+                await self._handle_tool_call(tool_call)
 
-            response = self._ask_openai()
-            return self._handle_open_ai_response(response)
+            open_ai_response = await self._handle_open_ai_response(response)
+            return open_ai_response
 
-    def _handle_tool_call(self, tool_call: ChatCompletionMessageToolCall):
+    async def _handle_tool_call(self, tool_call: ChatCompletionMessageToolCall):
         func_name = tool_call.function.name
         args = json.loads(tool_call.function.arguments)
 
@@ -72,17 +75,18 @@ class OpenAiUserClient:
 
         if func_name == "create_job":
             args['user_id'] = self._user_id
-            result = self._jobs_service.create_job(
+            result = await self._jobs_service.create_job(
                 job_create=JobCreate(**args)
             )
             self._tool_call_append(tool_call, result)
 
         elif func_name == "list_jobs":
-            result = self._jobs_service.list_jobs(user_id=self._user_id)
+            result = await self._jobs_service.list_jobs(user_id=self._user_id)
+            print(f"List jobs result: {result}")
             self._tool_call_append(tool_call, result)
 
         elif func_name == "delete_job":
-            result = self._jobs_service.delete_job(
+            result = await self._jobs_service.delete_job(
                 job_id=args['job_id'],
                 user_id=self._user_id
             )

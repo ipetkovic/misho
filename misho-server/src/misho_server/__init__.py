@@ -20,8 +20,11 @@ from misho_server.repository.jobs import JobsRepositorySqlite
 from misho_server.repository.reservation_calendar import ReservationCalendarRepositorySqlite
 from misho_server.repository.time_slot import TimeSlotRepositorySqlite
 from misho_server.repository.user import UserRepositorySqlite
+from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepositorySqlite
 from misho_server.repository.user_token import UserTokenRepositorySqlite
+from misho_server.service import telegram_bot
 from misho_server.service.job_notifier import JobNotifier
+from misho_server.service.jobs_service import JobsService
 from misho_server.service.mail_service import MailService
 from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_monitoring import ReservationMonitoring
@@ -29,6 +32,7 @@ from misho_server.service.reservation_scheduler import ReservationSchedulerImpl
 from misho_server.service.reservation_service import ReservationService
 from misho_server.service.reserve_job_executor import ReserveJobExecutor
 from misho_server.service.session_token_fetch_service import SessionTokenFetchService
+from openai import OpenAI
 from sqlalchemy.ext.asyncio import create_async_engine
 from aiohttp import web
 
@@ -81,9 +85,7 @@ async def start():
         http_client = httpx.AsyncClient()
 
         notification_service = NotificationService(
-            http_client=http_client,
-            mail_service=mail_service,
-            notification_webhook_url=CONFIG.notification_webhook_url
+            mail_service=mail_service
         )
 
         job_notifier = JobNotifier(
@@ -129,10 +131,12 @@ async def start():
         hour_slot_repository = HourSlotRepository(engine)
         court_respository = CourtRepository(engine)
 
+        jobs_service = JobsService(jobs_repository=jobs_repository,
+                                   hour_slots_repository=hour_slot_repository,
+                                   court_repository=court_respository)
+
         jobs_controller = JobsController(
-            jobs_repository=jobs_repository,
-            hour_slots_repository=hour_slot_repository,
-            court_repository=court_respository
+            jobs_service=jobs_service,
         )
         signup_controller = SignUpController(
             user_service=user_repository, sportbooking=sportbooking_service)
@@ -155,7 +159,20 @@ async def start():
         await http_app.start_server()
         logging.info("HTTP server started")
 
-        await _sleep_forever()
+        user_telegram_integration_repository = UserTelegramIntegrationRepositorySqlite(
+            engine=engine)
+
+        open_ai_user_client_builder = telegram_bot.OpenAiUserClientBuilder(
+            open_ai_client=OpenAI(),
+            jobs_service=jobs_service
+        )
+
+        async with telegram_bot.TelegramBot(
+            telegram_token=CONFIG.telegram_bot_token,
+            user_telegram_integration_repository=user_telegram_integration_repository,
+            open_ai_user_client_builder=open_ai_user_client_builder
+        ):
+            await _sleep_forever()
 
 
 async def _sleep_forever():

@@ -29,4 +29,4 @@ class Config:
     logging: LoggingConfig
     reservation_monitoring: ReservationMonitoringConfig
     mailer_config: MailerConfig
-    notification_webhook_url: str | None = None
+    telegram_bot_token: str

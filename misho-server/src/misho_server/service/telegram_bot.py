@@ -1,21 +1,14 @@
-import asyncio
 import logging
 from misho_server.domain.user import UserId
 from misho_server.domain.user_telegram_data import UserTelegramData
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai.user_client import OpenAiUserClient
-from misho_client.job_client import JobClient
-from aiohttp import web
-import pydantic
 from telegram import Update
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, Application
 
 import os
 from openai import OpenAI
-
-
-_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 
 
 class OpenAiUserClientBuilder:
@@ -31,7 +24,7 @@ class OpenAiUserClientBuilder:
         )
 
 
-class TelegramBotApplication:
+class TelegramBot:
     def __init__(
         self,
         telegram_token: str,
@@ -42,22 +35,30 @@ class TelegramBotApplication:
         self._user_telegram_integration_repository = user_telegram_integration_repository
         self._open_ai_user_client_builder = open_ai_user_client_builder
         self._open_ai_clients: dict[str, OpenAiUserClient] = {}
-        application = ApplicationBuilder().token(telegram_token).build()
+        self._application = ApplicationBuilder().token(telegram_token).build()
 
-        start_handler = CommandHandler('start', self.start)
-        application.add_handler(start_handler)
+        start_handler = CommandHandler('start', self._start_handler)
+        self._application.add_handler(start_handler)
 
         message_handler = MessageHandler(
-            filters.TEXT & (~filters.COMMAND), self.handle_message)
-        application.add_handler(message_handler)
+            filters.TEXT, self._message_handler)
+        self._application.add_handler(message_handler)
 
-    async def __aenter__(self):
-        return self
+    async def start(self):
+        logging.info("Starting Telegram bot application...")
+        try:
+            await self._application.initialize()
+            await self._application.start()
+            await self._application.updater.start_polling()
+        except Exception:
+            await self._application.shutdown()
+            raise
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        pass
+    async def stop(self):
+        logging.info("Stopping Telegram bot application...")
+        await self._application.shutdown()
 
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         is_user_registered = await self._is_user_registered(update.effective_user.username)
         if not is_user_registered:
             return None
@@ -75,7 +76,7 @@ class TelegramBotApplication:
         )
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
-    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> str | None:
+    async def _message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> str | None:
         message = update.message.text
         open_ai_client = await self._get_open_ai_client(
             update.effective_user.username,
@@ -124,32 +125,9 @@ class TelegramBotApplication:
             chat_id=chat_id
         )
 
+    async def __aenter__(self):
+        await self.start()
+        return self
 
-async def run():
-    open_ai_client = OpenAI()
-
-    open_ai_user_client_builder = OpenAiUserClientBuilder
-
-    application = ApplicationBuilder().token(_TOKEN).build()
-
-    start_handler = CommandHandler('start', start)
-    application.add_handler(start_handler)
-
-    async def message_handler_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        result = await handle_message(open_ai_clients, update, context)
-        return result
-
-    message_handler = MessageHandler(
-        filters.TEXT & (~filters.COMMAND), message_handler_callback)
-    application.add_handler(message_handler)
-
-    async with application:
-        await application.start()
-        await http_server(application)
-        await application.updater.start_polling()
-        await asyncio.Event().wait()
-        await application.stop()
-
-
-def main():
-    asyncio.run(run())
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.stop()

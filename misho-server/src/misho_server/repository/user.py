@@ -40,28 +40,28 @@ class UserRepositorySqlite(UserRepository):
             )
             session.add(user_dao)
             await session.commit()
-            return (_to_domain(user_dao), AppToken(token=token))
+            return (to_domain(user_dao), AppToken(token=token))
 
     async def get_user_by_auth_token(self, auth_token: str) -> User | None:
         async with self._sessionmaker() as session:
             stmt = select(dao.User).where(dao.User.app_token == auth_token)
             user_dao = await session.scalar(stmt)
-            return _to_domain(user_dao) if user_dao else None
+            return to_domain(user_dao) if user_dao else None
 
     async def get_user_by_id(self, user_id: UserId) -> User | None:
         async with self._sessionmaker() as session:
             stmt = select(dao.User).where(dao.User.id == user_id)
             user_dao = await session.scalar(stmt)
-            return _to_domain(user_dao) if user_dao else None
+            return to_domain(user_dao) if user_dao else None
 
     async def get_user_by_username(self, username: str) -> User | None:
         async with self._sessionmaker() as session:
             stmt = select(dao.User).where(dao.User.username == username)
             user_dao = await session.scalar(stmt)
-            return _to_domain(user_dao) if user_dao else None
+            return to_domain(user_dao) if user_dao else None
 
 
-def _to_domain(user_dao: dao.User) -> User:
+def to_domain(user_dao: dao.User) -> User:
     return User(
         id=user_dao.id,
         username=user_dao.username,

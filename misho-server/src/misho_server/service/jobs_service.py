@@ -40,7 +40,8 @@ class JobsService:
         return await self._jobs_repository.insert(job_create)
 
     async def list_jobs(self, statuses: list[Status] | None = None, user_id: UserId = None) -> list[Job]:
-        self._jobs_repository.list_all(statuses=statuses, user_id=user_id)
+        result = await self._jobs_repository.list_all(statuses=statuses, user_id=user_id)
+        return result
 
     async def get_job(self, job_id: int, user_id: UserId | None) -> Job | None:
         job = await self._jobs_repository.find_by_id(job_id)

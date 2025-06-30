@@ -168,7 +168,8 @@ class UserTelegramIntegration(Base):
     __tablename__ = 'user_telegram_notifications'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"), unique=True, nullable=True)
     username: Mapped[str] = mapped_column(unique=True)
     chat_id: Mapped[int] = mapped_column(unique=True, nullable=True)
     enable_notifications: Mapped[bool] = mapped_column(default=True)
