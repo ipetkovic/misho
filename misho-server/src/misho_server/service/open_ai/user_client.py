@@ -6,8 +6,6 @@ from misho_server.domain.job import JobCreate
 from misho_server.domain.user import UserId
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai import tools
-from misho_client import Authorization
-from misho_client.job_client import JobClient
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletion
 

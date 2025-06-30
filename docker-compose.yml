@@ -17,17 +17,3 @@ services:
       - ./db:/root/db
     ports:
       - "8000:8000"
-
-  misho-bot:
-    env_file: ".env"
-    environment:
-      - TZ=Europe/Berlin
-    image: mojo28/misho-bot
-    build:
-      context: .
-      dockerfile: ./misho-bot/Dockerfile
-      args:
-        TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-        MISHO_ACCESS_KEY: ${MISHO_ACCESS_KEY}
-    ports:
-      - "8001:8001"

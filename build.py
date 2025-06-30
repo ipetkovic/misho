@@ -8,12 +8,12 @@ import sys
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def build_docker_image(app, tag, platform, push):
+def build_docker_image(tag, platform, push):
     cmd = [
         "docker", "buildx", "build",
         "--platform", platform,
         "-t", tag,
-        '--file', os.path.join(_SCRIPT_DIR, app, 'Dockerfile'),
+        '--file', os.path.join(_SCRIPT_DIR, 'misho-server', 'Dockerfile'),
         '.'
     ]
 
@@ -29,17 +29,9 @@ def build_docker_image(app, tag, platform, push):
         sys.exit(1)
 
 
-_TAGS = {
-    "misho-server": "mojo28/misho",
-    "misho-bot": "mojo28/misho-bot"
-}
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Build (and optionally push) a Docker image.")
-    parser.add_argument("app",
-                        help="Application name (misho, misho-bot)")
     parser.add_argument("--tag", "-t", default="mojo28/misho:latest",
                         help="Docker image tag")
     parser.add_argument("--platform", "-p", default="linux/amd64",
@@ -48,8 +40,7 @@ def main():
                         help="Push image to Docker registry")
 
     args = parser.parse_args()
-    tag = _TAGS[args.app] + ':' + 'latest'
-    build_docker_image(args.app, tag, args.platform, args.push)
+    build_docker_image(args.tag, args.platform, args.push)
 
 
 if __name__ == "__main__":

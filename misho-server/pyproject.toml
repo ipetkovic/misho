@@ -15,7 +15,9 @@ dependencies = [
     "apscheduler>=3.11.0",
     "greenlet>=3.2.3",
     "misho-api",
+    "openai>=1.93.0",
     "pydantic[email]>=2.11.7",
+    "python-telegram-bot>=22.1",
     "sportbooking",
     "sqlalchemy>=2.0.41",
 ]
