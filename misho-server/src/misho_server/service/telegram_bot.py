@@ -1,8 +1,10 @@
 import logging
+from misho_server.database.model import User
 from misho_server.domain.user import UserId
 from misho_server.domain.user_telegram_data import UserTelegramData
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
 from misho_server.service.jobs_service import JobsService
+from misho_server.service.notification_service import NotificationService
 from misho_server.service.open_ai.user_client import OpenAiUserClient
 from telegram import Update
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, Application
@@ -29,7 +31,8 @@ class TelegramBot:
         self,
         telegram_token: str,
         user_telegram_integration_repository: UserTelegramIntegrationRepository,
-        open_ai_user_client_builder: OpenAiUserClientBuilder
+        open_ai_user_client_builder: OpenAiUserClientBuilder,
+        notification_service: NotificationService | None
     ):
         self._telegram_token = telegram_token
         self._user_telegram_integration_repository = user_telegram_integration_repository
@@ -44,6 +47,8 @@ class TelegramBot:
             filters.TEXT, self._message_handler)
         self._application.add_handler(message_handler)
 
+        notification_service.subscribe(self._handle_notification)
+
     async def start(self):
         logging.info("Starting Telegram bot application...")
         try:
@@ -57,6 +62,14 @@ class TelegramBot:
     async def stop(self):
         logging.info("Stopping Telegram bot application...")
         await self._application.shutdown()
+
+    async def _handle_notification(self, user: User, message: str) -> None:
+        user_telegram_data = await self._get_user_telegram_data_by_user_id(user.id)
+        if user_telegram_data and user_telegram_data.chat_id is not None:
+            await self._application.bot.send_message(
+                chat_id=user_telegram_data.chat_id,
+                text=message
+            )
 
     async def _start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         is_user_registered = await self._is_user_registered(update.effective_user.username)
@@ -118,6 +131,9 @@ class TelegramBot:
 
     async def _get_user_telegram_data(self, username: str) -> UserTelegramData | None:
         return await self._user_telegram_integration_repository.get_user_telegram_data_by_username(username)
+
+    async def _get_user_telegram_data_by_user_id(self, user_id: UserId) -> UserTelegramData | None:
+        return await self._user_telegram_integration_repository.get_user_telegram_data_by_user_id(user_id)
 
     async def _update_user_chat_id(self, username: str, chat_id: int) -> None:
         await self._user_telegram_integration_repository.update_user_telegram_chat_id(

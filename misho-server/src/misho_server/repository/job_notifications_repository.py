@@ -55,7 +55,7 @@ class JobNotificationsRepositorySqlite(JobNotificationsRepository):
                 .join(dao.TimeSlot, dao.TimeSlot.id == dao.Job.time_slot_id)
                 .join(dao.HourSlot, dao.TimeSlot.hour_slot_id == dao.HourSlot.id)
                 .where(
-                    dao.MonitoringJob.action == dao.MonitoringAction.NOTIFY,
+                    dao.MonitoringJob.action == dao.JobAction.NOTIFY,
                     or_(
                         and_(
                             dao.JobNotificationState.trigger_on_available.is_(

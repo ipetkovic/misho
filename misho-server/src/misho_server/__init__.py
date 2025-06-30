@@ -80,13 +80,7 @@ async def start():
             user_repository=user_repository,
             user_token_repository=user_token_repository)
 
-        mail_service = MailService(CONFIG.mailer_config)
-
-        http_client = httpx.AsyncClient()
-
-        notification_service = NotificationService(
-            mail_service=mail_service
-        )
+        notification_service = NotificationService()
 
         job_notifier = JobNotifier(
             job_notifications_repository=job_notifications_repository,
@@ -170,7 +164,8 @@ async def start():
         async with telegram_bot.TelegramBot(
             telegram_token=CONFIG.telegram_bot_token,
             user_telegram_integration_repository=user_telegram_integration_repository,
-            open_ai_user_client_builder=open_ai_user_client_builder
+            open_ai_user_client_builder=open_ai_user_client_builder,
+            notification_service=notification_service
         ):
             await _sleep_forever()
 

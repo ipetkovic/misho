@@ -49,7 +49,7 @@ class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
                 .join(dao.HourSlot, dao.TimeSlot.hour_slot_id == dao.HourSlot.id)
                 .where(
                     and_(
-                        dao.MonitoringJob.action == dao.MonitoringAction.RESERVE,
+                        dao.MonitoringJob.action == dao.JobAction.RESERVE,
                         dao.ReservationCalendar.reserved_by == None,
                         dao.Job.status.in_(
                             [dao.Status.PENDING, dao.Status.FAILED]),

@@ -1,24 +1,22 @@
-
-
 import logging
+from typing import Awaitable, Callable
 from misho_server.database.model import User
-from misho_server.service.mail_service import MailService
 
-from misho_api.notification import NotificationApi
+
+type NotificationServiceSubscriber = Callable[[User, str], Awaitable[None]]
 
 
 class NotificationService:
-    def __init__(self, mail_service: MailService):
-        self._mail_service = mail_service
+    def __init__(self):
+        self._subscribers: list[NotificationServiceSubscriber] = []
+
+    def subscribe(self, subscriber: NotificationServiceSubscriber) -> None:
+        self._subscribers.append(subscriber)
 
     async def send_notification(self, user: User, message: str) -> None:
-        if user.email is not None:
+        for subscriber in self._subscribers:
             try:
-                await self._mail_service.send_email(
-                    to=user.email,
-                    subject="Sportbooking obavijest",
-                    body=message
-                )
-
+                await subscriber(user, message)
             except Exception as e:
-                logging.error(f"Failed to send email to {user.email}: {e}")
+                logging.error(
+                    f"Error sending notification to {user.email}: {e}")
