@@ -100,4 +100,4 @@ class ReservationMonitoring:
 
     def _is_new_day(self):
         dt = datetime.datetime.now()
-        return dt.hour == 0 and dt.minute == 0
+        return dt.hour == 0 and dt.minute == 0 and dt.second == 0

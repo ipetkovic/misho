@@ -7,7 +7,7 @@ class UserCreate(pydantic.BaseModel):
     name: str
     username: str
     password: str
-    email: str
+    email: str | None = None
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
 
@@ -17,6 +17,6 @@ class User(pydantic.BaseModel):
     name: str
     username: str
     password: str
-    email: str
+    email: str | None = None
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

@@ -6,8 +6,10 @@ from misho_server.domain.job import JobCreate
 from misho_server.domain.user import UserId
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai import tools
+from misho_server.service.signup_service import SignUpService
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletion
+from telegram import User
 
 from misho_api.job import JobCreateApi
 
@@ -17,12 +19,14 @@ class OpenAiUserClient:
         self,
         open_ai_client: OpenAI,
         jobs_service: JobsService,
-        user_id: UserId
+        signup_service: SignUpService,
+        user_id: UserId | None
     ):
         self._last_message_timestamp = None
         self._messages = [self._system_message()]
         self._open_ai_client = open_ai_client
         self._jobs_service = jobs_service
+        self._signup_service = signup_service
         self._user_id = user_id
         self._clear_context_after_seconds = 60 * 10  # 10 minutes
         self._lock = asyncio.Lock()
@@ -101,6 +105,12 @@ class OpenAiUserClient:
             ))
             self._tool_call_append(tool_call, result)
 
+        elif func_name == "signup":
+            result = await call(self._signup_service.sign_up(args['username'], args['password']))
+            if isinstance(result, User):
+                self._user_id = result.id
+            self._tool_call_append(tool_call, result)
+
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):
         self._messages.append({
             "role": "assistant",
@@ -138,5 +148,7 @@ class OpenAiUserClient:
                 When the user says 'tomorrow', use day after today. 
                 If start hour is less than 17, to_hour is from_hour + 1, otherwise to_hour is from_hour + 2.
                 Prefer Croatian language.
+                When user asks for job reservation, keep in mind that job creation does not mean that reservation is made.
+                It means that job is created and will be executed once the time slot is available.
                 """
         }
