@@ -86,36 +86,10 @@ delete_job_tool = {
     }
 }
 
-signup_tool = {
-    "type": "function",
-    "function": {
-        "name": "signup",
-        "description": "Sign up a new user with a Sportbooking username and password.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "username": {
-                    "type": "string",
-                    "description": "The username for the new user."
-                },
-                "password": {
-                    "type": "string",
-                    "description": "The password for the new user."
-                }
-            },
-            "required": ["username", "password"],
-            "title": "SignupRequest"
-        }
-    }
-}
 
-
-def get_tools(is_signed_up: bool):
-    if is_signed_up:
-        return [
-            create_job_tool,
-            list_jobs_tool,
-            delete_job_tool
-        ]
-    else:
-        return [signup_tool]
+def get_tools():
+    return [
+        create_job_tool,
+        list_jobs_tool,
+        delete_job_tool
+    ]

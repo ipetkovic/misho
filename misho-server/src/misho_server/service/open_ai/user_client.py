@@ -19,14 +19,12 @@ class OpenAiUserClient:
         self,
         open_ai_client: OpenAI,
         jobs_service: JobsService,
-        signup_service: SignUpService,
         user_id: UserId | None
     ):
         self._last_message_timestamp = None
         self._messages = [self._system_message()]
         self._open_ai_client = open_ai_client
         self._jobs_service = jobs_service
-        self._signup_service = signup_service
         self._user_id = user_id
         self._clear_context_after_seconds = 60 * 10  # 10 minutes
         self._lock = asyncio.Lock()
@@ -103,12 +101,6 @@ class OpenAiUserClient:
                 job_id=args['job_id'],
                 user_id=self._user_id
             ))
-            self._tool_call_append(tool_call, result)
-
-        elif func_name == "signup":
-            result = await call(self._signup_service.sign_up(args['username'], args['password']))
-            if isinstance(result, User):
-                self._user_id = result.id
             self._tool_call_append(tool_call, result)
 
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):

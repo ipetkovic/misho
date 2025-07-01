@@ -4,7 +4,6 @@ from misho_server.domain.job import Job, Status
 from misho_server.domain.reservation_calendar import CourtId
 from misho_server.domain.reservation_slot import ReservationSlot
 from misho_server.repository.jobs import JobsRepository
-from misho_server.service.mail_service import MailService
 from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_service import ReservationService
 
@@ -14,7 +13,6 @@ class ReserveJobExecutor:
         self,
         job_repository: JobsRepository,
         reservation_service: ReservationService,
-        # Optional, can be used for notifications
         notification_service: NotificationService,
     ):
         self._job_repository = job_repository

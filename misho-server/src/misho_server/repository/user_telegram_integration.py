@@ -21,6 +21,9 @@ class UserTelegramIntegrationRepository:
     async def get_user_telegram_data_by_user_id(self, username: str) -> UserTelegramData | None:
         pass
 
+    async def update_user_telegram_user_id(self, username: str, user_id: int) -> None:
+        pass
+
     async def update_user_telegram_chat_id(self, username: str, chat_id: int) -> None:
         pass
 
@@ -46,6 +49,15 @@ class UserTelegramIntegrationRepositorySqlite(UserTelegramIntegrationRepository)
             ).where(dao.UserTelegramIntegration.user_id == user_id)
             user_telegram_data = await session.scalar(stmt)
             return _to_domain(user_telegram_data) if user_telegram_data else None
+
+    async def update_user_telegram_user_id(self, username: str, user_id: int) -> None:
+        async with self._sessionmaker() as session:
+            stmt = update(dao.UserTelegramIntegration).where(
+                dao.UserTelegramIntegration.username == username
+            ).values(user_id=user_id)
+
+            await session.execute(stmt)
+            await session.commit()
 
     async def update_user_telegram_chat_id(self, username: str, chat_id: int) -> None:
         async with self._sessionmaker() as session:

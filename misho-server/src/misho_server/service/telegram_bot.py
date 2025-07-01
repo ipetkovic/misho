@@ -1,4 +1,5 @@
 import logging
+import shlex
 from misho_server.database.model import User
 from misho_server.domain.user import UserId
 from misho_server.domain.user_telegram_data import UserTelegramData
@@ -6,6 +7,7 @@ from misho_server.repository.user_telegram_integration import UserTelegramIntegr
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.notification_service import NotificationService
 from misho_server.service.open_ai.user_client import OpenAiUserClient
+from misho_server.service.signup_service import SignUpService
 from telegram import Update
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, Application
 
@@ -32,11 +34,13 @@ class TelegramBot:
         telegram_token: str,
         user_telegram_integration_repository: UserTelegramIntegrationRepository,
         open_ai_user_client_builder: OpenAiUserClientBuilder,
+        signup_service: SignUpService,
         notification_service: NotificationService | None
     ):
         self._telegram_token = telegram_token
         self._user_telegram_integration_repository = user_telegram_integration_repository
         self._open_ai_user_client_builder = open_ai_user_client_builder
+        self._signup_service = signup_service
         self._open_ai_clients: dict[str, OpenAiUserClient] = {}
         self._application = ApplicationBuilder().token(telegram_token).build()
 
@@ -44,8 +48,11 @@ class TelegramBot:
         self._application.add_handler(start_handler)
 
         message_handler = MessageHandler(
-            filters.TEXT, self._message_handler)
+            filters.TEXT & ~filters.COMMAND, self._message_handler)
         self._application.add_handler(message_handler)
+
+        signup_handler = CommandHandler("signup", self._signup_handler)
+        self._application.add_handler(signup_handler)
 
         notification_service.subscribe(self._handle_notification)
 
@@ -83,10 +90,40 @@ class TelegramBot:
 
         message = (
             "Pozdrav! Ja sam Misho bot, "
-            "tu sam da ti pomognem s rezervacijama i obavijestima za teniske terene. "
-            "Možeš mi postaviti pitanja ili zatražiti pomoć oko rezervacija. "
-            "Kako ti mogu pomoći?"
+            "tu sam da ti pomognem s rezervacijama i obavijestima za teniske terene.\n"
+            "Možeš mi postaviti pitanja ili zatražiti pomoć oko rezervacija.\n"
+            "Prije nego što počnemo, moraš se registrirati sa Sportbooking korisničkim imenom i lozinkom.\n\n"
+            "To možeš učiniti tako da pošalješ poruku u formatu:\n"
+            "/signup <korisničko_ime> <lozinka>\n\n"
+            "Ukoliko korisničko ime i/ili lozinka sadrže razmake, koristi navodnike. Primjer:\n"
+            "/signup \"korisničko ime\" \"lozinka\""
         )
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+
+    async def _signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        print("Signup handler called")
+        print(update.message.text)
+
+        text = update.message.text.partition(' ')[2]
+        text = text.replace('“', '"')
+        text = text.replace('”', '"')
+        text = text.replace("‘", "'")
+        text = text.replace("’", "'")
+
+        try:
+            args = shlex.split(text)
+            username, password = args
+            user = await self._signup_service.sign_up(username=username, password=password)
+            await self._user_telegram_integration_repository.update_user_telegram_user_id(
+                update.effective_user.username,
+                user.id
+            )
+            print(user)
+            message = 'Registracija uspješna! Kako ti mogu pomoći?'
+        except Exception as e:
+            logging.error(f"Error during signup: {e}")
+            message = 'Došlo je do greške prilikom registracije. Provjeri korisničko ime i lozinku i pokušaj ponovno.'
+
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
     async def _message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> str | None:
@@ -95,9 +132,6 @@ class TelegramBot:
             update.effective_user.username,
             update.effective_chat.id
         )
-
-        print(update.effective_chat.id)
-        print(open_ai_client)
 
         if open_ai_client is None:
             # TODO
@@ -115,7 +149,9 @@ class TelegramBot:
         if username not in self._open_ai_clients:
             user_telegram_data = await self._get_user_telegram_data(username)
 
-            if self._open_ai_clients.get(username) is None and user_telegram_data is not None:
+            user_assigned = user_telegram_data is not None and user_telegram_data.user is not None
+
+            if self._open_ai_clients.get(username) is None and user_assigned:
                 self._open_ai_clients[username] = self._open_ai_user_client_builder.build(
                     user_id=user_telegram_data.user.id
                 )
