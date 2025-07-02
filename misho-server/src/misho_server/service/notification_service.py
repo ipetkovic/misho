@@ -19,4 +19,4 @@ class NotificationService:
                 await subscriber(user, message)
             except Exception as e:
                 logging.error(
-                    f"Error sending notification to {user.email}: {e}")
+                    f"Error sending notification to {user.username}: {e}")

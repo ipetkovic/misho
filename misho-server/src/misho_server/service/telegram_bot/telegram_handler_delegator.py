@@ -5,7 +5,7 @@ from misho_server.repository.user_telegram_integration import UserTelegramIntegr
 from misho_server.service.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
 from misho_server.service.telegram_bot.onboarding_handler import TelegramOnboardingHandler
 from misho_server.service.telegram_bot.standard_handler import TelegramStandardHandler
-from misho_server.service.telegram_bot.telegram_handler import TelegramHandler
+from misho_server.service.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -45,17 +45,11 @@ class TelegramHandlerDelegator(TelegramHandler):
         handler = self._get_handler(user_telegram_data)
         await handler.signup_handler(update, context)
 
-    async def should_send_notification(self, user: User) -> bool:
+    async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
         user_telegram_data = await self._user_telegram_integration_repository.get_user_telegram_data_by_user_id(
             user.id)
         handler = self._get_handler(user_telegram_data)
-        return await handler.should_send_notification(user)
-
-    async def handle_notification(self, user: User, message: str) -> None:
-        user_telegram_data = await self._user_telegram_integration_repository.get_user_telegram_data_by_user_id(
-            user.id)
-        handler = self._get_handler(user_telegram_data)
-        await handler.handle_notification(user, message)
+        return await handler.get_chat_id_for_notifications(user)
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_telegram_data = await self._user_telegram_integration_repository.get_user_telegram_data_by_username(

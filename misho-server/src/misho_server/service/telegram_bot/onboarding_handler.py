@@ -31,7 +31,7 @@ class TelegramOnboardingHandler(TelegramHandler):
         )
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
-    async def handle_notification(self, user: User) -> ChatId | None:
+    async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
         return None
 
     async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

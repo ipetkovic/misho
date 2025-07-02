@@ -14,7 +14,7 @@ class TelegramHandler:
     async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         raise NotImplementedError()
 
-    async def handle_notification(self, user: User) -> ChatId | None:
+    async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
         raise NotImplementedError()
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

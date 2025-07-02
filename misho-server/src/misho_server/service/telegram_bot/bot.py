@@ -35,7 +35,7 @@ class TelegramBot:
         signup_handler = CommandHandler("signup", handler.signup_handler)
         self._application.add_handler(signup_handler)
 
-        notification_service.subscribe(handler.handle_notification)
+        notification_service.subscribe(self._handle_notification)
 
     async def start(self):
         logging.info("Starting Telegram bot application...")
@@ -50,6 +50,15 @@ class TelegramBot:
     async def stop(self):
         logging.info("Stopping Telegram bot application...")
         await self._application.shutdown()
+
+    async def _handle_notification(self, user: User, message: str) -> None:
+        chat_id = await self._handler.get_chat_id_for_notifications(user)
+        print(chat_id)
+        if chat_id is not None:
+            await self._application.bot.send_message(
+                chat_id=chat_id,
+                text=message
+            )
 
     async def __aenter__(self):
         await self.start()

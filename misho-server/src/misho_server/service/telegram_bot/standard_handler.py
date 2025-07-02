@@ -48,9 +48,9 @@ class TelegramStandardHandler:
     async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         return None
 
-    async def handle_notification(self, user: User) -> ChatId | None:
+    async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
         user_telegram_data = await self._get_user_telegram_data_by_user_id(user.id)
-        return user_telegram_data.chat_id,
+        return user_telegram_data.chat_id
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.message.text
