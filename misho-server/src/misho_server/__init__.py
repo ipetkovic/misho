@@ -168,6 +168,7 @@ async def start():
         open_ai_user_client_builder = OpenAiUserClientBuilder(
             open_ai_client=OpenAI(),
             jobs_service=jobs_service,
+            reservation_calendar_repository=reservation_calendar_repository
         )
 
         telegram_blacklisted_handler = TelegramBlacklistedUserHandler()

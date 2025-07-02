@@ -90,10 +90,21 @@ delete_job_tool = {
     }
 }
 
+reservation_calendar_tool = {
+    "type": "function",
+    "function": {
+        "name": "reservation_calendar",
+        "description": (
+            "Get the reservation calendar for up to four days in advance."
+        ),
+    }
+}
+
 
 def get_tools():
     return [
         create_job_tool,
         list_jobs_tool,
-        delete_job_tool
+        delete_job_tool,
+        reservation_calendar_tool
     ]

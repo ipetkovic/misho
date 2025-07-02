@@ -4,6 +4,7 @@ import json
 import logging
 from misho_server.domain.job import JobCreate
 from misho_server.domain.user import UserId
+from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai import tools
 from misho_server.service.signup_service import SignUpService
@@ -19,12 +20,14 @@ class OpenAiUserClient:
         self,
         open_ai_client: OpenAI,
         jobs_service: JobsService,
+        reservation_calendar_repository: ReservationCalendarRepository,
         user_id: UserId | None
     ):
         self._last_message_timestamp = None
         self._messages = [self._system_message()]
         self._open_ai_client = open_ai_client
         self._jobs_service = jobs_service
+        self._reservation_calendar_repository = reservation_calendar_repository
         self._user_id = user_id
         self._clear_context_after_seconds = 60 * 10  # 10 minutes
         self._lock = asyncio.Lock()
@@ -101,6 +104,12 @@ class OpenAiUserClient:
                 job_id=args['job_id'],
                 user_id=self._user_id
             ))
+            self._tool_call_append(tool_call, result)
+
+        elif func_name == "reservation_calendar":
+            # Assuming reservation_calendar is a method in JobsService
+            result = await call(self._reservation_calendar_repository.get_calendar())
+            print(f"Reservation calendar result: {result}")
             self._tool_call_append(tool_call, result)
 
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):
