@@ -32,6 +32,11 @@ from misho_server.service.reservation_service import ReservationService
 from misho_server.service.reserve_job_executor import ReserveJobExecutor
 from misho_server.service.session_token_fetch_service import SessionTokenFetchService
 from misho_server.service.signup_service import SignUpService
+from misho_server.service.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
+from misho_server.service.telegram_bot.bot import TelegramBot
+from misho_server.service.telegram_bot.onboarding_handler import TelegramOnboardingHandler
+from misho_server.service.telegram_bot.standard_handler import OpenAiUserClientBuilder, TelegramStandardHandler
+from misho_server.service.telegram_bot.telegram_handler_delegator import TelegramHandlerDelegator
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import create_async_engine
 from aiohttp import web
@@ -160,16 +165,31 @@ async def start():
                                        sportbooking=sportbooking_service
                                        )
 
-        open_ai_user_client_builder = telegram_bot.OpenAiUserClientBuilder(
+        open_ai_user_client_builder = OpenAiUserClientBuilder(
             open_ai_client=OpenAI(),
             jobs_service=jobs_service,
         )
 
-        async with telegram_bot.TelegramBot(
-            telegram_token=CONFIG.telegram_bot_token,
+        telegram_blacklisted_handler = TelegramBlacklistedUserHandler()
+        telegram_onboarding_handler = TelegramOnboardingHandler(
+            user_telegram_integration_repository=user_telegram_integration_repository,
+            signup_service=signup_service,
+        )
+        telegram_standard_handler = TelegramStandardHandler(
             user_telegram_integration_repository=user_telegram_integration_repository,
             open_ai_user_client_builder=open_ai_user_client_builder,
-            signup_service=signup_service,
+        )
+
+        telegram_handler_delegator = TelegramHandlerDelegator(
+            user_telegram_integration_repository=user_telegram_integration_repository,
+            blacklisted_handler=telegram_blacklisted_handler,
+            onboarding_handler=telegram_onboarding_handler,
+            standard_handler=telegram_standard_handler
+        )
+
+        async with TelegramBot(
+            telegram_token=CONFIG.telegram_bot_token,
+            handler=telegram_handler_delegator,
             notification_service=notification_service
         ):
             await _sleep_forever()

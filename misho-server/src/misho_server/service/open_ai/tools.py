@@ -61,8 +61,10 @@ list_jobs_tool = {
     "function": {
         "name": "list_jobs",
         "description": (
-            "Show a list of current jobs. Optionally filter by status. "
+            "Show a list of current jobs"
             "Possible status values: PENDING, FAILED, SUCCESS."
+            "Do not list jobs with numbered bullets, since user can confuse them with job IDs."
+            "Always include courts by priority in the response."
         ),
     }
 }
