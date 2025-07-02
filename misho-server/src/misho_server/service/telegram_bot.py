@@ -79,6 +79,8 @@ class TelegramBot:
             )
 
     async def _start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        logging.info("Start handler called for user: %s",
+                     update.effective_user.username)
         is_user_registered = await self._is_user_registered(update.effective_user.username)
         if not is_user_registered:
             return None
