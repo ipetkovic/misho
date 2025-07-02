@@ -75,7 +75,7 @@ class JobsService:
             error = f"Invalid courts: {diff}. Available courts: {[court.id for court in courts]}"
             raise InvalidCourts(error)
 
-        job_for_time_slot = await self._jobs_repository.find_by_time_slot(job_create.time_slot)
+        job_for_time_slot = await self._jobs_repository.find_by_time_slot(job_create.time_slot, job_create.user_id)
         if job_for_time_slot:
             raise JobAlreadyExists(
                 f"Job for time slot {job_create.time_slot} already exists (id: {job_for_time_slot.id}). Either delete previous job or change time slot."

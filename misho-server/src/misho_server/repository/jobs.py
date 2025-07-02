@@ -23,7 +23,7 @@ class JobsRepository:
         raise NotImplementedError()
 
     async def find_by_time_slot(
-        self, time_slot: TimeSlot
+        self, time_slot: TimeSlot, user_id: UserId | None = None
     ) -> Job | None:
         raise NotImplementedError()
 
@@ -106,10 +106,12 @@ class JobsRepositorySqlite(JobsRepository):
         async with self._sessionmaker() as session:
             return await self._find_by_id(session, job_id)
 
-    async def find_by_time_slot(self, time_slot: TimeSlot) -> Job | None:
+    async def find_by_time_slot(self, time_slot: TimeSlot, user_id: UserId | None) -> Job | None:
         async with self._sessionmaker() as session:
             time_slot_id = await find_time_slot_id(session, time_slot)
             stmt = self._select().where(dao.Job.time_slot_id == time_slot_id)
+            if user_id is not None:
+                stmt = stmt.where(dao.Job.user_id == user_id)
             result = await session.execute(stmt)
             job_dao = result.scalar_one_or_none()
             return to_domain(job_dao) if job_dao else None
