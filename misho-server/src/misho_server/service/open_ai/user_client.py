@@ -85,6 +85,7 @@ class OpenAiUserClient:
                 return str(e)
 
         if func_name == "create_job":
+            logging.info(f"Creating job with args: {args}")
             args['user_id'] = self._user_id
             result = await call(
                 self._jobs_service.create_job(
@@ -95,6 +96,7 @@ class OpenAiUserClient:
             self._tool_call_append(tool_call, result)
 
         elif func_name == "list_jobs":
+            logging.info(f"List job called.")
             result = await call(self._jobs_service.list_jobs(user_id=self._user_id))
             print(f"List jobs result: {result}")
             self._tool_call_append(tool_call, result)
@@ -107,9 +109,9 @@ class OpenAiUserClient:
             self._tool_call_append(tool_call, result)
 
         elif func_name == "reservation_calendar":
+            logging.info(f"Reservation calendar called.")
             # Assuming reservation_calendar is a method in JobsService
             result = await call(self._reservation_calendar_repository.get_calendar())
-            print(f"Reservation calendar result: {result}")
             self._tool_call_append(tool_call, result)
 
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):

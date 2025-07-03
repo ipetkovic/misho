@@ -96,6 +96,7 @@ reservation_calendar_tool = {
         "name": "reservation_calendar",
         "description": (
             "Get the reservation calendar for up to four days in advance."
+            "Since response is big, do not call this tool, unless user explicitally asks for it."
         ),
     }
 }
