@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.associationproxy import association_proxy
 import datetime
 
-from misho_server.domain.job import JobAction, Status
+from misho_server.domain.job import JobAction, OnExpiryAction, Status
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -87,6 +87,9 @@ class Job(Base):
         Enum(Status), default=Status.PENDING)
     created_at: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now)
+    expires_at: Mapped[Optional[datetime.datetime]] = mapped_column()
+    on_expiry_action: Mapped[Optional[OnExpiryAction]] = mapped_column(
+        Enum(OnExpiryAction), nullable=True)
 
     user: Mapped[User] = relationship(User)
     time_slot: Mapped[TimeSlot] = relationship(TimeSlot)

@@ -11,7 +11,7 @@ type JobId = int
 
 
 class Status(Enum):
-    PENDING = "PENDING"
+    ACTIVE = "PENDING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
@@ -21,6 +21,10 @@ class JobAction(Enum):
     NOTIFY = "NOTIFY"
 
 
+class OnExpiryAction(Enum):
+    CREATE_NOTIFY_JOB = "CREATE_NOTIFY_JOB"
+
+
 class Job(pydantic.BaseModel):
     id: JobId
     user: User
@@ -28,6 +32,8 @@ class Job(pydantic.BaseModel):
     courts_by_priority: tuple[CourtId, ...]
     action: JobAction
     created_at: datetime.datetime
+    expires_at: datetime.datetime
+    on_expiry_action: OnExpiryAction | None = None
     status: Status
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
@@ -38,5 +44,7 @@ class JobCreate(pydantic.BaseModel):
     time_slot: TimeSlot
     action: JobAction
     courts_by_priority: list[CourtId]
+    expires_at: datetime.datetime | None = None
+    on_expiry_action: OnExpiryAction | None = None
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

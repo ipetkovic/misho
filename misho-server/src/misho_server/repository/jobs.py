@@ -27,7 +27,7 @@ class JobsRepository:
     ) -> Job | None:
         raise NotImplementedError()
 
-    async def list_all(self, statuses: list[Status] | None = None, user_id: UserId = None) -> list[Job]:
+    async def list_all(self, statuses: list[Status] | None = None, user_id: UserId | None = None) -> list[Job]:
         raise NotImplementedError()
 
     async def get_reservation_jobs_for_date(self, date: datetime.date) -> list[Job]:
