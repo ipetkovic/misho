@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import pydantic
 from misho_server.domain.reservation_slot import ReservationSlot
 
@@ -43,7 +41,8 @@ class ReservationCalendar(pydantic.BaseModel):
         )
 
     def diff(self, other: 'ReservationCalendar') -> dict[ReservationSlot, CourtReservation]:
-        diff = {}
+        diff: dict[ReservationSlot, CourtReservation] = {}
+
         for slot, court_reservation in self.calendar.items():
             if slot not in other.calendar:
                 diff[slot] = court_reservation

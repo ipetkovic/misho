@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from datetime import date
+from typing import Sequence
 from misho_server.domain.reservation_calendar import CourtReservation, ReservationCalendar
-from sqlalchemy import Sequence, delete, select, tuple_
+import pydantic
+from sqlalchemy import delete, select, tuple_
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
@@ -18,8 +20,7 @@ class ReservationCalendarRepository:
         raise NotImplementedError()
 
 
-@dataclass
-class UpdateCalendar:
+class UpdateCalendar(pydantic.BaseModel):
     to_insert: dict[ReservationSlot, CourtReservation]
     to_update: dict[ReservationSlot, CourtReservation]
     to_delete: list[ReservationSlot]
@@ -31,17 +32,17 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
         self._sessionmaker = async_sessionmaker(
             bind=engine, expire_on_commit=False)
 
-    async def get_calendar(self) -> ReservationCalendar | None:
+    async def get_calendar(self, filter_by_days: list[date] | None = None) -> ReservationCalendar | None:
         async with self._sessionmaker() as session:
             calendar_dao = await self._load_calendar(session)
-            return _to_domain(calendar_dao) if calendar_dao else None
+            calendar = _to_domain(calendar_dao) if calendar_dao else None
+            return calendar
 
     async def set_calendar(self, calendar: ReservationCalendar) -> None:
         async with self._sessionmaker() as session:
 
             old_calendar_dao = await self._load_calendar(session)
 
-            print(len(old_calendar_dao))
             old_calendar = _to_domain(
                 old_calendar_dao
             ) if old_calendar_dao else None
@@ -60,7 +61,7 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
             time_slots = set(
                 reservation_slot.time_slot
                 for reservation_slot in times_slots_from_calendars)
-            time_slot_ids = await find_times_slots(session, time_slots)
+            time_slot_ids = await find_times_slots(session, list(time_slots))
 
             def to_dao_reservation_calendar(
                 reservation_slot: ReservationSlot,
@@ -150,7 +151,8 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
 
 
 def _to_domain(data: Sequence[dao.ReservationCalendar]) -> ReservationCalendar:
-    calendar_dict = {}
+    calendar_dict: dict[ReservationSlot, CourtReservation] = {}
+
     for row in data:
         time_slot = row.time_slot
         reservation_slot = ReservationSlot(

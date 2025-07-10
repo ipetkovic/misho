@@ -1,17 +1,8 @@
-from enum import Enum
 import logging
-import shlex
-from misho_server.database.model import User
-from misho_server.domain.user import UserId
-from misho_server.domain.user_telegram_data import UserTelegramData
-from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
-from misho_server.service.jobs_service import JobsService
+from misho_server.domain.user import User
 from misho_server.service.notification_service import NotificationService
-from misho_server.service.open_ai.user_client import OpenAiUserClient
-from misho_server.service.signup_service import SignUpService
 from misho_server.service.telegram_bot.telegram_handler import TelegramHandler
-from telegram import Update
-from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, Application
+from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler
 
 
 class TelegramBot:
@@ -19,7 +10,7 @@ class TelegramBot:
         self,
         telegram_token: str,
         handler: TelegramHandler,
-        notification_service: NotificationService | None
+        notification_service: NotificationService
     ):
         self._handler = handler
         self._telegram_token = telegram_token
@@ -42,6 +33,8 @@ class TelegramBot:
         try:
             await self._application.initialize()
             await self._application.start()
+            if self._application.updater is None:
+                raise RuntimeError("Updater is not initialized.")
             await self._application.updater.start_polling()
         except Exception:
             await self._application.shutdown()
@@ -53,7 +46,6 @@ class TelegramBot:
 
     async def _handle_notification(self, user: User, message: str) -> None:
         chat_id = await self._handler.get_chat_id_for_notifications(user)
-        print(chat_id)
         if chat_id is not None:
             await self._application.bot.send_message(
                 chat_id=chat_id,
@@ -64,5 +56,5 @@ class TelegramBot:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, *_):
         await self.stop()

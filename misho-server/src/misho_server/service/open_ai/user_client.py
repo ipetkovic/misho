@@ -7,12 +7,8 @@ from misho_server.domain.user import UserId
 from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai import tools
-from misho_server.service.signup_service import SignUpService
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletion
-from telegram import User
-
-from misho_api.job import JobCreateApi
 
 
 class OpenAiUserClient:
@@ -56,12 +52,10 @@ class OpenAiUserClient:
     async def _handle_open_ai_response(self, response: ChatCompletion) -> str | None:
         choice = response.choices[0]
 
-        print(choice)
-
         if choice.finish_reason == "stop":
             return choice.message.content
 
-        elif choice.finish_reason == "tool_calls":
+        elif choice.finish_reason == "tool_calls" and choice.message.tool_calls:
             tool_calls = choice.message.tool_calls
 
             for tool_call in tool_calls:

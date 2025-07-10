@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any
 from sqlalchemy import select, tuple_
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.orm import selectinload
 import misho_server.database.model as dao
 from misho_server.domain.time_slot import TimeSlot
-from misho_server.repository.hour_slot import get_hour_slot, list_hour_slots
+from misho_server.repository.hour_slot import list_hour_slots
 from misho_server.repository.hour_slot import to_domain as hour_slot_to_domain
 
 type TimeSlotId = int
@@ -29,7 +30,7 @@ class TimeSlotRepositorySqlite:
                             for i in range(number_of_days)]
 
             # 3. Create all combinations
-            values = [
+            values: list[dict[str, Any]] = [
                 {"date": d, "hour_slot_id": hour_slot_id}
                 for d in future_dates
                 for hour_slot_id in hour_slot_ids
@@ -53,12 +54,12 @@ async def find_times_slots(session: AsyncSession, time_slots: list[TimeSlot]) ->
 
     result = await session.execute(select_stmt)
 
-    time_slots = result.scalars().all()
+    time_slots_result = result.scalars().all()
 
     return {TimeSlot(
         date=row.date,
         hour_slot=hour_slot_to_domain(row.hour_slot)
-    ): row.id for row in time_slots}
+    ): row.id for row in time_slots_result}
 
 
 async def find_time_slot_id(session: AsyncSession, time_slot: TimeSlot) -> TimeSlotId | None:

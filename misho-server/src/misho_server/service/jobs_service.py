@@ -1,3 +1,6 @@
+from datetime import timedelta
+import datetime
+from misho_server.config.model import JobCreateConfig
 from misho_server.domain.job import Job, JobCreate, Status
 from misho_server.domain.user import UserId
 from misho_server.repository.court import CourtRepository
@@ -27,19 +30,22 @@ class JobAlreadyExists(JobsServiceError):
 class JobsService:
     def __init__(
         self,
+        job_create_config: JobCreateConfig,
         jobs_repository: JobsRepository,
         hour_slots_repository: HourSlotRepository,
         court_repository: CourtRepository
     ):
+        self._job_create_config = job_create_config
         self._jobs_repository = jobs_repository
         self._hour_slots_repository = hour_slots_repository
         self._court_repository = court_repository
 
     async def create_job(self, job_create: JobCreate) -> Job:
         await self._validate_job_create(job_create)
+        job_create.expires_at = self._get_job_expires_at(job_create)
         return await self._jobs_repository.insert(job_create)
 
-    async def list_jobs(self, statuses: list[Status] | None = None, user_id: UserId = None) -> list[Job]:
+    async def list_jobs(self, statuses: list[Status] | None = None, user_id: UserId | None = None) -> list[Job]:
         result = await self._jobs_repository.list_all(statuses=statuses, user_id=user_id)
         return result
 
@@ -59,7 +65,18 @@ class JobsService:
         await self._jobs_repository.delete(job_id)
         return True
 
-    async def _validate_job_create(self, job_create: JobCreate) -> bool:
+    def _get_job_expires_at(self, job_create: JobCreate) -> datetime.datetime:
+        job_expires_at = job_create.expires_at
+        if job_expires_at is None:
+            job_expires_at = job_create.time_slot.start_time()
+            if job_create.action == JobCreate.action.RESERVE:
+                job_expires_at = job_create.time_slot.start_time() - \
+                    timedelta(
+                        hours=self._job_create_config.default_reserve_job_expire_before_hours)
+
+        return job_expires_at
+
+    async def _validate_job_create(self, job_create: JobCreate) -> None:
         hour_slots = await self._hour_slots_repository.list_hour_slots()
 
         if job_create.time_slot.hour_slot not in hour_slots:
@@ -79,4 +96,14 @@ class JobsService:
         if job_for_time_slot:
             raise JobAlreadyExists(
                 f"Job for time slot {job_create.time_slot} already exists (id: {job_for_time_slot.id}). Either delete previous job or change time slot."
+            )
+
+        if job_create.expires_at is not None and job_create.expires_at > job_create.time_slot.start_time():
+            raise JobsServiceError(
+                "Job expiration time must be before the start time of the time slot."
+            )
+
+        if job_create.on_expiry_action is not None and job_create.expires_at is None:
+            raise JobsServiceError(
+                "Job on expiry action is set, but expires_at is not set. Please set expires_at."
             )

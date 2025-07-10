@@ -1,6 +1,4 @@
-from sqlalchemy import Select, select
-from sqlalchemy.orm import Session
-from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio import AsyncSession
 import misho_server.database.model as dao
@@ -22,13 +20,13 @@ class HourSlotRepository:
 
 
 async def list_hour_slots(session: AsyncSession) -> dict[HourSlot, HourSlotId]:
-    stmt: Select[dao.HourSlot] = select(dao.HourSlot)
+    stmt = select(dao.HourSlot)
     result = await session.execute(stmt)
     hour_slots_dao = result.scalars().all()
     return {to_domain(hour_slot): hour_slot.id for hour_slot in hour_slots_dao}
 
 
-async def get_hour_slot(session: AsyncSession, hour_slot: HourSlot) -> dao.HourSlot:
+async def get_hour_slot(session: AsyncSession, hour_slot: HourSlot) -> dao.HourSlot | None:
 
     stmt = select(dao.HourSlot).filter(
         dao.HourSlot.from_hour == hour_slot.from_hour,

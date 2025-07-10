@@ -9,6 +9,9 @@ import misho_server.database.model as dao
 
 
 class UserRepository:
+    async def list_users(self) -> list[User]:
+        raise NotImplementedError()
+
     async def get_user_by_id(self, user_id: UserId) -> User | None:
         raise NotImplementedError()
 
@@ -27,6 +30,12 @@ class UserRepositorySqlite(UserRepository):
         self._engine = engine
         self._sessionmaker = async_sessionmaker(
             bind=engine, expire_on_commit=False)
+
+    async def list_users(self) -> list[User]:
+        async with self._sessionmaker() as session:
+            stmt = select(dao.User)
+            result = await session.scalars(stmt)
+            return [to_domain(user_dao) for user_dao in result.all()]
 
     async def create_user(self, user: UserCreate) -> tuple[User, AppToken]:
         async with self._sessionmaker() as session:

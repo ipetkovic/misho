@@ -1,5 +1,6 @@
 import datetime
 import logging
+from misho_server.domain.user import UserId
 from misho_server.service.sportbooking_service import SportbookingService
 from misho_server.domain.session_token import SessionToken
 from misho_server.repository.user import UserRepository
@@ -19,7 +20,7 @@ class SessionTokenFetchService:
         self._sportbooking = sportbooking
         self._refresh_after_minutes = refresh_after_minutes
 
-    async def get_token(self, user_id) -> SessionToken:
+    async def get_token(self, user_id: UserId) -> SessionToken:
         user_token = await self._user_token_repository.get_user_token(user_id)
 
         if user_token is None or self._is_expired(user_token.updated_at):
@@ -29,7 +30,7 @@ class SessionTokenFetchService:
 
         return token
 
-    async def refresh_token(self, user_id) -> SessionToken:
+    async def refresh_token(self, user_id: UserId) -> SessionToken:
         logging.info(f"Refreshing token for user {user_id}")
         user = await self._user_repository.get_user_by_id(user_id)
         if not user:

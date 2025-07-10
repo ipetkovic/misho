@@ -1,4 +1,6 @@
-create_job_tool = {
+from openai.types.chat import ChatCompletionToolParam
+
+create_job_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "create_job",
@@ -56,7 +58,7 @@ create_job_tool = {
     }
 }
 
-list_jobs_tool = {
+list_jobs_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "list_jobs",
@@ -71,7 +73,7 @@ list_jobs_tool = {
     }
 }
 
-delete_job_tool = {
+delete_job_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "delete_job",
@@ -90,7 +92,7 @@ delete_job_tool = {
     }
 }
 
-reservation_calendar_tool = {
+reservation_calendar_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "reservation_calendar",
@@ -102,7 +104,7 @@ reservation_calendar_tool = {
 }
 
 
-def get_tools():
+def get_tools() -> list[ChatCompletionToolParam]:
     return [
         create_job_tool,
         list_jobs_tool,

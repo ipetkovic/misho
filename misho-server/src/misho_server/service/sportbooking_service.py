@@ -1,7 +1,3 @@
-
-
-from pydantic import TypeAdapter, parse_obj_as
-import pydantic
 from misho_server.domain.hour_slot import HourSlot
 from misho_server.domain.reservation_calendar import UserCourtReservation, UserReservationCalendar
 from misho_server.domain.reservation_slot import ReservationSlot

@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from dataclasses import dataclass
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from misho_server.domain.court import CourtId
 import misho_server.database.model as dao
@@ -19,12 +20,12 @@ class AvailableJobReservationSlot:
 
 
 class AvailableJobReservationSlotRepository:
-    async def get_available_job_reservation_slots() -> list[AvailableJobReservationSlot]:
+    async def get_available_job_reservation_slots(self) -> list[AvailableJobReservationSlot]:
         raise NotImplementedError()
 
 
 class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
-    def __init__(self, engine):
+    def __init__(self, engine: AsyncEngine):
         self._engine = engine
         self._sessionmaker = async_sessionmaker(
             bind=engine, expire_on_commit=False)
@@ -52,7 +53,7 @@ class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
                         dao.MonitoringJob.action == dao.JobAction.RESERVE,
                         dao.ReservationCalendar.reserved_by == None,
                         dao.Job.status.in_(
-                            [dao.Status.PENDING, dao.Status.FAILED]),
+                            [dao.Status.ACTIVE]),
                     )
                 )
             )

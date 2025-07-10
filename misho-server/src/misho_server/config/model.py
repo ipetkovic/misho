@@ -4,7 +4,6 @@ from apscheduler.triggers.cron import CronTrigger
 
 @dataclass
 class ReservationMonitoringConfig:
-    username: str
     cron: CronTrigger
 
 
@@ -19,6 +18,11 @@ class MailerConfig:
     port: int
     username: str
     password: str
+
+
+@dataclass
+class JobCreateConfig:
+    default_reserve_job_expire_before_hours: int
 
 
 @dataclass

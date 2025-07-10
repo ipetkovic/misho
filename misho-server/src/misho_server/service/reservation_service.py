@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 import datetime
 import logging
-from misho_server.domain.hour_slot import HourSlot
 from misho_server.domain.reservation_slot import ReservationSlot
 from misho_server.service.sportbooking_service import SportbookingService
-from misho_server.domain.reservation_calendar import CourtId, UserReservationCalendar
+from misho_server.domain.reservation_calendar import UserReservationCalendar
 from misho_server.domain.session_token import SessionToken
 from misho_server.service.session_token_fetch_service import SessionTokenFetchService
 from misho_server.config import CONFIG
@@ -60,6 +59,10 @@ class ReservationService:
             raise CourtNotAvailableForUser(reservation_slot)
 
         reservation_link = calendar.user_calendar[reservation_slot].link_for_reservation
+
+        if reservation_link is None:
+            raise ValueError('Reservation link is None')
+
         logging.debug(f"Trying to reserve court {reservation_slot.court}")
         return await self._reserve(
             user_token=token,

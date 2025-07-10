@@ -1,14 +1,9 @@
-import datetime
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from misho_server.domain.court import CourtId
-from misho_server.domain.hour_slot import HourSlot
-from misho_server.domain.job import JobId
 from misho_server.domain.job_notification import JobNotificationId, JobNotification
 from misho_server.domain.reservation_slot import ReservationSlot
-from misho_server.domain.time_slot import TimeSlot
 import misho_server.database.model as dao
 from sqlalchemy.orm import selectinload
 from misho_server.repository.jobs import to_domain as job_to_domain

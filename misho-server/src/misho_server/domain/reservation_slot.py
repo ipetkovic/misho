@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import pydantic
 
 from misho_server.domain.court import CourtId

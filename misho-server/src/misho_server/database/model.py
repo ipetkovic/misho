@@ -84,7 +84,7 @@ class Job(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     time_slot_id: Mapped[int] = mapped_column(ForeignKey("time_slots.id"))
     status: Mapped[Status] = mapped_column(
-        Enum(Status), default=Status.PENDING)
+        Enum(Status), default=Status.ACTIVE)
     created_at: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now)
     expires_at: Mapped[Optional[datetime.datetime]] = mapped_column()

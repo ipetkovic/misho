@@ -19,14 +19,14 @@ class ReserveJobExecutor:
         self._reservation_service = reservation_service
         self._notification_service = notification_service
 
-    async def execute(self, job: Job, court_pool: set[CourtId] = None):
+    async def execute(self, job: Job, court_pool: set[CourtId]):
 
         async def execute_reserve_job():
             return await self._execute_reserve_job(job, court_pool)
 
         return await execute_reserve_job()
 
-    async def _execute_reserve_job(self, job: Job, court_pool: set[CourtId] = None):
+    async def _execute_reserve_job(self, job: Job, court_pool: set[CourtId]):
         logging.info(f"Starting executing reserve job {job.id}")
 
         async def reserve() -> ReservationSlot | None:
@@ -65,7 +65,7 @@ class ReserveJobExecutor:
         reservation_slot = None
         try:
             reservation_slot = await reserve()
-        except Exception as e:
+        except Exception as _:
             pass
 
         is_success = reservation_slot is not None
@@ -87,6 +87,5 @@ class ReserveJobExecutor:
         )
 
     async def _update_job_status(self, job: Job, is_success: bool):
-        if CONFIG.update_job_status:
-            job_status = Status.SUCCESS if is_success else Status.FAILED
-            await self._job_repository.update_job_status(job.id, job_status)
+        if CONFIG.update_job_status and is_success:
+            await self._job_repository.update_job_status(job.id, Status.SUCCESS)

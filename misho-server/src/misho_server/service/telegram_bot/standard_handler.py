@@ -4,7 +4,8 @@ from misho_server.repository.reservation_calendar import ReservationCalendarRepo
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai.user_client import OpenAiUserClient
-from misho_server.service.telegram_bot.telegram_handler import ChatId
+from misho_server.service.telegram_bot.common import get_chat_id, get_message_text, get_username
+from misho_server.service.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from openai import OpenAI
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -25,7 +26,7 @@ class OpenAiUserClientBuilder:
         )
 
 
-class TelegramStandardHandler:
+class TelegramStandardHandler(TelegramHandler):
     def __init__(
         self,
         user_telegram_integration_repository: UserTelegramIntegrationRepository,
@@ -35,7 +36,13 @@ class TelegramStandardHandler:
         self._open_ai_clients: dict[str, OpenAiUserClient] = {}
         self._user_telegram_integration_repository = user_telegram_integration_repository
 
-    async def start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        username = get_username(update)
+        chat_id = get_chat_id(update)
+
+        if username is None or chat_id is None:
+            return
+
         message = (
             "Pozdrav! Ja sam Misho bot, "
             "tu sam da ti pomognem s rezervacijama i obavijestima za teniske terene.\n"
@@ -43,35 +50,41 @@ class TelegramStandardHandler:
         )
 
         await self._update_user_chat_id(
-            username=update.effective_user.username,
-            chat_id=update.effective_chat.id
+            username=username,
+            chat_id=chat_id
         )
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        await context.bot.send_message(chat_id=chat_id, text=message)
 
-    async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return None
 
     async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
         user_telegram_data = await self._get_user_telegram_data_by_user_id(user.id)
-        return user_telegram_data.chat_id
+        return user_telegram_data.chat_id if user_telegram_data else None
 
-    async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        message = update.message.text
-        open_ai_client = await self._get_open_ai_client(
-            update.effective_user.username
-        )
+    async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        username = get_username(update)
+        chat_id = get_chat_id(update)
+        message = get_message_text(update)
 
-        if message is None:
-            return None
+        if username is None or chat_id is None or message is None:
+            return
+
+        open_ai_client = await self._get_open_ai_client(username)
+        if open_ai_client is None:
+            raise ValueError(f"OpenAI client not found for user: {username}")
 
         response = await open_ai_client.handle_user_message(message)
 
         if response is not None:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+            await context.bot.send_message(chat_id=chat_id, text=response)
 
     async def _get_open_ai_client(self, username: str) -> OpenAiUserClient | None:
         if username not in self._open_ai_clients:
             user_telegram_data = await self._get_user_telegram_data(username)
+
+            if user_telegram_data is None or user_telegram_data.user is None:
+                return None
 
             self._open_ai_clients[username] = self._open_ai_user_client_builder.build(
                 user_id=user_telegram_data.user.id

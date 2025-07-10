@@ -1,14 +1,8 @@
-
-from sqlalchemy import Select, select
-from sqlalchemy.orm import Session
-from sqlalchemy.dialects.sqlite import insert
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 import misho_server.database.model as dao
-
 from misho_server.domain.court import Court
-from misho_server.domain.hour_slot import HourSlot, HourSlotId
 
 
 class CourtRepository:
@@ -20,7 +14,7 @@ class CourtRepository:
     async def list_courts(self) -> list[Court]:
         async with self._sessionmaker() as session:
             stmt = select(dao.Court)
-            result: Select[dao.Court] = await session.execute(stmt)
+            result = await session.execute(stmt)
             courts_dao = result.scalars().all()
             return [to_domain(court) for court in courts_dao]
 
