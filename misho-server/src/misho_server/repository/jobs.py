@@ -59,6 +59,8 @@ class JobsRepositorySqlite(JobsRepository):
                 time_slot_id=time_slot_id,
                 job_courts=job_courts,
                 monitoring_job=dao.MonitoringJob(action=job.action),
+                expires_at=job.expires_at,
+                on_expiry_action=job.on_expiry_action
             )
 
             session.add(job_dao)
@@ -174,5 +176,6 @@ def to_domain(job_dao: dao.Job) -> Job:
             court.court_id for court in job_dao.job_courts),
         created_at=job_dao.created_at,
         status=job_dao.status,
-        expires_at=expires_at
+        expires_at=expires_at,
+        on_expiry_action=job_dao.on_expiry_action
     )

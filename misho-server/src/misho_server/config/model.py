@@ -31,6 +31,7 @@ class Config:
     dummy_reservation: bool
     update_job_status: bool
     logging: LoggingConfig
+    job_create_config: JobCreateConfig
     reservation_monitoring: ReservationMonitoringConfig
     mailer_config: MailerConfig
     telegram_bot_token: str

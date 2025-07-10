@@ -1,5 +1,5 @@
 from datetime import datetime
-from misho_server.domain.job import Job, JobCreate, OnExpiryAction, Status
+from misho_server.domain.job import Job, JobAction, JobCreate, OnExpiryAction, Status
 from misho_server.repository.jobs import JobsRepository
 from misho_server.service.notification_service import NotificationService
 
@@ -17,15 +17,16 @@ class JobExpiredHandler:
 
     async def _handle_expired_job(self, job: Job):
         await self._job_repository.delete(job.id)
+        print(job.on_expiry_action)
         match job.on_expiry_action:
             case OnExpiryAction.CREATE_NOTIFY_JOB:
                 await self._job_repository.insert(
                     JobCreate(
                         user_id=job.user.id,
                         time_slot=job.time_slot,
-                        action=job.action,
+                        action=JobAction.NOTIFY,
                         courts_by_priority=list(job.courts_by_priority),
-                        expires_at=None,
+                        expires_at=job.time_slot.start_time(),
                         on_expiry_action=None
                     )
                 )

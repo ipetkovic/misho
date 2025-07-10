@@ -16,7 +16,7 @@ type CourtIdApi = int
 
 
 class StatusApi(Enum):
-    PENDING = "PENDING"
+    ACTIVE = "ACTIVE"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 

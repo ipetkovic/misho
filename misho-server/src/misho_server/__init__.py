@@ -4,7 +4,6 @@ import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-import httpx
 from misho_server.controller.reservation_calendar import ReservationCalendarController
 from misho_server.http.auth import AuthMiddleware
 from misho_server.http.http_app import HttpApplication
@@ -22,10 +21,11 @@ from misho_server.repository.time_slot import TimeSlotRepositorySqlite
 from misho_server.repository.user import UserRepositorySqlite
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepositorySqlite
 from misho_server.repository.user_token import UserTokenRepositorySqlite
-from misho_server.service import telegram_bot
+from misho_server.service.job_expired_handler import JobExpiredHandler
 from misho_server.service.job_notifier import JobNotifier
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.notification_service import NotificationService
+from misho_server.service.reservation_calendar_sync_service import ReservationCalendarSyncService
 from misho_server.service.reservation_monitoring import ReservationMonitoring
 from misho_server.service.reservation_scheduler import ReservationSchedulerImpl
 from misho_server.service.reservation_service import ReservationService
@@ -39,7 +39,6 @@ from misho_server.service.telegram_bot.standard_handler import OpenAiUserClientB
 from misho_server.service.telegram_bot.telegram_handler_delegator import TelegramHandlerDelegator
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import create_async_engine
-from aiohttp import web
 
 import logging
 
@@ -60,7 +59,7 @@ async def start():
     engine = create_async_engine(
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)
 
-    async with sportbooking.SportbookingApi() as sportbooking_api, engine.begin() as conn:
+    async with sportbooking.SportbookingApi() as sportbooking_api, engine.begin():
         migrate()
 
         sportbooking_service = SportbookingServiceImpl(
@@ -107,16 +106,25 @@ async def start():
         reservation_scheduler = ReservationSchedulerImpl(
             reserve_job_executor=reserve_job_executor)
 
+        reservation_calendar_sync_service = ReservationCalendarSyncService(
+            reservation_calendar_repository=reservation_calendar_repository,
+            user_repository=user_repository,
+            token_fetch_service=session_token_fetch_service,
+            sporbooking_service=sportbooking_service
+        )
+
+        job_expired_handler = JobExpiredHandler(
+            job_repository=jobs_repository,
+            notification_service=notification_service,
+        )
         reservation_monitoring = ReservationMonitoring(
             reservation_config=CONFIG.reservation_monitoring,  # Replace with actual config
-            sportbooking=sportbooking_service,
-            user_repository=user_repository,
-            reservation_calendar_repository=reservation_calendar_repository,
+            reservation_calendar_sync_service=reservation_calendar_sync_service,
+            job_expired_handler=job_expired_handler,
             jobs_repository=jobs_repository,
             job_notifier=job_notifier,
             reservation_scheduler=reservation_scheduler,
             available_job_reservation_slot_repository=available_job_reservation_slot_repository,
-            token_fetch_service=session_token_fetch_service
         )
 
         await time_slot_repository.insert_time_slots(datetime.date.today() - timedelta(days=10),
@@ -132,6 +140,7 @@ async def start():
 
         jobs_service = JobsService(jobs_repository=jobs_repository,
                                    hour_slots_repository=hour_slot_repository,
+                                   job_create_config=CONFIG.job_create_config,
                                    court_repository=court_respository)
 
         jobs_controller = JobsController(
@@ -142,7 +151,6 @@ async def start():
 
         auth = AuthMiddleware(user_repository=user_repository)
         http_app = HttpApplication(auth)
-        app = web.Application(middlewares=[auth.middleware])
 
         reservation_calendar_controller = ReservationCalendarController(
             sportbooking=sportbooking_service, session_token_fetch_service=session_token_fetch_service)

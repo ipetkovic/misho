@@ -1,7 +1,7 @@
 from datetime import timedelta
 import datetime
 from misho_server.config.model import JobCreateConfig
-from misho_server.domain.job import Job, JobCreate, Status
+from misho_server.domain.job import Job, JobAction, JobCreate, Status
 from misho_server.domain.user import UserId
 from misho_server.repository.court import CourtRepository
 from misho_server.repository.hour_slot import HourSlotRepository
@@ -42,14 +42,16 @@ class JobsService:
 
     async def create_job(self, job_create: JobCreate) -> Job:
         await self._validate_job_create(job_create)
-        job_create.expires_at = self._get_job_expires_at(job_create)
-        return await self._jobs_repository.insert(job_create)
+        expires_at = self._get_job_expires_at(job_create)
+        return await self._jobs_repository.insert(job_create.model_copy(
+            update={"expires_at": expires_at, }
+        ))
 
     async def list_jobs(self, statuses: list[Status] | None = None, user_id: UserId | None = None) -> list[Job]:
         result = await self._jobs_repository.list_all(statuses=statuses, user_id=user_id)
         return result
 
-    async def get_job(self, job_id: int, user_id: UserId | None) -> Job | None:
+    async def get_job(self, job_id: int, user_id: UserId | None = None) -> Job | None:
         job = await self._jobs_repository.find_by_id(job_id)
 
         if not job or (user_id and job.user.id != user_id):
@@ -69,7 +71,7 @@ class JobsService:
         job_expires_at = job_create.expires_at
         if job_expires_at is None:
             job_expires_at = job_create.time_slot.start_time()
-            if job_create.action == JobCreate.action.RESERVE:
+            if job_create.action == JobAction.RESERVE:
                 job_expires_at = job_create.time_slot.start_time() - \
                     timedelta(
                         hours=self._job_create_config.default_reserve_job_expire_before_hours)

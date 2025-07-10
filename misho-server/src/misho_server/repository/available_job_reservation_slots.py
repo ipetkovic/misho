@@ -24,7 +24,7 @@ class AvailableJobReservationSlotRepository:
         raise NotImplementedError()
 
 
-class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlot):
+class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlotRepository):
     def __init__(self, engine: AsyncEngine):
         self._engine = engine
         self._sessionmaker = async_sessionmaker(

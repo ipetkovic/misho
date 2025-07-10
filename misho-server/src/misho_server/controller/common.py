@@ -1,4 +1,5 @@
 
+from typing import Any, Type, TypeVar
 import pydantic
 from aiohttp import web
 
@@ -9,7 +10,10 @@ def to_json(obj: pydantic.BaseModel) -> str:
     return obj.model_dump_json(indent=2)
 
 
-def from_json(body: any, cls: pydantic.BaseModel):
+T = TypeVar("T", bound=pydantic.BaseModel)
+
+
+def from_json(body: Any, cls: Type[T]) -> T:
     try:
         return cls(**body)
     except pydantic.ValidationError as e:
@@ -33,4 +37,4 @@ def not_found(message: str) -> web.HTTPNotFound:
 
 def success_response(data: pydantic.BaseModel) -> web.Response:
     json = to_json(data)
-    return web.json_response(body=json)
+    return web.json_response(body=json.encode('utf-8'))

@@ -15,9 +15,9 @@ class JobsController:
     def get_routes(self):
         return [
             web.get('/jobs', self.list_jobs),
-            web.get('/jobs/{job_id:\d+}', self.get_job),
+            web.get('/jobs/{job_id:\\d+}', self.get_job),
             web.post('/jobs', self.create_job),
-            web.delete('/jobs/{job_id:\d+}', self.delete_job),
+            web.delete('/jobs/{job_id:\\d+}', self.delete_job),
         ]
 
     async def list_jobs(self, request: web.Request):
@@ -70,7 +70,7 @@ class JobsController:
         await self.jobs_repository.delete(job_id)
         return web.json_response()
 
-    def _convert_status(self, status: str) -> Status:
+    def _convert_status(self, status: str) -> Status | None:
         try:
             return Status(status)
         except ValueError:

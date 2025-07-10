@@ -1,7 +1,7 @@
 import os
 from apscheduler.triggers.cron import CronTrigger
 
-from misho_server.config.model import Config, LoggingConfig, MailerConfig, ReservationMonitoringConfig
+from misho_server.config.model import Config, JobCreateConfig, LoggingConfig, MailerConfig, ReservationMonitoringConfig
 
 _MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME')
 _MAIL_PASSWORD = os.getenv('MISHO_MAIL_PASSWORD')
@@ -18,8 +18,7 @@ CONFIG_DEV = Config(
         level='DEBUG'
     ),
     reservation_monitoring=ReservationMonitoringConfig(
-        username="Ivo Petkovic",
-        cron=CronTrigger(hour='*', minute='*', second='0, 10, 20, 30, 40, 50')
+        cron=CronTrigger(hour='*', minute='*', second='0')
     ),
     mailer_config=MailerConfig(
         hostname="smtp.gmail.com",
@@ -27,5 +26,8 @@ CONFIG_DEV = Config(
         username=_MAIL_USERNAME,
         password=_MAIL_PASSWORD
     ),
-    telegram_bot_token=_TELEGRAM_TOKEN
+    telegram_bot_token=_TELEGRAM_TOKEN,
+    job_create_config=JobCreateConfig(
+        default_reserve_job_expire_before_hours=10
+    )
 )

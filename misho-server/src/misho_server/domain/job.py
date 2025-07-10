@@ -11,7 +11,7 @@ type JobId = int
 
 
 class Status(Enum):
-    ACTIVE = "PENDING"
+    ACTIVE = "ACTIVE"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
@@ -33,7 +33,7 @@ class Job(pydantic.BaseModel):
     action: JobAction
     created_at: datetime.datetime
     expires_at: datetime.datetime
-    on_expiry_action: OnExpiryAction | None = None
+    on_expiry_action: OnExpiryAction | None
     status: Status
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
