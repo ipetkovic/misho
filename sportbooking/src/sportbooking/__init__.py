@@ -1,13 +1,16 @@
 import httpx
 from sportbooking.login import LoginResponse
 from sportbooking.reservation_calendar import UserReservationCalendar
+from sportbooking.reservation_cancel_query_input import ReservationCancelQueryInput
 from sportbooking.reservation_query_input import ReservationQueryInput
 from sportbooking.user_account_info import UserAccountInfo
 from sportbooking._internal.login import login as _login_api
 from sportbooking._internal.reserve import reserve as _reserve_api
+from sportbooking._internal.cancel_reservation import cancel_reservation as _cancel_reservation_api
 from sportbooking._internal.reservation_calendar import get_reservation_calendar as _get_reservation_calendar_api
 from sportbooking._internal.user_account import get_account_info as _get_account_info_api
 from sportbooking._internal.reservation_input import get_reservation_query_input as _get_reservation_query_input_api
+from sportbooking._internal.reservation_cancel_input import get_reservation_cancel_query_input as _get_reservation_cancel_query_input_api
 
 
 class SportbookingApiInterface:
@@ -21,6 +24,12 @@ class SportbookingApiInterface:
         raise NotImplementedError()
 
     async def reserve(self, token: str, reservation_input: ReservationQueryInput) -> None:
+        raise NotImplementedError()
+
+    async def get_reservation_cancel_query_input(self, token: str, reservation_cancel_url: str) -> ReservationCancelQueryInput:
+        raise NotImplementedError()
+
+    async def cancel_reservation(self, token: str, reservation_cancel_input: ReservationCancelQueryInput) -> None:
         raise NotImplementedError()
 
     async def get_user_account_info(self, token: str) -> UserAccountInfo:
@@ -43,11 +52,17 @@ class SportbookingApi(SportbookingApiInterface):
     async def reserve(self, token: str, reservation_input: ReservationQueryInput) -> None:
         return await _reserve_api(self._http_client, token, reservation_input)
 
+    async def get_reservation_cancel_query_input(self, token: str, reservation_cancel_url: str) -> ReservationCancelQueryInput:
+        return await _get_reservation_cancel_query_input_api(self._http_client, token, reservation_cancel_url)
+
+    async def cancel_reservation(self, token: str, reservation_cancel_input: ReservationCancelQueryInput) -> None:
+        return await _cancel_reservation_api(self._http_client, token, reservation_cancel_input)
+
     async def get_user_account_info(self, token: str) -> UserAccountInfo:
         return await _get_account_info_api(self._http_client, token)
 
     async def __aenter__(self):
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, *_):
         await self._http_client.aclose()

@@ -12,7 +12,7 @@ _STANDARD_HEADERS = {
 }
 
 
-def get_standard_headers() -> dict:
+def get_standard_headers() -> dict[str, str]:
     """
     Returns the standard headers used for requests to the Sportbooking API.
     """

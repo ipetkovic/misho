@@ -38,6 +38,10 @@ class SportbookingServiceImpl(SportbookingService):
         reservation_input = await self._sportbooking_api.get_reservation_query_input(token.value, reservation_url)
         await self._sportbooking_api.reserve(token.value, reservation_input)
 
+    async def cancel_reservation(self, token: SessionToken, reservation_cancel_url: str) -> None:
+        reservation_cancel_input = await self._sportbooking_api.get_reservation_cancel_query_input(token.value, reservation_cancel_url)
+        await self._sportbooking_api.cancel_reservation(token.value, reservation_cancel_input)
+
     async def get_user_account_name(self, token: SessionToken) -> str:
         return (await self._sportbooking_api.get_user_account_info(token.value)).name
 
