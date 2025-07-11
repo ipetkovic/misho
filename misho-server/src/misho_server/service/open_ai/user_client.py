@@ -3,10 +3,14 @@ from datetime import datetime, timedelta
 import json
 import logging
 from misho_server.domain.job import JobCreate
+from misho_server.domain.reservation_slot import ReservationSlot
+from misho_server.domain.time_slot import TimeSlot
 from misho_server.domain.user import UserId
 from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai import tools
+from misho_server.service.reservation_cancel_service import ReservationCancelService
+from misho_server.service.reservation_service import ReservationService
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletion
 
@@ -16,6 +20,8 @@ class OpenAiUserClient:
         self,
         open_ai_client: OpenAI,
         jobs_service: JobsService,
+        reservation_service: ReservationService,
+        reservation_cancel_service: ReservationCancelService,
         reservation_calendar_repository: ReservationCalendarRepository,
         user_id: UserId | None
     ):
@@ -24,6 +30,8 @@ class OpenAiUserClient:
         self._open_ai_client = open_ai_client
         self._jobs_service = jobs_service
         self._reservation_calendar_repository = reservation_calendar_repository
+        self._reservation_service = reservation_service
+        self._reservation_cancel_service = reservation_cancel_service
         self._user_id = user_id
         self._clear_context_after_seconds = 60 * 10  # 10 minutes
         self._lock = asyncio.Lock()
@@ -100,6 +108,42 @@ class OpenAiUserClient:
                 job_id=args['job_id'],
                 user_id=self._user_id
             ))
+            self._tool_call_append(tool_call, result)
+
+        elif func_name == "reserve":
+            logging.info(f"Reserve called with args: {args}")
+            time_slot = TimeSlot(**args['time_slot'])
+            court = int(args['court'])
+            reservation_slot = ReservationSlot(
+                time_slot=time_slot,
+                court=court
+            )
+            result = await call(
+                self._reservation_service.reserve(
+                    user_id=self._user_id,
+                    reservation_slot=reservation_slot
+                ))
+            if result is None:
+                result = "Reservation successful."
+
+            self._tool_call_append(tool_call, result)
+
+        elif func_name == "cancel_reservation":
+            logging.info(f"Reservation cancel called with args: {args}")
+            time_slot = TimeSlot(**args['time_slot'])
+            court = int(args['court'])
+            reservation_slot = ReservationSlot(
+                time_slot=time_slot,
+                court=court
+            )
+            result = await call(
+                self._reservation_cancel_service.cancel_reservation(
+                    user_id=self._user_id,
+                    reservation_slot=reservation_slot
+                ))
+            if result is None:
+                result = "Reservation cancellation successful."
+
             self._tool_call_append(tool_call, result)
 
         elif func_name == "reservation_calendar":

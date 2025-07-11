@@ -34,7 +34,11 @@ class ReservationRequestFailed(Exception):
 
 
 class ReservationService:
-    def __init__(self, sportbooking: SportbookingService, session_token_fetch_service: SessionTokenFetchService):
+    def __init__(
+        self,
+        sportbooking: SportbookingService,
+        session_token_fetch_service: SessionTokenFetchService,
+    ):
         self._session_token_fetch_service = session_token_fetch_service
         self._sportbooking = sportbooking
 

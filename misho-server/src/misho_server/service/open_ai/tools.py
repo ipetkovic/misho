@@ -58,6 +58,102 @@ create_job_tool: ChatCompletionToolParam = {
     }
 }
 
+reserve_tool: ChatCompletionToolParam = {
+    "type": "function",
+    "function": {
+        "name": "reserve",
+        "description": (
+            "Reserve court immidiately for the given time slot. This can be used only for up to four days in advance (if today is Friday, you can reserve up until Tuesday). In contrast to create_job, this does not create a job, but reserves the court immediately."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "time_slot": {
+                    "type": "object",
+                    "properties": {
+                        "date": {
+                            "type": "string",
+                            "format": "date",
+                            "title": "Date"
+                        },
+                        "hour_slot": {
+                            "type": "object",
+                            "title": "HourSlot",
+                            "properties": {
+                                "from_hour": {
+                                    "type": "integer",
+                                    "title": "From Hour"
+                                },
+                                "to_hour": {
+                                    "type": "integer",
+                                    "title": "To Hour"
+                                }
+                            },
+                            "required": ["from_hour", "to_hour"]
+                        }
+                    },
+                    "required": ["date", "hour_slot"],
+                    "title": "TimeSlot"
+                },
+                "court": {
+                    "type": "integer",
+                    "title": "Court to reserve",
+                }
+            },
+            "required": ["time_slot", "court"],
+            "title": "ReserveRequest"
+        }
+    }
+}
+
+cancel_reservation_tool: ChatCompletionToolParam = {
+    "type": "function",
+    "function": {
+        "name": "cancel_reservation",
+        "description": (
+            "Cancel reservation for the court immidiately for the given time slot. This can be used only for up to four days in advance (if today is Friday, you can reserve up until Tuesday). In contrast to create_job, this does not create a job, but cancels reserve immediately."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "time_slot": {
+                    "type": "object",
+                    "properties": {
+                        "date": {
+                            "type": "string",
+                            "format": "date",
+                            "title": "Date"
+                        },
+                        "hour_slot": {
+                            "type": "object",
+                            "title": "HourSlot",
+                            "properties": {
+                                "from_hour": {
+                                    "type": "integer",
+                                    "title": "From Hour"
+                                },
+                                "to_hour": {
+                                    "type": "integer",
+                                    "title": "To Hour"
+                                }
+                            },
+                            "required": ["from_hour", "to_hour"]
+                        }
+                    },
+                    "required": ["date", "hour_slot"],
+                    "title": "TimeSlot"
+                },
+                "court": {
+                    "type": "integer",
+                    "title": "Court to reserve",
+                }
+            },
+            "required": ["time_slot", "court"],
+            "title": "ReserveCancelRequest"
+        }
+    }
+}
+
 list_jobs_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
@@ -109,5 +205,7 @@ def get_tools() -> list[ChatCompletionToolParam]:
         create_job_tool,
         list_jobs_tool,
         delete_job_tool,
+        reserve_tool,
+        cancel_reservation_tool,
         reservation_calendar_tool
     ]

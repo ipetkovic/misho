@@ -4,6 +4,8 @@ from misho_server.repository.reservation_calendar import ReservationCalendarRepo
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai.user_client import OpenAiUserClient
+from misho_server.service.reservation_cancel_service import ReservationCancelService
+from misho_server.service.reservation_service import ReservationService
 from misho_server.service.telegram_bot.common import get_chat_id, get_message_text, get_username
 from misho_server.service.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from openai import OpenAI
@@ -12,16 +14,27 @@ from telegram.ext import ContextTypes
 
 
 class OpenAiUserClientBuilder:
-    def __init__(self, open_ai_client: OpenAI, jobs_service: JobsService, reservation_calendar_repository: ReservationCalendarRepository):
+    def __init__(
+        self,
+        open_ai_client: OpenAI,
+        jobs_service: JobsService,
+        reservation_service: ReservationService,
+        reservation_cancel_service: ReservationCancelService,
+        reservation_calendar_repository: ReservationCalendarRepository
+    ):
         self._open_ai_client = open_ai_client
         self._jobs_service = jobs_service
         self._reservation_calendar_repository = reservation_calendar_repository
+        self._reservation_service = reservation_service
+        self._reservation_cancel_service = reservation_cancel_service
 
     def build(self, user_id: UserId) -> OpenAiUserClient:
         return OpenAiUserClient(
             open_ai_client=self._open_ai_client,
             jobs_service=self._jobs_service,
             reservation_calendar_repository=self._reservation_calendar_repository,
+            reservation_service=self._reservation_service,
+            reservation_cancel_service=self._reservation_cancel_service,
             user_id=user_id
         )
 

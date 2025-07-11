@@ -26,6 +26,7 @@ from misho_server.service.job_notifier import JobNotifier
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_calendar_sync_service import ReservationCalendarSyncService
+from misho_server.service.reservation_cancel_service import ReservationCancelService
 from misho_server.service.reservation_monitoring import ReservationMonitoring
 from misho_server.service.reservation_scheduler import ReservationSchedulerImpl
 from misho_server.service.reservation_service import ReservationService
@@ -173,10 +174,17 @@ async def start():
                                        sportbooking=sportbooking_service
                                        )
 
+        reservation_cancel_service = ReservationCancelService(
+            sportbooking=sportbooking_service,
+            session_token_fetch_service=session_token_fetch_service
+        )
+
         open_ai_user_client_builder = OpenAiUserClientBuilder(
             open_ai_client=OpenAI(),
             jobs_service=jobs_service,
-            reservation_calendar_repository=reservation_calendar_repository
+            reservation_calendar_repository=reservation_calendar_repository,
+            reservation_service=reservation_service,
+            reservation_cancel_service=reservation_cancel_service,
         )
 
         telegram_blacklisted_handler = TelegramBlacklistedUserHandler()
