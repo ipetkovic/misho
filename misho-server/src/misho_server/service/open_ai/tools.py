@@ -191,11 +191,26 @@ delete_job_tool: ChatCompletionToolParam = {
 reservation_calendar_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
-        "name": "reservation_calendar",
-        "description": (
-            "Get the reservation calendar for up to four days in advance."
-            "Since response is big, do not call this tool too often."
-        ),
+        "name": "get_reservations",
+        "description": "Get the reservation calendar for up to four days in advance. Should return a table",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "only_for_user": {
+                    "type": "boolean",
+                    "description": "If true, only return reservations made by the current user. If false, return all reservations.",
+                },
+                "dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "date",
+                    },
+                    "description": "Filter reservations by specific dates."
+                }
+            },
+            "required": []  # Both parameters are optional
+        }
     }
 }
 

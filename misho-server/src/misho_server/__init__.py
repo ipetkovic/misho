@@ -25,6 +25,7 @@ from misho_server.service.job_expired_handler import JobExpiredHandler
 from misho_server.service.job_notifier import JobNotifier
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.notification_service import NotificationService
+from misho_server.service.reservation_calendar import ReservationCalendarService
 from misho_server.service.reservation_calendar_sync_service import ReservationCalendarSyncService
 from misho_server.service.reservation_cancel_service import ReservationCancelService
 from misho_server.service.reservation_monitoring import ReservationMonitoring
@@ -179,12 +180,17 @@ async def start():
             session_token_fetch_service=session_token_fetch_service
         )
 
+        reservation_calendar_service = ReservationCalendarService(
+            reservation_calendar_repository=reservation_calendar_repository,
+            user_repository=user_repository,
+        )
+
         open_ai_user_client_builder = OpenAiUserClientBuilder(
             open_ai_client=OpenAI(),
             jobs_service=jobs_service,
-            reservation_calendar_repository=reservation_calendar_repository,
             reservation_service=reservation_service,
             reservation_cancel_service=reservation_cancel_service,
+            reservation_calendar_service=reservation_calendar_service
         )
 
         telegram_blacklisted_handler = TelegramBlacklistedUserHandler()

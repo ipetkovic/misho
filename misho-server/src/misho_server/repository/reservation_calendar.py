@@ -13,7 +13,7 @@ from misho_server.repository.time_slot import to_domain as time_slot_to_domain
 
 
 class ReservationCalendarRepository:
-    async def get_calendar(self) -> ReservationCalendar | None:
+    async def get_calendar(self, filter_by_name: str | None = None, filter_by_days: list[date] | None = None) -> ReservationCalendar | None:
         raise NotImplementedError()
 
     async def set_calendar(self, calendar: ReservationCalendar) -> None:
@@ -32,9 +32,22 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
         self._sessionmaker = async_sessionmaker(
             bind=engine, expire_on_commit=False)
 
-    async def get_calendar(self, filter_by_days: list[date] | None = None) -> ReservationCalendar | None:
+    async def get_calendar(self, filter_by_name: str | None = None, filter_by_days: list[date] | None = None) -> ReservationCalendar | None:
         async with self._sessionmaker() as session:
             calendar_dao = await self._load_calendar(session)
+            print(filter_by_name)
+            if filter_by_name:
+                calendar_dao = [
+                    row for row in calendar_dao
+                    if row.reserved_by == filter_by_name
+                ]
+            print("filter_by_days: ", calendar_dao)
+            if filter_by_days:
+                calendar_dao = [
+                    row for row in calendar_dao
+                    if row.time_slot.date in filter_by_days
+                ]
+            print("calendar_dao: ", calendar_dao)
             calendar = _to_domain(calendar_dao) if calendar_dao else None
             return calendar
 

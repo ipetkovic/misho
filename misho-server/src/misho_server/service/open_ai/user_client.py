@@ -9,6 +9,7 @@ from misho_server.domain.user import UserId
 from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai import tools
+from misho_server.service.reservation_calendar import ReservationCalendarService
 from misho_server.service.reservation_cancel_service import ReservationCancelService
 from misho_server.service.reservation_service import ReservationService
 from openai import OpenAI
@@ -22,14 +23,14 @@ class OpenAiUserClient:
         jobs_service: JobsService,
         reservation_service: ReservationService,
         reservation_cancel_service: ReservationCancelService,
-        reservation_calendar_repository: ReservationCalendarRepository,
+        reservation_calendar_service: ReservationCalendarService,
         user_id: UserId | None
     ):
         self._last_message_timestamp = None
         self._messages = [self._system_message()]
         self._open_ai_client = open_ai_client
         self._jobs_service = jobs_service
-        self._reservation_calendar_repository = reservation_calendar_repository
+        self._reservation_calendar_service = reservation_calendar_service
         self._reservation_service = reservation_service
         self._reservation_cancel_service = reservation_cancel_service
         self._user_id = user_id
@@ -84,6 +85,7 @@ class OpenAiUserClient:
                 result = await cr
                 return result
             except Exception as e:
+                logging.error(f"Error calling function {func_name}: {e}")
                 return str(e)
 
         if func_name == "create_job":
@@ -146,10 +148,22 @@ class OpenAiUserClient:
 
             self._tool_call_append(tool_call, result)
 
-        elif func_name == "reservation_calendar":
-            logging.info(f"Reservation calendar called.")
+        elif func_name == "get_reservations":
+            logging.info(f"Get reservations called with args: {args}.")
             # Assuming reservation_calendar is a method in JobsService
-            result = await call(self._reservation_calendar_repository.get_calendar())
+            dates = args.get('dates', None)
+            dates = [datetime.strptime(date, "%Y-%m-%d").date()
+                     for date in dates] if dates else None
+            only_for_user = args.get('only_for_user', False)
+
+            user_id_filter = None
+            if only_for_user:
+                user_id_filter = self._user_id
+
+            print(
+                f"Dates for reservation calendar: {dates}, user_id_filter: {user_id_filter}")
+
+            result = await call(self._reservation_calendar_service.get_calendar(user_id=user_id_filter, filter_by_days=dates))
             self._tool_call_append(tool_call, result)
 
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):
