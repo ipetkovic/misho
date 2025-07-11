@@ -39,7 +39,7 @@ class ReservationService:
         self._sportbooking = sportbooking
 
     async def reserve(self, user_id: int, reservation_slot: ReservationSlot) -> None:
-        logging.debug(
+        logging.info(
             f"Reserving for user {user_id} on {reservation_slot.time_slot} for court {reservation_slot.court}")
         token = await self._session_token_fetch_service.get_token(user_id)
         calendar = await self.refresh_reservation_calendar(token)
@@ -88,7 +88,7 @@ class ReservationService:
         await self._verify_reservation(user_token, reservation_slot)
 
     async def _verify_reservation(self, user_token: SessionToken, reservation_slot: ReservationSlot) -> None:
-        if CONFIG.dummy_reservation:
+        if not CONFIG.dummy_reservation:
             logging.debug(
                 f"Verifying reservation for court {reservation_slot.court} on {reservation_slot.time_slot}"
             )

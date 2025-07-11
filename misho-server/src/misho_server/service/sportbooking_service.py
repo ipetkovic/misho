@@ -18,6 +18,9 @@ class SportbookingService:
     async def reserve(self, token: SessionToken, reservation_url: str) -> None:
         raise NotImplementedError()
 
+    async def cancel_reservation(self, token: SessionToken, reservation_cancel_url: str) -> None:
+        raise NotImplementedError()
+
     async def get_user_account_name(self, token: SessionToken) -> str:
         raise NotImplementedError()
 
