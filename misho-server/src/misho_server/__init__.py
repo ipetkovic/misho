@@ -9,6 +9,7 @@ from misho_server.http.auth import AuthMiddleware
 from misho_server.http.http_app import HttpApplication
 from misho_server.controller.jobs import JobsController
 from misho_server.controller.signup import SignUpController
+from apscheduler.triggers.cron import CronTrigger
 from misho_server.config import CONFIG
 from misho_server.database.migration import migrate
 from misho_server.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
@@ -135,12 +136,8 @@ async def start():
 
         reservation_monitoring = ReservationMonitoring(
             reservation_config=CONFIG.reservation_monitoring,  # Replace with actual config
-            reservation_calendar_sync_service=reservation_calendar_sync_service,
-            job_expired_handler=job_expired_handler,
             jobs_repository=jobs_repository,
-            job_notifier=job_notifier,
             reservation_scheduler=reservation_scheduler,
-            reservation_notification_service=reservation_notification_service,
             available_job_reservation_slot_repository=available_job_reservation_slot_repository,
         )
 
@@ -148,8 +145,29 @@ async def start():
                                                      number_of_days=100)
 
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(reservation_monitoring.run,
+        scheduler.add_job(reservation_monitoring.run,  # type: ignore
+                          name="reservation_monitoring",
                           trigger=CONFIG.reservation_monitoring.cron)
+        scheduler.add_job(  # type: ignore
+            reservation_calendar_sync_service.sync_calendar,
+            name="reservation_calendar_sync",
+            trigger=CronTrigger(hour='*', minute='*', second='25,55')
+        )
+        scheduler.add_job(  # type: ignore
+            job_expired_handler.handle_expired_jobs,
+            name="job_expired_handler",
+            trigger=CronTrigger(hour='*', minute='*', second='0')
+        )
+        scheduler.add_job(  # type: ignore
+            job_notifier.handle,
+            name="job_notifier",
+            trigger=CronTrigger(hour='*', minute='*', second='0,30')
+        )
+        scheduler.add_job(  # type: ignore
+            reservation_notification_service.handle,
+            name="reservation_notification_service",
+            trigger=CronTrigger(hour='*', minute='*', second='0')
+        )
         scheduler.start()
 
         hour_slot_repository = HourSlotRepository(engine)

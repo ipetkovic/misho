@@ -1,3 +1,4 @@
+import logging
 from misho_server.domain.job_notification import JobNotification
 from misho_server.repository.job_notifications_repository import JobNotificationsRepository
 from misho_server.service.notification_service import NotificationService
@@ -12,8 +13,8 @@ class JobNotifier:
         """
         Handle job notifications by fetching available notifications and processing them.
         """
+        logging.info("Handling job notifications")
         notifications = await self._job_notifications_repository.get_notifications()
-        print(f'notifications: {notifications}')
         for notification in notifications:
             await self._process_notification(notification)
 

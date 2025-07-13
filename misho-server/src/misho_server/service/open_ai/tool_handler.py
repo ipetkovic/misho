@@ -56,7 +56,6 @@ class OpenAiToolHandler:
         elif func_name == "list_jobs":
             logging.info(f"List job called.")
             result = await call(self._jobs_service.list_jobs(user_id=user_id))
-            print(f"List jobs result: {result}")
             return str(result)
 
         elif func_name == "delete_job":

@@ -42,8 +42,6 @@ class ReservationNotificationService:
                         time_slot=reservation_slot.time_slot
                     )
 
-                    print(user_time_slot)
-
                     if self._user_time_slots[user_time_slot] is False and self._should_notify(reservation_slot.time_slot):
                         reservation_cancel_latest_time = reservation_slot.time_slot.start_time() - \
                             timedelta(hours=8)
