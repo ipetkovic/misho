@@ -8,6 +8,7 @@ from misho_server.service.reservation_calendar_sync_service import ReservationCa
 from misho_server.repository.available_job_reservation_slots import AvailableJobReservationSlotRepository
 from misho_server.repository.jobs import JobsRepository
 from misho_server.service.job_notifier import JobNotifier
+from misho_server.service.reservation_notification_service import ReservationNotificationService
 from misho_server.service.reservation_scheduler import ReservationScheduler
 
 
@@ -19,6 +20,7 @@ class ReservationMonitoring:
         reservation_scheduler: ReservationScheduler,
         job_expired_handler: JobExpiredHandler,
         available_job_reservation_slot_repository: AvailableJobReservationSlotRepository,
+        reservation_notification_service: ReservationNotificationService,
         jobs_repository: JobsRepository,
         job_notifier: JobNotifier,
     ):
@@ -29,6 +31,7 @@ class ReservationMonitoring:
         self._job_expired_handler = job_expired_handler
         self._reservation_scheduler = reservation_scheduler
         self._available_job_reservation_slot_repository = available_job_reservation_slot_repository
+        self._reservation_notification_service = reservation_notification_service
 
     async def run(self):
         if self._is_new_day():
@@ -38,6 +41,7 @@ class ReservationMonitoring:
         await self._job_expired_handler.handle_expired_jobs()
         await self._check_for_available_job_reservation_slots()
         await self._job_notifier.handle()
+        await self._reservation_notification_service.handle()
 
     async def _check_for_available_job_reservation_slots(self):
         available_job_reservation_slots = await self._available_job_reservation_slot_repository.get_available_job_reservation_slots()

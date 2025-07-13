@@ -18,7 +18,7 @@ CONFIG_DEV = Config(
         level='DEBUG'
     ),
     reservation_monitoring=ReservationMonitoringConfig(
-        cron=CronTrigger(hour='*', minute='*', second='0')
+        cron=CronTrigger(hour='*', minute='*', second='0,10,20,30,40,50'),
     ),
     mailer_config=MailerConfig(
         hostname="smtp.gmail.com",

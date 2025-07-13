@@ -166,6 +166,23 @@ class JobNotificationState(Base):
     job: Mapped[Job] = association_proxy("job_court", "job")
 
 
+class ReservationBeforeNotification(Base):
+    __tablename__ = 'reservation_notifications'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    time_slot_id: Mapped[int] = mapped_column(ForeignKey("time_slots.id"))
+    court_id: Mapped[int] = mapped_column(ForeignKey("courts.id"))
+    notify_at: Mapped[datetime.datetime] = mapped_column()
+    is_notified: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now)
+
+    user: Mapped[User] = relationship(User)
+    time_slot: Mapped[TimeSlot] = relationship(TimeSlot)
+    court: Mapped[Court] = relationship(Court)
+
+
 class UserTelegramIntegration(Base):
     __tablename__ = 'user_telegram_notifications'
 

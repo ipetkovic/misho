@@ -25,7 +25,6 @@ class OpenAiUserClient:
         self._context_cleanup_task_started = False
 
     async def handle_user_message(self, user_message: str) -> str | None:
-        print(self._messages)
         if not self._context_cleanup_task_started:
             asyncio.create_task(self._start_context_cleanup_loop())
             self._context_cleanup_task_started = True

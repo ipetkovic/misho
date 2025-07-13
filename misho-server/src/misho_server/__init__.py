@@ -30,6 +30,7 @@ from misho_server.service.reservation_calendar import ReservationCalendarService
 from misho_server.service.reservation_calendar_sync_service import ReservationCalendarSyncService
 from misho_server.service.reservation_cancel_service import ReservationCancelService
 from misho_server.service.reservation_monitoring import ReservationMonitoring
+from misho_server.service.reservation_notification_service import ReservationNotificationService
 from misho_server.service.reservation_scheduler import ReservationSchedulerImpl
 from misho_server.service.reservation_service import ReservationService
 from misho_server.service.reserve_job_executor import ReserveJobExecutor
@@ -120,6 +121,18 @@ async def start():
             job_repository=jobs_repository,
             notification_service=notification_service,
         )
+
+        reservation_calendar_service = ReservationCalendarService(
+            reservation_calendar_repository=reservation_calendar_repository,
+            user_repository=user_repository,
+        )
+
+        reservation_notification_service = ReservationNotificationService(
+            reservation_calendar_service=reservation_calendar_service,
+            user_repository=user_repository,
+            notification_service=notification_service,
+        )
+
         reservation_monitoring = ReservationMonitoring(
             reservation_config=CONFIG.reservation_monitoring,  # Replace with actual config
             reservation_calendar_sync_service=reservation_calendar_sync_service,
@@ -127,6 +140,7 @@ async def start():
             jobs_repository=jobs_repository,
             job_notifier=job_notifier,
             reservation_scheduler=reservation_scheduler,
+            reservation_notification_service=reservation_notification_service,
             available_job_reservation_slot_repository=available_job_reservation_slot_repository,
         )
 
@@ -179,11 +193,6 @@ async def start():
         reservation_cancel_service = ReservationCancelService(
             sportbooking=sportbooking_service,
             session_token_fetch_service=session_token_fetch_service
-        )
-
-        reservation_calendar_service = ReservationCalendarService(
-            reservation_calendar_repository=reservation_calendar_repository,
-            user_repository=user_repository,
         )
 
         open_ai_tool_handler = OpenAiToolHandler(
