@@ -39,6 +39,7 @@ class OpenAiUserClient:
         self._context_cleanup_task_started = False
 
     async def handle_user_message(self, user_message: str) -> str | None:
+        print(self._messages)
         if not self._context_cleanup_task_started:
             asyncio.create_task(self._start_context_cleanup_loop())
             self._context_cleanup_task_started = True
@@ -62,6 +63,7 @@ class OpenAiUserClient:
         choice = response.choices[0]
 
         if choice.finish_reason == "stop":
+            self._content_append(choice.message.content)
             return choice.message.content
 
         elif choice.finish_reason == "tool_calls" and choice.message.tool_calls:
@@ -164,7 +166,20 @@ class OpenAiUserClient:
                 f"Dates for reservation calendar: {dates}, user_id_filter: {user_id_filter}")
 
             result = await call(self._reservation_calendar_service.get_calendar(user_id=user_id_filter, filter_by_days=dates))
-            self._tool_call_append(tool_call, result)
+            result = result.calendar
+
+            shrinked_result = {(str(
+                reservation_slot.time_slot), reservation_slot.court): reservation.reserved_by for reservation_slot, reservation in result.items()}
+
+            print(shrinked_result)
+            self._tool_call_append(tool_call, shrinked_result)
+
+    def _content_append(self, content: str | None):
+        if content is not None:
+            self._messages.append({
+                "role": "assistant",
+                "content": content
+            })
 
     def _tool_call_append(self, tool_call: ChatCompletionMessageToolCall, result: any):
         self._messages.append({
