@@ -3,6 +3,7 @@ from misho_server.domain.user_telegram_data import UserTelegramData
 from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
 from misho_server.service.jobs_service import JobsService
+from misho_server.service.open_ai.tool_handler import OpenAiToolHandler
 from misho_server.service.open_ai.user_client import OpenAiUserClient
 from misho_server.service.reservation_calendar import ReservationCalendarService
 from misho_server.service.reservation_cancel_service import ReservationCancelService
@@ -18,24 +19,15 @@ class OpenAiUserClientBuilder:
     def __init__(
         self,
         open_ai_client: OpenAI,
-        jobs_service: JobsService,
-        reservation_service: ReservationService,
-        reservation_cancel_service: ReservationCancelService,
-        reservation_calendar_service: ReservationCalendarService
+        open_ai_tool_handler: OpenAiToolHandler,
     ):
         self._open_ai_client = open_ai_client
-        self._jobs_service = jobs_service
-        self._reservation_calendar_service = reservation_calendar_service
-        self._reservation_service = reservation_service
-        self._reservation_cancel_service = reservation_cancel_service
+        self._tool_handler = open_ai_tool_handler
 
     def build(self, user_id: UserId) -> OpenAiUserClient:
         return OpenAiUserClient(
             open_ai_client=self._open_ai_client,
-            jobs_service=self._jobs_service,
-            reservation_calendar_service=self._reservation_calendar_service,
-            reservation_service=self._reservation_service,
-            reservation_cancel_service=self._reservation_cancel_service,
+            tool_handler=self._tool_handler,
             user_id=user_id
         )
 
