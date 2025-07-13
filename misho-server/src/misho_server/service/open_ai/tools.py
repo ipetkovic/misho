@@ -50,6 +50,25 @@ create_job_tool: ChatCompletionToolParam = {
                         "type": "integer"
                     },
                     "default": [4, 6, 5, 7]
+                },
+                "expires_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "title": "Job Expiration Time",
+                    "description": (
+                        "The time when the job expires. Don't force user to specify this. In that case reservation job will expire 10 hours before start of the time slot."
+                        "Notification job will expire on start of the time slot."
+                    )
+                },
+                "on_expiry_action": {
+                    "type": "string",
+                    "enum": ["CREATE_NOTIFY_JOB", None],
+                    "title": "On Expiry Action",
+                    "description": (
+                        "Action to take when the job expires"
+                        "This is only applicable for RESERVE action. If set to None, no action will be taken on expiry."
+                        "Use CREATE_NOTIFY_JOB for reserve actions by default, and for NOTIFY None."
+                    )
                 }
             },
             "required": ["time_slot", "action", "courts_by_priority"],
@@ -164,6 +183,7 @@ list_jobs_tool: ChatCompletionToolParam = {
             "If PENDING is returned, use ACTIVE status."
             "Do not list jobs with numbered bullets, since user can confuse them with job IDs."
             "Always include courts by priority in the response. Always include job ID in the response."
+            "Include expires_at and on_expiry_action in the response, if it is set."
             "Never include user in the response."
         ),
     }
