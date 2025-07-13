@@ -51,6 +51,13 @@ class OpenAiUserClient:
             response = await self._handle_open_ai_response(response)
             return response
 
+    def add_system_message_to_context(self, message: str):
+        self._messages.append({
+            "role": "system",
+            "content": message
+        })
+        self._last_message_timestamp = datetime.now()
+
     def _ask_openai(self):
         return self._open_ai_client.chat.completions.create(
             model="gpt-4o",

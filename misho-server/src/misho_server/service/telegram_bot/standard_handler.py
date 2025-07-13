@@ -72,8 +72,12 @@ class TelegramStandardHandler(TelegramHandler):
     async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return None
 
-    async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
+    async def handle_message_notification(self, user: User, message: str) -> ChatId | None:
         user_telegram_data = await self._get_user_telegram_data_by_user_id(user.id)
+        open_ai_client = await self._get_open_ai_client(user.username)
+        if open_ai_client is not None:
+            open_ai_client.add_system_message_to_context(message)
+
         return user_telegram_data.chat_id if user_telegram_data else None
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -45,7 +45,7 @@ class TelegramBot:
         await self._application.shutdown()
 
     async def _handle_notification(self, user: User, message: str) -> None:
-        chat_id = await self._handler.get_chat_id_for_notifications(user)
+        chat_id = await self._handler.handle_message_notification(user, message)
         if chat_id is not None:
             await self._application.bot.send_message(
                 chat_id=chat_id,

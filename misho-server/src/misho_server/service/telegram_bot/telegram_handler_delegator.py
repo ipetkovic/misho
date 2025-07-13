@@ -54,11 +54,11 @@ class TelegramHandlerDelegator(TelegramHandler):
         handler = self._get_handler(user_telegram_data)
         await handler.signup_handler(update, context)
 
-    async def get_chat_id_for_notifications(self, user: User) -> ChatId | None:
+    async def handle_message_notification(self, user: User, message: str) -> ChatId | None:
         user_telegram_data = await self._user_telegram_integration_repository.get_user_telegram_data_by_user_id(
             user.id)
         handler = self._get_handler(user_telegram_data)
-        return await handler.get_chat_id_for_notifications(user)
+        return await handler.handle_message_notification(user, message)
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = get_username(update)
