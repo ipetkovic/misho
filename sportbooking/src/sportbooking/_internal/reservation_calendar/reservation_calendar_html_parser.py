@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, ResultSet, Tag
 import datetime
 from sportbooking.reservation_calendar import CourtId, HourSlot, ReservationSlot, TimeSlot, UserCourtReservation, UserReservationCalendar
 
@@ -27,15 +27,16 @@ class CourtReservationParser:
 
         dates_objects = self._soup.find_all("font", class_="rekreacija-icon")
 
-        def extract_date(text) -> str:
+        def extract_date(text: str) -> str:
             return text.split(',')[1].strip()
 
         dates = [datetime.datetime.strptime(extract_date(date.text), "%d.%m.%Y").date()
                  for date in dates_objects]
 
-        day_tables = [button.parent.parent.parent.parent for button in buttons]
+        day_tables: list[Tag] = [
+            button.parent.parent.parent.parent for button in buttons]  # type: ignore
 
-        calendar = {}
+        calendar: dict[ReservationSlot, UserCourtReservation] = {}
         for date, day_table in zip(dates, day_tables):
             courts = self._get_courts(day_table)
             day_calendar = self._parse_day_calendar(day_table, date, courts)
@@ -44,7 +45,11 @@ class CourtReservationParser:
         return UserReservationCalendar(user_calendar=calendar)
 
     def _get_courts(self, table: Tag) -> list[CourtId]:
-        ths = table.find("thead").find_all("tr")[1].find_all("th")[1:]
+        head = table.find("thead")
+        assert isinstance(head, Tag), "Expected a Tag for thead"
+
+        ths: list[Tag] = head.find_all("tr")[1].find_all("th")[  # type: ignore
+            1:]
 
         def parse_court_num(court_name: str) -> int:
             return int(court_name.split(' ')[-1])
@@ -52,8 +57,11 @@ class CourtReservationParser:
         return [parse_court_num(th.text.strip()) for th in ths]
 
     def _parse_day_calendar(self, table: Tag, date: datetime.date, courts: list[int]) -> dict[ReservationSlot, UserCourtReservation]:
-        rows = table.find("tbody").find_all("tr")
-        reservations = {}
+        a = table.find("tbody")
+        assert isinstance(a, Tag), "Expected a Tag for tbody"
+
+        rows: ResultSet[Tag] = a.find_all("tr")  # type: ignore
+        reservations: dict[ReservationSlot, UserCourtReservation] = {}
         for row in rows:
             hour_slot, court_reservations = self._parse_hour_slot(
                 row, date, courts)
@@ -75,11 +83,15 @@ class CourtReservationParser:
 
         time = _parse_time(columns[0].text.strip())
 
-        reservations = {}
+        reservations: dict[CourtId, UserCourtReservation] = {}
         for court_num, court_reservation in zip(court_nums, columns[1:]):
+            assert isinstance(court_reservation,
+                              Tag), "Expected a Tag for court reservation"
             a = court_reservation.find('a')
+            assert isinstance(a, Tag), "Expected a Tag or PageElement for 'a'"
+
             href = None
-            href = a['href'] if a else None
+            href = str(a['href']) if a else None
 
             link_for_reservation = None
             link_for_cancellation = None
@@ -117,11 +129,13 @@ class NamesParser:
 
     def parse(self) -> NamesCalendar:
         heads = self._soup.find_all("thead", class_="poimenimavrijemfont")
-        tables = [head.parent for head in heads]
+        tables: list[Tag] = [head.parent for head in heads]  # type: ignore
 
         def extract_table_date(table: Tag):
-            main_div = table.parent.parent
+            main_div = table.parent.parent  # type: ignore
+            assert isinstance(main_div, Tag), "Expected a Tag for table"
             title_div = main_div.find("div")
+            assert isinstance(title_div, Tag), "Expected a Tag for title_div"
             day = title_div.text.strip()
             return day.split(',')[1].strip()
 
@@ -130,7 +144,7 @@ class NamesParser:
 
         courts = self._get_courts(tables[0])
 
-        calendar = {}
+        calendar: dict[ReservationSlot, Name] = {}
         for date, table in zip(dates, tables):
             day_calendar = self._parse_day_calendar(date, table, courts)
             calendar.update(day_calendar)
@@ -139,10 +153,12 @@ class NamesParser:
 
     def _parse_day_calendar(self, date: datetime.date, table: Tag, courts: list[int]) -> dict[ReservationSlot, Name]:
         rows = table.find_all("tbody")
-        day_calendar = {}
+        day_calendar: dict[ReservationSlot, Name] = {}
         for row in rows:
-            hour_slot, row_names = self._parse_hour_slot(
-                row.find('tr'), courts)
+            assert isinstance(row, Tag), "Expected a Tag for tbody"
+            tr = row.find('tr')
+            assert isinstance(tr, Tag), "Expected a Tag for tr"
+            hour_slot, row_names = self._parse_hour_slot(tr, courts)
 
             for court, name in row_names.items():
                 slot = ReservationSlot(
@@ -161,8 +177,9 @@ class NamesParser:
 
         time = _parse_time(columns[0].text.strip())
 
-        names = {}
+        names: NamePerCourt = {}
         for court_num, slot in zip(court_nums, columns[1:]):
+            assert isinstance(slot, Tag), "Expected a Tag for slot"
             div = slot.find('div')
             if div is not None:
                 names[court_num] = div.text.strip()
@@ -170,7 +187,8 @@ class NamesParser:
         return (time, names)
 
     def _get_courts(self, table: Tag) -> list[int]:
-        ths = table.find("thead").find_all("tr")[1].find_all("th")[1:]
+        ths: list[Tag] = table.find("thead").find_all(  # type: ignore
+            "tr")[1].find_all("th")[1:]  # type: ignore
 
         def parse_court_num(court_name: str) -> int:
             return int(court_name.split(' ')[-1])

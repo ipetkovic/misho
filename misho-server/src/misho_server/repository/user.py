@@ -1,7 +1,7 @@
 
-from sqlalchemy import *
 from misho_server.domain.app_token import AppToken
 from misho_server.domain.user import User, UserCreate, UserId
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine
 import secrets

@@ -24,7 +24,10 @@ def deploy(host, username, docker_compose_path, key_file, tag):
     print(ssh)
 
     print("📦 Copying docker-compose.yml...")
-    with SCPClient(ssh.get_transport()) as scp:
+    transport = ssh.get_transport()
+    assert transport is not None, "SSH transport is not available"
+
+    with SCPClient(transport) as scp:
         scp.put(f'{_SCRIPT_DIR}/docker-compose.yml',
                 remote_path=f"./docker-compose.yml")
 
