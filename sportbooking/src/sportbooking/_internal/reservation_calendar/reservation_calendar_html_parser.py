@@ -88,10 +88,10 @@ class CourtReservationParser:
             assert isinstance(court_reservation,
                               Tag), "Expected a Tag for court reservation"
             a = court_reservation.find('a')
-            assert isinstance(a, Tag), "Expected a Tag or PageElement for 'a'"
-
             href = None
-            href = str(a['href']) if a else None
+            if a is not None:
+                assert isinstance(a, Tag), "Expected a Tag for a"
+                href = str(a['href'])
 
             link_for_reservation = None
             link_for_cancellation = None
