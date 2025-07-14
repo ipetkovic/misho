@@ -4,13 +4,7 @@ import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from misho_server.controller.reservation_calendar import ReservationCalendarController
 from misho_server.domain.reservation_update_bus import ReservationUpdateBus
-from misho_server.http.auth import AuthMiddleware
-from misho_server.http.http_app import HttpApplication
-from misho_server.controller.jobs import JobsController
-from misho_server.controller.signup import SignUpController
-from apscheduler.triggers.cron import CronTrigger
 from misho_server.config import CONFIG
 from misho_server.database.migration import migrate
 from misho_server.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
@@ -184,29 +178,6 @@ async def start():
                                    hour_slots_repository=hour_slot_repository,
                                    job_create_config=CONFIG.job_create_config,
                                    court_repository=court_respository)
-
-        jobs_controller = JobsController(
-            jobs_service=jobs_service,
-        )
-        signup_controller = SignUpController(
-            user_service=user_repository, sportbooking=sportbooking_service)
-
-        auth = AuthMiddleware(user_repository=user_repository)
-        http_app = HttpApplication(auth)
-
-        reservation_calendar_controller = ReservationCalendarController(
-            sportbooking=sportbooking_service, session_token_fetch_service=session_token_fetch_service)
-
-        http_app.add_routes(
-            jobs_controller.get_routes()
-        ).add_routes(
-            signup_controller.get_routes()
-        ).add_routes(
-            reservation_calendar_controller.get_routes()
-        )
-
-        await http_app.start_server()
-        logging.info("HTTP server started")
 
         user_telegram_integration_repository = UserTelegramIntegrationRepositorySqlite(
             engine=engine)

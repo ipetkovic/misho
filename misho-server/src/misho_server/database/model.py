@@ -163,7 +163,7 @@ class JobNotificationState(Base):
     job_court: Mapped['JobCourt'] = relationship(
         "JobCourt", back_populates="notification_state"
     )
-    job: Mapped[Job] = association_proxy("job_court", "job")
+    job: Mapped[Job] = association_proxy("job_court", "job")  # type: ignore
 
 
 class ReservationBeforeNotification(Base):

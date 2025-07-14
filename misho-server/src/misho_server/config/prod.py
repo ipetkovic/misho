@@ -3,9 +3,9 @@ from apscheduler.triggers.cron import CronTrigger
 
 from misho_server.config.model import Config, JobCreateConfig, JobExpiredHandlerConfig, JobNotifierConfig, LoggingConfig, MailerConfig, ReservationCalendarSyncConfig, ReservationMonitoringConfig, ReservationNotificationServiceConfig
 
-_MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME')
-_MAIL_PASSWORD = os.getenv('MISHO_MAIL_PASSWORD')
-_TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+_MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME', '')
+_MAIL_PASSWORD = os.getenv('MISHO_MAIL_PASSWORD', '')
+_TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 
 
 CONFIG_PROD = Config(

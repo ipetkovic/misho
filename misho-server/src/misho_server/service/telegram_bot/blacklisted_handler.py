@@ -23,7 +23,7 @@ class TelegramBlacklistedUserHandler(TelegramHandler):
             f"Signup handler called for blacklisted user: {username}")
         return None
 
-    async def handle_message_notification(self, user: User) -> ChatId | None:
+    async def handle_message_notification(self, user: User, message: str) -> ChatId | None:
         return None
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

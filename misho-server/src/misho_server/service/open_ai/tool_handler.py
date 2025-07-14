@@ -113,9 +113,6 @@ class OpenAiToolHandler:
             if only_for_user:
                 user_id_filter = user_id
 
-            print(
-                f"Dates for reservation calendar: {dates}, user_id_filter: {user_id_filter}")
-
             result = await call(self._reservation_calendar_service.get_calendar(user_id=user_id_filter, filter_by_days=dates))
 
             if isinstance(result, ReservationCalendar):
