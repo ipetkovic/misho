@@ -25,6 +25,7 @@ class JobNotifierConfig:
 @dataclass
 class ReservationNotificationServiceConfig:
     cron: CronTrigger
+    notify_before_minutes: tuple[int, ...]  # in minutes
 
 
 @dataclass

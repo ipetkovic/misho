@@ -138,6 +138,7 @@ async def start():
             reservation_calendar_service=reservation_calendar_service,
             user_repository=user_repository,
             notification_service=notification_service,
+            notify_before_minutes=CONFIG.reservation_notification_service.notify_before_minutes
         )
 
         reservation_monitoring = ReservationMonitoring(

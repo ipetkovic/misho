@@ -28,7 +28,8 @@ CONFIG_PROD = Config(
         cron=CronTrigger(hour='*', minute='*', second='0,30')
     ),
     reservation_notification_service=ReservationNotificationServiceConfig(
-        cron=CronTrigger(hour='*', minute='*', second='0')
+        cron=CronTrigger(hour='*', minute='*', second='0'),
+        notify_before_minutes=(10 * 60, 8 * 60 + 30)
     ),
     mailer_config=MailerConfig(
         hostname="smtp.gmail.com",
