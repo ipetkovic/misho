@@ -7,3 +7,4 @@ dist/
 sportbooking.db
 .python-version
 build/
+db/
