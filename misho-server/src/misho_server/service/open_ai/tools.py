@@ -32,6 +32,7 @@ create_job_tool: ChatCompletionToolParam = {
                                     "title": "To Hour"
                                 }
                             },
+                            "description": "If user specifies start hour only... If it is less than 17, to_hour is from_hour + 1, otherwise to_hour is from_hour + 2.",
                             "required": ["from_hour", "to_hour"]
                         }
                     },
@@ -108,6 +109,7 @@ reserve_tool: ChatCompletionToolParam = {
                                     "title": "To Hour"
                                 }
                             },
+                            "description": "If user specifies start hour only... If it is less than 17, to_hour is from_hour + 1, otherwise to_hour is from_hour + 2.",
                             "required": ["from_hour", "to_hour"]
                         }
                     },
@@ -156,6 +158,7 @@ cancel_reservation_tool: ChatCompletionToolParam = {
                                     "title": "To Hour"
                                 }
                             },
+                            "description": "If user specifies start hour only... If it is less than 17, to_hour is from_hour + 1, otherwise to_hour is from_hour + 2.",
                             "required": ["from_hour", "to_hour"]
                         }
                     },

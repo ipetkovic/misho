@@ -114,7 +114,6 @@ class OpenAiUserClient:
             "content": f"""
                 You are a helpful assistant. Today is {datetime.today()}.
                 When the user says 'tomorrow', use day after today. 
-                If user specifies start hour only... If it is less than 17, to_hour is from_hour + 1, otherwise to_hour is from_hour + 2.
                 Prefer Croatian language.
                 When user asks for job reservation, keep in mind that job creation does not mean that reservation is made.
                 It means that job is created and will be executed once the time slot is available.
