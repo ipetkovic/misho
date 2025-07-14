@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from misho_server.domain.job import Job, JobAction, JobCreate, OnExpiryAction, Status
 from misho_server.repository.jobs import JobsRepository
 from misho_server.service.notification_service import NotificationService
@@ -10,6 +11,7 @@ class JobExpiredHandler:
         self._notification_service = notification_service
 
     async def handle_expired_jobs(self):
+        logging.info("Handling expired jobs")
         expired_jobs = await self._job_repository.list_all()
         for job in expired_jobs:
             if job.expires_at <= datetime.now():

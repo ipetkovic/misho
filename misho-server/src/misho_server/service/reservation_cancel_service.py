@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-import datetime
 import logging
 from misho_server.domain.reservation_slot import ReservationSlot
+from misho_server.domain.reservation_update_bus import ReservationUpdateBus
+from misho_server.domain.reservation_update_event import ReservationUpdateEvent, ReservationUpdateEventType
 from misho_server.service.sportbooking_service import SportbookingService
 from misho_server.domain.reservation_calendar import UserReservationCalendar
 from misho_server.domain.session_token import SessionToken
@@ -21,9 +21,15 @@ class ReservationCancelRequestFailed(Exception):
 
 
 class ReservationCancelService:
-    def __init__(self, sportbooking: SportbookingService, session_token_fetch_service: SessionTokenFetchService):
+    def __init__(
+        self,
+        sportbooking: SportbookingService,
+        session_token_fetch_service: SessionTokenFetchService,
+        reservation_update_bus: ReservationUpdateBus
+    ):
         self._session_token_fetch_service = session_token_fetch_service
         self._sportbooking = sportbooking
+        self._reservation_update_bus = reservation_update_bus
 
     async def cancel_reservation(self, user_id: int, reservation_slot: ReservationSlot) -> None:
         logging.info(
@@ -43,11 +49,15 @@ class ReservationCancelService:
 
         logging.debug(
             f"Trying to cancel reservation for court {reservation_slot.court}")
-        return await self._cancel_reservation(
+        await self._cancel_reservation(
             user_token=token,
             reservation_slot=reservation_slot,
             link=link_for_cancellation
         )
+        await self._reservation_update_bus.publish(ReservationUpdateEvent(
+            user_id=user_id,
+            event_type=ReservationUpdateEventType.CANCELLED,
+        ))
 
     async def _cancel_reservation(
             self,

@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import datetime
 import logging
 from misho_server.domain.reservation_slot import ReservationSlot
+from misho_server.domain.reservation_update_bus import ReservationUpdateBus
+from misho_server.domain.reservation_update_event import ReservationUpdateEvent, ReservationUpdateEventType
 from misho_server.service.sportbooking_service import SportbookingService
 from misho_server.domain.reservation_calendar import UserReservationCalendar
 from misho_server.domain.session_token import SessionToken
@@ -38,9 +40,11 @@ class ReservationService:
         self,
         sportbooking: SportbookingService,
         session_token_fetch_service: SessionTokenFetchService,
+        reservation_update_bus: ReservationUpdateBus
     ):
         self._session_token_fetch_service = session_token_fetch_service
         self._sportbooking = sportbooking
+        self._reservation_update_bus = reservation_update_bus
 
     async def reserve(self, user_id: int, reservation_slot: ReservationSlot) -> None:
         logging.info(
@@ -68,11 +72,15 @@ class ReservationService:
             raise ValueError('Reservation link is None')
 
         logging.debug(f"Trying to reserve court {reservation_slot.court}")
-        return await self._reserve(
+        await self._reserve(
             user_token=token,
             reservation_slot=reservation_slot,
             link=reservation_link
         )
+        await self._reservation_update_bus.publish(ReservationUpdateEvent(
+            user_id=user_id,
+            event_type=ReservationUpdateEventType.CREATED
+        ))
 
     async def _reserve(
             self,
@@ -86,9 +94,7 @@ class ReservationService:
             logging.info(
                 f"Dummy reservation for court {reservation_slot.court} on {reservation_slot.time_slot}")
         else:
-            print("jaje")
             await self._sportbooking.reserve(user_token, link)
-            print("jaje2")
         await self._verify_reservation(user_token, reservation_slot)
 
     async def _verify_reservation(self, user_token: SessionToken, reservation_slot: ReservationSlot) -> None:

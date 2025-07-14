@@ -5,6 +5,7 @@ import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from misho_server.controller.reservation_calendar import ReservationCalendarController
+from misho_server.domain.reservation_update_bus import ReservationUpdateBus
 from misho_server.http.auth import AuthMiddleware
 from misho_server.http.http_app import HttpApplication
 from misho_server.controller.jobs import JobsController
@@ -98,9 +99,13 @@ async def start():
         available_job_reservation_slot_repository = AvailableJobReservationSlotRepositorySqlite(
             engine)
 
+        reservation_event_bus = ReservationUpdateBus()
+
         reservation_service = ReservationService(
             sportbooking=sportbooking_service,
-            session_token_fetch_service=session_token_fetch_service)
+            session_token_fetch_service=session_token_fetch_service,
+            reservation_update_bus=reservation_event_bus
+        )
 
         reserve_job_executor = ReserveJobExecutor(
             job_repository=jobs_repository,
@@ -115,7 +120,8 @@ async def start():
             reservation_calendar_repository=reservation_calendar_repository,
             user_repository=user_repository,
             token_fetch_service=session_token_fetch_service,
-            sporbooking_service=sportbooking_service
+            sporbooking_service=sportbooking_service,
+            reservation_update_bus=reservation_event_bus
         )
 
         job_expired_handler = JobExpiredHandler(
@@ -151,22 +157,22 @@ async def start():
         scheduler.add_job(  # type: ignore
             reservation_calendar_sync_service.sync_calendar,
             name="reservation_calendar_sync",
-            trigger=CronTrigger(hour='*', minute='*', second='25,55')
+            trigger=CONFIG.reservation_calendar_sync.cron
         )
         scheduler.add_job(  # type: ignore
             job_expired_handler.handle_expired_jobs,
             name="job_expired_handler",
-            trigger=CronTrigger(hour='*', minute='*', second='0')
+            trigger=CONFIG.job_expired_handler.cron
         )
         scheduler.add_job(  # type: ignore
             job_notifier.handle,
             name="job_notifier",
-            trigger=CronTrigger(hour='*', minute='*', second='0,30')
+            trigger=CONFIG.job_notifier.cron
         )
         scheduler.add_job(  # type: ignore
             reservation_notification_service.handle,
             name="reservation_notification_service",
-            trigger=CronTrigger(hour='*', minute='*', second='0')
+            trigger=CONFIG.reservation_notification_service.cron
         )
         scheduler.start()
 
@@ -210,7 +216,8 @@ async def start():
 
         reservation_cancel_service = ReservationCancelService(
             sportbooking=sportbooking_service,
-            session_token_fetch_service=session_token_fetch_service
+            session_token_fetch_service=session_token_fetch_service,
+            reservation_update_bus=reservation_event_bus
         )
 
         open_ai_tool_handler = OpenAiToolHandler(

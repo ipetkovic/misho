@@ -1,7 +1,7 @@
 import os
 from apscheduler.triggers.cron import CronTrigger
 
-from misho_server.config.model import Config, JobCreateConfig, LoggingConfig, MailerConfig, ReservationMonitoringConfig
+from misho_server.config.model import Config, JobCreateConfig, JobExpiredHandlerConfig, JobNotifierConfig, LoggingConfig, MailerConfig, ReservationCalendarSyncConfig, ReservationMonitoringConfig, ReservationNotificationServiceConfig
 
 _MAIL_USERNAME = os.getenv('MISHO_MAIL_USERNAME')
 _MAIL_PASSWORD = os.getenv('MISHO_MAIL_PASSWORD')
@@ -17,6 +17,18 @@ CONFIG_PROD = Config(
     ),
     reservation_monitoring=ReservationMonitoringConfig(
         cron=CronTrigger(hour='*', minute='*', second='0, 30')
+    ),
+    reservation_calendar_sync=ReservationCalendarSyncConfig(
+        cron=CronTrigger(hour='*', minute='*', second='25,55'),
+    ),
+    job_expired_handler=JobExpiredHandlerConfig(
+        cron=CronTrigger(hour='*', minute='*', second='0')
+    ),
+    job_notifier=JobNotifierConfig(
+        cron=CronTrigger(hour='*', minute='*', second='0,30')
+    ),
+    reservation_notification_service=ReservationNotificationServiceConfig(
+        cron=CronTrigger(hour='*', minute='*', second='0')
     ),
     mailer_config=MailerConfig(
         hostname="smtp.gmail.com",

@@ -1,5 +1,7 @@
 import logging
 from misho_server.domain.reservation_calendar import ReservationCalendar
+from misho_server.domain.reservation_update_bus import ReservationUpdateBus
+from misho_server.domain.reservation_update_event import ReservationUpdateEvent
 from misho_server.domain.user import UserId
 from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.repository.user import UserRepository
@@ -16,16 +18,23 @@ class ReservationCalendarSyncService:
         reservation_calendar_repository: ReservationCalendarRepository,
         user_repository: UserRepository,
         token_fetch_service: SessionTokenFetchService,
-        sporbooking_service: SportbookingService
+        sporbooking_service: SportbookingService,
+        reservation_update_bus: ReservationUpdateBus
     ):
         self._reservation_calendar_repository = reservation_calendar_repository
         self._user_repository = user_repository
         self._sportbooking_service = sporbooking_service
         self._token_fetch_service = token_fetch_service
         self._user_id: UserId | None = None
+        self._reservation_update_bus = reservation_update_bus
+
+        async def on_event(_: ReservationUpdateEvent):
+            await self.sync_calendar()
+
+        self._reservation_update_bus.subscribe(on_event)
 
     async def sync_calendar(self) -> CalendarUpdated:
-        logging.debug("Fetching reservation calendar")
+        logging.info("Syncing reservation calendar")
         old_calendar = await self._reservation_calendar_repository.get_calendar()
         new_calendar = await self._fetch_calendar()
 

@@ -8,6 +8,26 @@ class ReservationMonitoringConfig:
 
 
 @dataclass
+class ReservationCalendarSyncConfig:
+    cron: CronTrigger
+
+
+@dataclass
+class JobExpiredHandlerConfig:
+    cron: CronTrigger
+
+
+@dataclass
+class JobNotifierConfig:
+    cron: CronTrigger
+
+
+@dataclass
+class ReservationNotificationServiceConfig:
+    cron: CronTrigger
+
+
+@dataclass
 class LoggingConfig:
     level: str
 
@@ -33,5 +53,9 @@ class Config:
     logging: LoggingConfig
     job_create_config: JobCreateConfig
     reservation_monitoring: ReservationMonitoringConfig
+    reservation_calendar_sync: ReservationCalendarSyncConfig
+    job_expired_handler: JobExpiredHandlerConfig
+    job_notifier: JobNotifierConfig
+    reservation_notification_service: ReservationNotificationServiceConfig
     mailer_config: MailerConfig
     telegram_bot_token: str
