@@ -8,3 +8,4 @@ sportbooking.db
 .python-version
 build/
 db/
+node_modules/
