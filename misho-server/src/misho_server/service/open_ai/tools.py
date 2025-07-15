@@ -5,7 +5,7 @@ create_job_tool: ChatCompletionToolParam = {
     "function": {
         "name": "create_job",
         "description": (
-            "Create a job with a time slot, an action (RESERVE or NOTIFY), and a list of preferred court IDs in priority order."
+            "Create a job with a time slot, an action (RESERVE or NOTIFY), and a list of preferred court IDs in priority order. Always include day name, together with date and hour slot."
             "Croatian: Kreiraj zadatak za zadani termin, akcijom (REZERVIRAJ ili OBAVIJESTI), i listom preferiranih terena poredanih po prioritetu."
         ),
         "parameters": {
@@ -186,6 +186,7 @@ list_jobs_tool: ChatCompletionToolParam = {
             "If PENDING is returned, use ACTIVE status."
             "Do not list jobs with numbered bullets, since user can confuse them with job IDs."
             "Always include courts by priority in the response. Always include job ID in the response."
+            "Always include day name, together with date and hour slot."
             "Include expires_at and on_expiry_action in the response, if it is set."
             "Never include user in the response."
         ),
@@ -215,7 +216,10 @@ reservation_calendar_tool: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "get_reservations",
-        "description": "Get the reservation calendar for up to five days in advance. Should return a table",
+        "description": (
+            "Get the reservation calendar for up to five days in advance. Should return a table. "
+            "Always include day name, together with date and hour slot."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
