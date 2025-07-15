@@ -34,7 +34,7 @@ def _parse_response(response: Response) -> ReservationQueryInput:
     return _parse_reservation_input(response.text)
 
 
-def _parse_reservation_input(html: str):
+def _parse_reservation_input(html: str) -> dict[str, str]:
     soup = BeautifulSoup(html, 'html.parser')
     div = soup.find_all("div", class_="rezervacijaterenapanel")[0]
 
@@ -42,7 +42,7 @@ def _parse_reservation_input(html: str):
         'rsatni', 'lmter1', 'terpi', 'brojk', 'danre', 'rteren', 'termin', 'cijena', 'protiv', 'submit'
     )
 
-    reservation_input = {name: div.find('input', attrs={'name': name}).get(
+    reservation_input: dict[str, str] = {name: div.find('input', attrs={'name': name}).get(  # type: ignore
         'value') for name in input_fields}
 
     return reservation_input

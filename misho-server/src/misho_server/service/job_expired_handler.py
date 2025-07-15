@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
-from misho_server.domain.job import Job, JobAction, JobCreate, OnExpiryAction, Status
-from misho_server.repository.jobs import JobsRepository
+from misho_server.core.job import Job, JobAction, JobCreate, OnExpiryAction, Status
+from misho_server.core.job.jobs_repository import JobsRepository
 from misho_server.service.notification_service import NotificationService
 
 

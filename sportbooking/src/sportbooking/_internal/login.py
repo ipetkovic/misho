@@ -27,7 +27,7 @@ def _request(username: str, password: str) -> Request:
     return Request(
         method="POST",
         url=URL,
-        data=payload,
+        data=payload,  # type: ignore
         headers=headers
     )
 

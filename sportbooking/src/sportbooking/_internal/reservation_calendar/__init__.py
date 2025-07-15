@@ -1,6 +1,4 @@
-import datetime
 from httpx import AsyncClient
-import pydantic
 
 from sportbooking.reservation_calendar import UserReservationCalendar
 from sportbooking._internal.reservation_calendar.reservation_calendar import get_reservation_calendar as get_reservation_calendar_api

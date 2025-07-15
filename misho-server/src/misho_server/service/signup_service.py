@@ -1,5 +1,5 @@
-from misho_server.domain.user import User, UserCreate
-from misho_server.repository.user import UserRepository
+from misho_server.core.user import User, UserCreate
+from misho_server.core.user.user_repository import UserRepository
 from misho_server.service.sportbooking_service import SportbookingService
 
 

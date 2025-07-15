@@ -1,8 +1,8 @@
-from misho_server.domain.hour_slot import HourSlot
-from misho_server.domain.reservation_calendar import UserCourtReservation, UserReservationCalendar
-from misho_server.domain.reservation_slot import ReservationSlot
-from misho_server.domain.session_token import SessionToken
-from misho_server.domain.time_slot import TimeSlot
+from misho_server.core.hour_slot import HourSlot
+from misho_server.core.reservation_calendar import UserCourtReservation, UserReservationCalendar
+from misho_server.core.reservation_slot import ReservationSlot
+from misho_server.core.session_token import SessionToken
+from misho_server.core.time_slot import TimeSlot
 from sportbooking import SportbookingApi
 import sportbooking
 import sportbooking.reservation_calendar

@@ -1,6 +1,6 @@
 import logging
-from misho_server.domain.job_notification import JobNotification
-from misho_server.repository.job_notifications_repository import JobNotificationsRepository
+from misho_server.core.job_notification import JobNotification
+from misho_server.core.job_notification.job_notifications_repository import JobNotificationsRepository
 from misho_server.service.notification_service import NotificationService
 
 

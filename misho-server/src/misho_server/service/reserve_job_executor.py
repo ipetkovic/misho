@@ -1,9 +1,9 @@
 import logging
 from misho_server.config import CONFIG
-from misho_server.domain.job import Job, Status
-from misho_server.domain.reservation_calendar import CourtId
-from misho_server.domain.reservation_slot import ReservationSlot
-from misho_server.repository.jobs import JobsRepository
+from misho_server.core.job import Job, Status
+from misho_server.core.reservation_calendar import CourtId
+from misho_server.core.reservation_slot import ReservationSlot
+from misho_server.core.job.jobs_repository import JobsRepository
 from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_service import ReservationService
 

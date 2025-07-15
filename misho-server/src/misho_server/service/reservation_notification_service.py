@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 import logging
 from typing import DefaultDict
-from misho_server.domain.time_slot import TimeSlot
-from misho_server.domain.user import UserId
-from misho_server.repository.user import UserRepository
+from misho_server.core.time_slot import TimeSlot
+from misho_server.core.user import UserId
+from misho_server.core.user.user_repository import UserRepository
 from misho_server.service.notification_service import NotificationService
 from misho_server.service.reservation_calendar import ReservationCalendarService
 import pydantic

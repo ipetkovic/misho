@@ -5,7 +5,7 @@ from misho_server.config.model import Config
 from misho_server.config.prod import CONFIG_PROD
 
 
-_ENV = os.getenv('MISHO_ENVIRONMENT')
+_ENV = os.getenv('MISHO_ENVIRONMENT', '')
 
 _CONFIGS = {
     'DEV': CONFIG_DEV,

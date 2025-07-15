@@ -4,30 +4,29 @@ import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from misho_server.controller.reservation_calendar import ReservationCalendarController
-from misho_server.domain.reservation_update_bus import ReservationUpdateBus
-from misho_server.http.auth import AuthMiddleware
-from misho_server.http.http_app import HttpApplication
-from misho_server.controller.jobs import JobsController
-from misho_server.controller.signup import SignUpController
-from apscheduler.triggers.cron import CronTrigger
+from misho_server.core.reservation_update_bus import ReservationUpdateBus
 from misho_server.config import CONFIG
-from misho_server.database.migration import migrate
-from misho_server.repository.available_job_reservation_slots import AvailableJobReservationSlotRepositorySqlite
-from misho_server.repository.court import CourtRepository
-from misho_server.repository.hour_slot import HourSlotRepository
-from misho_server.repository.job_notifications_repository import JobNotificationsRepositorySqlite
-from misho_server.repository.jobs import JobsRepositorySqlite
-from misho_server.repository.reservation_calendar import ReservationCalendarRepositorySqlite
-from misho_server.repository.time_slot import TimeSlotRepositorySqlite
-from misho_server.repository.user import UserRepositorySqlite
-from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepositorySqlite
-from misho_server.repository.user_token import UserTokenRepositorySqlite
+from misho_server.infrastructure.open_ai.tool_handler import OpenAiToolHandler
+from misho_server.infrastructure.persistance.available_job_reservation_slots_repository import AvailableJobReservationSlotRepositorySqlite
+from misho_server.infrastructure.persistance.court_repository import CourtRepositorySqlite
+from misho_server.infrastructure.persistance.hour_slot_repository import HourSlotRepositorySqlite
+from misho_server.infrastructure.persistance.job_notifications_repository import JobNotificationsRepositorySqlite
+from misho_server.infrastructure.persistance.jobs_repository import JobsRepositorySqlite
+from misho_server.infrastructure.persistance.migration import migrate
+from misho_server.infrastructure.persistance.reservation_calendar_repository import ReservationCalendarRepositorySqlite
+from misho_server.infrastructure.persistance.time_slot_repository import TimeSlotRepositorySqlite
+from misho_server.infrastructure.persistance.user_repository import UserRepositorySqlite
+from misho_server.infrastructure.persistance.user_telegram_integration_repository import UserTelegramIntegrationRepositorySqlite
+from misho_server.infrastructure.persistance.user_token_repository import UserTokenRepositorySqlite
+from misho_server.infrastructure.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
+from misho_server.infrastructure.telegram_bot.bot import TelegramBot
+from misho_server.infrastructure.telegram_bot.onboarding_handler import TelegramOnboardingHandler
+from misho_server.infrastructure.telegram_bot.standard_handler import OpenAiUserClientBuilder, TelegramStandardHandler
+from misho_server.infrastructure.telegram_bot.telegram_handler_delegator import TelegramHandlerDelegator
 from misho_server.service.job_expired_handler import JobExpiredHandler
 from misho_server.service.job_notifier import JobNotifier
 from misho_server.service.jobs_service import JobsService
 from misho_server.service.notification_service import NotificationService
-from misho_server.service.open_ai.tool_handler import OpenAiToolHandler
 from misho_server.service.reservation_calendar import ReservationCalendarService
 from misho_server.service.reservation_calendar_sync_service import ReservationCalendarSyncService
 from misho_server.service.reservation_cancel_service import ReservationCancelService
@@ -38,11 +37,6 @@ from misho_server.service.reservation_service import ReservationService
 from misho_server.service.reserve_job_executor import ReserveJobExecutor
 from misho_server.service.session_token_fetch_service import SessionTokenFetchService
 from misho_server.service.signup_service import SignUpService
-from misho_server.service.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
-from misho_server.service.telegram_bot.bot import TelegramBot
-from misho_server.service.telegram_bot.onboarding_handler import TelegramOnboardingHandler
-from misho_server.service.telegram_bot.standard_handler import OpenAiUserClientBuilder, TelegramStandardHandler
-from misho_server.service.telegram_bot.telegram_handler_delegator import TelegramHandlerDelegator
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -177,36 +171,13 @@ async def start():
         )
         scheduler.start()
 
-        hour_slot_repository = HourSlotRepository(engine)
-        court_respository = CourtRepository(engine)
+        hour_slot_repository = HourSlotRepositorySqlite(engine)
+        court_respository = CourtRepositorySqlite(engine)
 
         jobs_service = JobsService(jobs_repository=jobs_repository,
                                    hour_slots_repository=hour_slot_repository,
                                    job_create_config=CONFIG.job_create_config,
                                    court_repository=court_respository)
-
-        jobs_controller = JobsController(
-            jobs_service=jobs_service,
-        )
-        signup_controller = SignUpController(
-            user_service=user_repository, sportbooking=sportbooking_service)
-
-        auth = AuthMiddleware(user_repository=user_repository)
-        http_app = HttpApplication(auth)
-
-        reservation_calendar_controller = ReservationCalendarController(
-            sportbooking=sportbooking_service, session_token_fetch_service=session_token_fetch_service)
-
-        http_app.add_routes(
-            jobs_controller.get_routes()
-        ).add_routes(
-            signup_controller.get_routes()
-        ).add_routes(
-            reservation_calendar_controller.get_routes()
-        )
-
-        await http_app.start_server()
-        logging.info("HTTP server started")
 
         user_telegram_integration_repository = UserTelegramIntegrationRepositorySqlite(
             engine=engine)

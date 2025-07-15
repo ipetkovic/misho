@@ -1,10 +1,10 @@
 import datetime
 import logging
-from misho_server.domain.user import UserId
+from misho_server.core.user import UserId
 from misho_server.service.sportbooking_service import SportbookingService
-from misho_server.domain.session_token import SessionToken
-from misho_server.repository.user import UserRepository
-from misho_server.repository.user_token import UserTokenRepository
+from misho_server.core.session_token import SessionToken
+from misho_server.core.user.user_repository import UserRepository
+from misho_server.core.user_token.user_token_repository import UserTokenRepository
 
 
 class SessionTokenFetchService:

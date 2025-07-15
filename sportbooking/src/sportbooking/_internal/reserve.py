@@ -31,7 +31,7 @@ def _request(token: str, reservation_input: dict[str, str]) -> Request:
         method='POST',
         url=URL,
         headers=headers,
-        data=payload
+        data=payload  # type: ignore
     )
 
 
