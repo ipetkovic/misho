@@ -34,14 +34,6 @@ class LoggingConfig:
 
 
 @dataclass
-class MailerConfig:
-    hostname: str
-    port: int
-    username: str
-    password: str
-
-
-@dataclass
 class JobCreateConfig:
     default_reserve_job_expire_before_hours: int
 
@@ -58,5 +50,4 @@ class Config:
     job_expired_handler: JobExpiredHandlerConfig
     job_notifier: JobNotifierConfig
     reservation_notification_service: ReservationNotificationServiceConfig
-    mailer_config: MailerConfig
     telegram_bot_token: str
