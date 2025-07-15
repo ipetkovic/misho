@@ -2,8 +2,8 @@ import logging
 import shlex
 from misho_server.core.user import User
 from misho_server.core.user_telegram.user_telegram_integration_repository import UserTelegramIntegrationRepository
-from misho_server.infrastructure.telegram_bot.common import get_chat_id, get_message_text, get_username
-from misho_server.infrastructure.telegram_bot.telegram_handler import ChatId, TelegramHandler
+from misho_server.interfaces.telegram_bot.common import get_chat_id, get_message_text, get_username
+from misho_server.interfaces.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from misho_server.service.signup_service import SignUpService
 from telegram import Update
 from telegram.ext import ContextTypes

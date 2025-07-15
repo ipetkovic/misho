@@ -2,8 +2,8 @@ import asyncio
 from datetime import datetime, timedelta
 import logging
 from misho_server.core.user import UserId
-from misho_server.infrastructure.open_ai import tools
-from misho_server.infrastructure.open_ai.tool_handler import OpenAiToolHandler
+from misho_server.interfaces.open_ai import tools
+from misho_server.interfaces.open_ai.tool_handler import OpenAiToolHandler
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletion
 

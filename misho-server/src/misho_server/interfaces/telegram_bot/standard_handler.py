@@ -1,10 +1,10 @@
 from misho_server.core.user import User, UserId
 from misho_server.core.user_telegram import UserTelegramData
 from misho_server.core.user_telegram.user_telegram_integration_repository import UserTelegramIntegrationRepository
-from misho_server.infrastructure.open_ai.tool_handler import OpenAiToolHandler
-from misho_server.infrastructure.open_ai.user_client import OpenAiUserClient
-from misho_server.infrastructure.telegram_bot.common import get_chat_id, get_message_text, get_username
-from misho_server.infrastructure.telegram_bot.telegram_handler import ChatId, TelegramHandler
+from misho_server.interfaces.open_ai.tool_handler import OpenAiToolHandler
+from misho_server.interfaces.open_ai.user_client import OpenAiUserClient
+from misho_server.interfaces.telegram_bot.common import get_chat_id, get_message_text, get_username
+from misho_server.interfaces.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from openai import OpenAI
 from telegram import Update
 from telegram.ext import ContextTypes

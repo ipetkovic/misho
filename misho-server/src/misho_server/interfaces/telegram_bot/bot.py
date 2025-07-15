@@ -1,11 +1,12 @@
 import logging
 from misho_server.core.user import User
-from misho_server.infrastructure.telegram_bot.telegram_handler import TelegramHandler
+from misho_server.interfaces.telegram_bot import TelegramBot
+from misho_server.interfaces.telegram_bot.telegram_handler import TelegramHandler
 from misho_server.service.notification_service import NotificationService
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler
 
 
-class TelegramBot:
+class TelegramBotImpl(TelegramBot):
     def __init__(
         self,
         telegram_token: str,
@@ -51,10 +52,3 @@ class TelegramBot:
                 chat_id=chat_id,
                 text=message
             )
-
-    async def __aenter__(self):
-        await self.start()
-        return self
-
-    async def __aexit__(self, *_):
-        await self.stop()

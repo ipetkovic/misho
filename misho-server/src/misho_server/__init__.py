@@ -6,7 +6,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from misho_server.core.reservation_update_bus import ReservationUpdateBus
 from misho_server.config import CONFIG
-from misho_server.infrastructure.open_ai.tool_handler import OpenAiToolHandler
 from misho_server.infrastructure.persistance.available_job_reservation_slots_repository import AvailableJobReservationSlotRepositorySqlite
 from misho_server.infrastructure.persistance.court_repository import CourtRepositorySqlite
 from misho_server.infrastructure.persistance.hour_slot_repository import HourSlotRepositorySqlite
@@ -18,11 +17,12 @@ from misho_server.infrastructure.persistance.time_slot_repository import TimeSlo
 from misho_server.infrastructure.persistance.user_repository import UserRepositorySqlite
 from misho_server.infrastructure.persistance.user_telegram_integration_repository import UserTelegramIntegrationRepositorySqlite
 from misho_server.infrastructure.persistance.user_token_repository import UserTokenRepositorySqlite
-from misho_server.infrastructure.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
-from misho_server.infrastructure.telegram_bot.bot import TelegramBot
-from misho_server.infrastructure.telegram_bot.onboarding_handler import TelegramOnboardingHandler
-from misho_server.infrastructure.telegram_bot.standard_handler import OpenAiUserClientBuilder, TelegramStandardHandler
-from misho_server.infrastructure.telegram_bot.telegram_handler_delegator import TelegramHandlerDelegator
+from misho_server.interfaces.open_ai.tool_handler import OpenAiToolHandler
+from misho_server.interfaces.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
+from misho_server.interfaces.telegram_bot.bot import TelegramBotImpl
+from misho_server.interfaces.telegram_bot.onboarding_handler import TelegramOnboardingHandler
+from misho_server.interfaces.telegram_bot.standard_handler import OpenAiUserClientBuilder, TelegramStandardHandler
+from misho_server.interfaces.telegram_bot.telegram_handler_delegator import TelegramHandlerDelegator
 from misho_server.service.job_expired_handler import JobExpiredHandler
 from misho_server.service.job_notifier import JobNotifier
 from misho_server.service.jobs_service import JobsService
@@ -221,7 +221,7 @@ async def start():
             standard_handler=telegram_standard_handler
         )
 
-        async with TelegramBot(
+        async with TelegramBotImpl(
             telegram_token=CONFIG.telegram_bot_token,
             handler=telegram_handler_delegator,
             notification_service=notification_service

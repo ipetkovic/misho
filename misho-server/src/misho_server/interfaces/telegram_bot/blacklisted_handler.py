@@ -1,7 +1,7 @@
 import logging
 from misho_server.core.user import User
-from misho_server.infrastructure.telegram_bot.common import get_username
-from misho_server.infrastructure.telegram_bot.telegram_handler import ChatId, TelegramHandler
+from misho_server.interfaces.telegram_bot.common import get_username
+from misho_server.interfaces.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from telegram import Update
 from telegram.ext import ContextTypes
 

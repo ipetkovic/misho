@@ -1,4 +1,4 @@
-from misho_server.infrastructure.telegram_bot.telegram_handler import ChatId
+from misho_server.interfaces.telegram_bot.telegram_handler import ChatId
 from telegram import Update
 
 

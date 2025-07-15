@@ -2,11 +2,11 @@ from enum import Enum
 from misho_server.core.user import User
 from misho_server.core.user_telegram import UserTelegramData
 from misho_server.core.user_telegram.user_telegram_integration_repository import UserTelegramIntegrationRepository
-from misho_server.infrastructure.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
-from misho_server.infrastructure.telegram_bot.common import get_username
-from misho_server.infrastructure.telegram_bot.onboarding_handler import TelegramOnboardingHandler
-from misho_server.infrastructure.telegram_bot.standard_handler import TelegramStandardHandler
-from misho_server.infrastructure.telegram_bot.telegram_handler import ChatId, TelegramHandler
+from misho_server.interfaces.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
+from misho_server.interfaces.telegram_bot.common import get_username
+from misho_server.interfaces.telegram_bot.onboarding_handler import TelegramOnboardingHandler
+from misho_server.interfaces.telegram_bot.standard_handler import TelegramStandardHandler
+from misho_server.interfaces.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from telegram import Update
 from telegram.ext import ContextTypes
 
