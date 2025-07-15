@@ -5,7 +5,6 @@ WORKDIR /root
 ENV PYTHONPATH=src/
 RUN pip install --no-cache-dir uv
 
-COPY misho-api/ ./misho-api
 COPY sportbooking/ ./sportbooking
 COPY misho-server/ ./misho-server
 COPY pyproject.toml .
