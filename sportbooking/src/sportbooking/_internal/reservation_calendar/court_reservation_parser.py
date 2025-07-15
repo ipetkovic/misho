@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup, ResultSet, Tag
 import datetime
+from sportbooking._internal.reservation_calendar.names_parser import Name, NamePerCourt, NamesCalendar
 from sportbooking.reservation_calendar import CourtId, HourSlot, ReservationSlot, TimeSlot, UserCourtReservation, UserReservationCalendar
 
 
@@ -9,10 +10,6 @@ def parse(html: str) -> UserReservationCalendar:
     reservations = CourtReservationParser(soup, names_calendar).parse()
     return reservations
 
-
-type Name = str
-type NamesCalendar = dict[ReservationSlot, Name]
-type NamePerCourt = dict[CourtId, Name]
 
 type CourtReservations = dict[CourtId, UserCourtReservation]
 

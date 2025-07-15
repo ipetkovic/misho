@@ -1,6 +1,6 @@
 from httpx import AsyncClient, Request
 from sportbooking._internal.common import HOST, get_standard_headers
-from sportbooking._internal.reservation_calendar import reservation_calendar_html_parser
+from sportbooking._internal.reservation_calendar import court_reservation_parser
 from sportbooking.reservation_calendar import UserReservationCalendar
 
 
@@ -26,7 +26,7 @@ async def get_reservation_calendar(client: AsyncClient, token: str) -> UserReser
     if invalid_response_content in response.text[:1000]:
         raise Exception("Cannot get reservation calendar")
 
-    return reservation_calendar_html_parser.parse(response.text)
+    return court_reservation_parser.parse(response.text)
 
 
 def _request(token: str) -> Request:
