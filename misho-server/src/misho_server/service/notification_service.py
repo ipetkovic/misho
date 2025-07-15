@@ -1,7 +1,7 @@
 import logging
 from typing import Awaitable, Callable
 
-from misho_server.domain.user import User
+from misho_server.core.user import User
 
 
 type NotificationServiceSubscriber = Callable[[User, str], Awaitable[None]]

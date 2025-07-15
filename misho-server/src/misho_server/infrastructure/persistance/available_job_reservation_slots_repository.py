@@ -1,0 +1,50 @@
+from misho_server.core.available_job_reservation_slot.available_job_reservation_slots_repository import AvailableJobReservationSlot, AvailableJobReservationSlotRepository
+from sqlalchemy.orm import selectinload
+
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio.session import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+import misho_server.infrastructure.persistance.model as dao
+from misho_server.infrastructure.persistance import jobs_repository
+
+
+class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlotRepository):
+    def __init__(self, engine: AsyncEngine):
+        self._engine = engine
+        self._sessionmaker = async_sessionmaker(
+            bind=engine, expire_on_commit=False)
+
+    async def get_available_job_reservation_slots(self) -> list[AvailableJobReservationSlot]:
+        async with self._sessionmaker() as session:
+            stmt = (
+                select(dao.Job, dao.JobCourt.court_id).options(
+                    selectinload(dao.Job.time_slot)
+                    .selectinload(dao.TimeSlot.hour_slot),
+                    selectinload(dao.Job.job_courts),
+                    selectinload(dao.Job.monitoring_job),
+                    selectinload(dao.Job.user),
+                )
+                .join(dao.JobCourt, dao.Job.id == dao.JobCourt.job_id)
+                .join(dao.MonitoringJob, dao.MonitoringJob.job_id == dao.Job.id)
+                .join(dao.ReservationCalendar, and_(
+                    dao.ReservationCalendar.time_slot_id == dao.Job.time_slot_id,
+                    dao.ReservationCalendar.court_id == dao.JobCourt.court_id
+                ))
+                .join(dao.TimeSlot, dao.TimeSlot.id == dao.Job.time_slot_id)
+                .join(dao.HourSlot, dao.TimeSlot.hour_slot_id == dao.HourSlot.id)
+                .where(
+                    and_(
+                        dao.MonitoringJob.action == dao.JobAction.RESERVE,
+                        dao.ReservationCalendar.reserved_by == None,
+                        dao.Job.status.in_(
+                            [dao.Status.ACTIVE]),
+                    )
+                )
+            )
+
+            result = await session.execute(stmt)
+            rows = result.all()
+            print(rows)
+            return [AvailableJobReservationSlot(
+                jobs_repository.to_domain(row[0]), row[1]) for row in rows]

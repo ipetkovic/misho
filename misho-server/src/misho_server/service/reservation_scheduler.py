@@ -1,7 +1,7 @@
 import asyncio
-from misho_server.domain.reservation_calendar import CourtId
-from misho_server.domain.time_slot import TimeSlot
-from misho_server.domain.job import Job
+from misho_server.core.reservation_calendar import CourtId
+from misho_server.core.time_slot import TimeSlot
+from misho_server.core.job import Job
 from misho_server.service.reserve_job_executor import ReserveJobExecutor
 
 

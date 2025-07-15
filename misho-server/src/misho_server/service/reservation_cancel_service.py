@@ -1,10 +1,10 @@
 import logging
-from misho_server.domain.reservation_slot import ReservationSlot
-from misho_server.domain.reservation_update_bus import ReservationUpdateBus
-from misho_server.domain.reservation_update_event import ReservationUpdateEvent, ReservationUpdateEventType
+from misho_server.core.reservation_slot import ReservationSlot
+from misho_server.core.reservation_update_bus import ReservationUpdateBus
+from misho_server.core.reservation_update_event import ReservationUpdateEvent, ReservationUpdateEventType
 from misho_server.service.sportbooking_service import SportbookingService
-from misho_server.domain.reservation_calendar import UserReservationCalendar
-from misho_server.domain.session_token import SessionToken
+from misho_server.core.reservation_calendar import UserReservationCalendar
+from misho_server.core.session_token import SessionToken
 from misho_server.service.session_token_fetch_service import SessionTokenFetchService
 from misho_server.config import CONFIG
 

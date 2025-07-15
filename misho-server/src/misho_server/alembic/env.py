@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from misho_server.database.model import Base
+from misho_server.infrastructure.persistance.model import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

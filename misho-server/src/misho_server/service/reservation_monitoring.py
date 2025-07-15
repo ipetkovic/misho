@@ -1,10 +1,10 @@
 import datetime
 import logging
 from misho_server.config.model import ReservationMonitoringConfig
-from misho_server.domain.court import CourtId
-from misho_server.domain.job import Job
-from misho_server.repository.available_job_reservation_slots import AvailableJobReservationSlotRepository
-from misho_server.repository.jobs import JobsRepository
+from misho_server.core.court import CourtId
+from misho_server.core.job import Job
+from misho_server.core.available_job_reservation_slot.available_job_reservation_slots_repository import AvailableJobReservationSlotRepository
+from misho_server.core.job.jobs_repository import JobsRepository
 from misho_server.service.reservation_scheduler import ReservationScheduler
 
 

@@ -1,11 +1,11 @@
 from datetime import timedelta
 import datetime
 from misho_server.config.model import JobCreateConfig
-from misho_server.domain.job import Job, JobAction, JobCreate, Status
-from misho_server.domain.user import UserId
-from misho_server.repository.court import CourtRepository
-from misho_server.repository.hour_slot import HourSlotRepository
-from misho_server.repository.jobs import JobsRepository
+from misho_server.core.job import Job, JobAction, JobCreate, Status
+from misho_server.core.user import UserId
+from misho_server.core.court.court_repository import CourtRepository
+from misho_server.core.hour_slot.hour_slot_repository import HourSlotRepository
+from misho_server.core.job.jobs_repository import JobsRepository
 
 
 class JobsServiceError(Exception):

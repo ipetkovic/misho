@@ -1,10 +1,10 @@
 
 
 from datetime import date
-from misho_server.domain.reservation_calendar import ReservationCalendar
-from misho_server.domain.user import UserId
-from misho_server.repository.reservation_calendar import ReservationCalendarRepository
-from misho_server.repository.user import UserRepository
+from misho_server.core.reservation_calendar import ReservationCalendar
+from misho_server.core.user import UserId
+from misho_server.core.reservation_calendar.reservation_calendar_repository import ReservationCalendarRepository
+from misho_server.core.user.user_repository import UserRepository
 
 
 class ReservationCalendarService:
