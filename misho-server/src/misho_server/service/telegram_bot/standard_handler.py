@@ -1,13 +1,8 @@
 from misho_server.domain.user import User, UserId
 from misho_server.domain.user_telegram_data import UserTelegramData
-from misho_server.repository.reservation_calendar import ReservationCalendarRepository
 from misho_server.repository.user_telegram_integration import UserTelegramIntegrationRepository
-from misho_server.service.jobs_service import JobsService
 from misho_server.service.open_ai.tool_handler import OpenAiToolHandler
 from misho_server.service.open_ai.user_client import OpenAiUserClient
-from misho_server.service.reservation_calendar import ReservationCalendarService
-from misho_server.service.reservation_cancel_service import ReservationCancelService
-from misho_server.service.reservation_service import ReservationService
 from misho_server.service.telegram_bot.common import get_chat_id, get_message_text, get_username
 from misho_server.service.telegram_bot.telegram_handler import ChatId, TelegramHandler
 from openai import OpenAI
