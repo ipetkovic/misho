@@ -15,7 +15,7 @@ class TimeSlot(pydantic.BaseModel):
         return datetime.datetime.combine(self.date, datetime.time(self.hour_slot.from_hour))
 
     def __str__(self):
-        return f"{self._day_name}, {self.date.strftime('%d.%m.%Y')} {self.hour_slot.from_hour:02d}:00 - {self.hour_slot.to_hour:02d}:00"
+        return f"{self._day_name()}, {self.date.strftime('%d.%m.%Y')} {self.hour_slot.from_hour:02d}:00 - {self.hour_slot.to_hour:02d}:00"
 
     def _day_name(self) -> str:
         day_names = {
