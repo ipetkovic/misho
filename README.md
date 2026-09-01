@@ -74,11 +74,23 @@ uv run pyright
 
 The bot ignores anyone it doesn't already know — `TelegramHandlerDelegator` treats an unrecognised
 Telegram username as blacklisted and silently drops the message. There's deliberately no self-serve
-path, so onboarding somebody is two steps.
+path: an open bot would let any stranger spend your OpenAI budget and book real courts. So onboarding
+somebody is two steps.
 
-**1. Whitelist their Telegram username.** No code path inserts this row, so add it by hand.
-`enable_notifications`, `created_at` and `updated_at` are `NOT NULL` without defaults, so they all have
-to be supplied:
+**1. Invite their Telegram username**, from inside Telegram:
+
+```
+/invite their_telegram_username
+```
+
+Only `MISHO_ADMIN_TELEGRAM_USERNAME` may run this; for anyone else the command stays silent, exactly
+like the blacklist. The username has to match the casing Telegram reports, and a leading `@` is
+stripped for you.
+
+That admin row is itself seeded on every startup, so the deployer is never locked out of their own
+bot. Leave the variable unset and `/invite` is disabled — the allow-list then has to be seeded by
+hand, remembering that `enable_notifications`, `created_at` and `updated_at` are `NOT NULL` without
+database-level defaults:
 
 ```sql
 INSERT INTO user_telegram_notifications

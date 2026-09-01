@@ -51,3 +51,7 @@ class Config:
     job_notifier: JobNotifierConfig
     reservation_notification_service: ReservationNotificationServiceConfig
     telegram_bot_token: str
+    # Telegram username (no leading @) that is allow-listed on startup and may
+    # run /invite. Empty disables both -- the allow-list then has to be seeded
+    # by hand.
+    admin_telegram_username: str

@@ -1,6 +1,7 @@
 import logging
 from misho_server.core.user import User
 from misho_server.interfaces.telegram_bot import TelegramBot
+from misho_server.interfaces.telegram_bot.admin_handler import TelegramAdminHandler
 from misho_server.interfaces.telegram_bot.common import get_chat_id
 from misho_server.interfaces.telegram_bot.telegram_handler import TelegramHandler
 from misho_server.service.notification_service import NotificationService
@@ -13,6 +14,7 @@ class TelegramBotImpl(TelegramBot):
         self,
         telegram_token: str,
         handler: TelegramHandler,
+        admin_handler: TelegramAdminHandler,
         notification_service: NotificationService
     ):
         self._handler = handler
@@ -28,6 +30,9 @@ class TelegramBotImpl(TelegramBot):
 
         signup_handler = CommandHandler("signup", handler.signup_handler)
         self._application.add_handler(signup_handler)
+
+        invite_handler = CommandHandler("invite", admin_handler.invite_handler)
+        self._application.add_handler(invite_handler)
 
         self._application.add_error_handler(self._error_handler)  # type: ignore
 

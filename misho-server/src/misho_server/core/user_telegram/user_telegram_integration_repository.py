@@ -9,6 +9,9 @@ class UserTelegramIntegrationRepository:
     async def get_user_telegram_data_by_user_id(self, user_id: UserId) -> UserTelegramData | None:
         pass
 
+    async def create_user_telegram_data(self, username: str) -> None:
+        pass
+
     async def update_user_telegram_user_id(self, username: str, user_id: int) -> None:
         pass
 

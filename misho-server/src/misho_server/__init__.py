@@ -18,6 +18,7 @@ from misho_server.infrastructure.persistance.user_repository import UserReposito
 from misho_server.infrastructure.persistance.user_telegram_integration_repository import UserTelegramIntegrationRepositorySqlite
 from misho_server.infrastructure.persistance.user_token_repository import UserTokenRepositorySqlite
 from misho_server.interfaces.open_ai.tool_handler import OpenAiToolHandler
+from misho_server.interfaces.telegram_bot.admin_handler import TelegramAdminHandler
 from misho_server.interfaces.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
 from misho_server.interfaces.telegram_bot.bot import TelegramBotImpl
 from misho_server.interfaces.telegram_bot.onboarding_handler import TelegramOnboardingHandler
@@ -37,6 +38,7 @@ from misho_server.service.reservation_service import ReservationService
 from misho_server.service.reserve_job_executor import ReserveJobExecutor
 from misho_server.service.session_token_fetch_service import SessionTokenFetchService
 from misho_server.service.signup_service import SignUpService
+from misho_server.service.telegram_invite_service import TelegramInviteService
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -185,6 +187,11 @@ async def start():
         user_telegram_integration_repository = UserTelegramIntegrationRepositorySqlite(
             engine=engine)
 
+        telegram_invite_service = TelegramInviteService(
+            user_telegram_integration_repository=user_telegram_integration_repository)
+
+        await _invite_admin(telegram_invite_service)
+
         signup_service = SignUpService(user_service=user_repository,
                                        sportbooking=sportbooking_service
                                        )
@@ -207,6 +214,11 @@ async def start():
             open_ai_tool_handler=open_ai_tool_handler
         )
 
+        telegram_admin_handler = TelegramAdminHandler(
+            admin_username=CONFIG.admin_telegram_username,
+            telegram_invite_service=telegram_invite_service,
+        )
+
         telegram_blacklisted_handler = TelegramBlacklistedUserHandler()
         telegram_onboarding_handler = TelegramOnboardingHandler(
             user_telegram_integration_repository=user_telegram_integration_repository,
@@ -227,9 +239,29 @@ async def start():
         async with TelegramBotImpl(
             telegram_token=CONFIG.telegram_bot_token,
             handler=telegram_handler_delegator,
+            admin_handler=telegram_admin_handler,
             notification_service=notification_service
         ):
             await _sleep_forever()
+
+
+async def _invite_admin(telegram_invite_service: TelegramInviteService) -> None:
+    """Seed the allow-list so the deployer is not locked out of their own bot.
+
+    Every other user is invited from inside Telegram, but the first row has to
+    come from somewhere -- the database ships empty and a missing row means
+    blacklisted, including for whoever deployed the thing.
+    """
+    admin_username = CONFIG.admin_telegram_username
+    if not admin_username:
+        logging.warning(
+            "MISHO_ADMIN_TELEGRAM_USERNAME is not set: /invite is disabled and "
+            "the allow-list has to be seeded by hand.")
+        return
+
+    created = await telegram_invite_service.invite(admin_username)
+    if created:
+        logging.info("Allow-listed admin Telegram user: %s", admin_username)
 
 
 async def _sleep_forever():

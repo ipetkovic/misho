@@ -15,7 +15,8 @@ All commands run from the **repo root** — `alembic.ini` and `CONFIG.database_p
 
 ```bash
 uv sync                        # install workspace (root + sportbooking + misho-server)
-source .env                    # TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, MISHO_ENVIRONMENT
+source .env                    # TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, MISHO_ENVIRONMENT,
+                               # MISHO_ADMIN_TELEGRAM_USERNAME
 uv run misho-server            # run the whole app (migrations + schedulers + bot)
 uv run pyright                 # type check — the project is written for pyright strict mode
 ```
@@ -108,8 +109,11 @@ calendar), `job_expired_handler` (delete expired jobs, optionally spawn a follow
 ### Telegram + OpenAI layer
 
 `TelegramHandlerDelegator` routes every update to one of three handlers based on DB state: no
-`user_telegram_notifications` row → **blacklisted** (silently ignored — rows are inserted manually to grant access);
+`user_telegram_notifications` row → **blacklisted** (silently ignored); rows are created by `TelegramInviteService`,
+either by the `/invite` command or by the startup seed of `MISHO_ADMIN_TELEGRAM_USERNAME`;
 row without `user_id` → **onboarding** (`/signup <user> <pass>`, verified against sportbooking); otherwise **standard**.
+`/invite` is the exception to that routing: it is gated on *who* sends it rather than on their state, so
+`TelegramAdminHandler` is registered straight onto `TelegramBotImpl` and never passes through the delegator.
 
 The standard handler holds one `OpenAiUserClient` per Telegram username: a `gpt-4o` chat loop with hand-written tool
 schemas in `interfaces/open_ai/tools.py`, dispatched by function-name string in `tool_handler.py`, with conversation
