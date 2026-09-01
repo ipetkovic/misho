@@ -19,7 +19,6 @@ class JobExpiredHandler:
 
     async def _handle_expired_job(self, job: Job):
         await self._job_repository.delete(job.id)
-        print(job.on_expiry_action)
         match job.on_expiry_action:
             case OnExpiryAction.CREATE_NOTIFY_JOB:
                 await self._job_repository.insert(

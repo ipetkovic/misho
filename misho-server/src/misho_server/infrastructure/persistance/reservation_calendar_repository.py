@@ -121,7 +121,6 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
             if reservation_slot not in old_calendar.calendar
         }
 
-        print("to insert: ", to_insert.keys())
 
         to_update = {
             reservation_slot: court_reservations
@@ -130,7 +129,6 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
             court_reservations != old_calendar.calendar[reservation_slot]
         }
 
-        print("to update: ", to_update.keys())
 
         to_delete = [
             reservation_slot
@@ -138,7 +136,6 @@ class ReservationCalendarRepositorySqlite(ReservationCalendarRepository):
             if reservation_slot not in new_calendar.calendar
         ]
 
-        print("to delete: ", to_delete)
 
         return UpdateCalendar(to_insert=to_insert,
                               to_update=to_update,

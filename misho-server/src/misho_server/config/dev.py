@@ -5,8 +5,6 @@ from misho_server.config.model import Config, JobCreateConfig, JobExpiredHandler
 
 _TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 
-print(os.environ.keys())
-
 
 CONFIG_DEV = Config(
     database_path='db/sportbooking.db',

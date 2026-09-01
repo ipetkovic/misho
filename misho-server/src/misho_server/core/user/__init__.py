@@ -6,7 +6,7 @@ type UserId = int
 class UserCreate(pydantic.BaseModel):
     name: str
     username: str
-    password: str
+    password: str = pydantic.Field(repr=False)
     email: str | None = None
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)
@@ -16,7 +16,7 @@ class User(pydantic.BaseModel):
     id: UserId
     name: str
     username: str
-    password: str
+    password: str = pydantic.Field(repr=False)
     email: str | None = None
 
     model_config = pydantic.ConfigDict(extra='ignore', frozen=True)

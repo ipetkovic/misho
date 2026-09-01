@@ -1,3 +1,4 @@
+import logging
 import datetime
 from misho_server.core.user_token.user_token_repository import UserTokenRepository
 from sqlalchemy import select
@@ -25,8 +26,7 @@ class UserTokenRepositorySqlite(UserTokenRepository):
 
     async def set_user_token(self, user_id: UserId, token: SessionToken) -> None:
         async with self._sessionmaker() as session:
-            print(
-                f"Setting user token for user_id={user_id}, {token}")
+            logging.debug(f"Setting session token for user_id={user_id}")
 
             stmt = insert(dao.UserToken).values(
                 user_id=user_id,

@@ -69,8 +69,6 @@ class JobsRepositorySqlite(JobsRepository):
             )
             result = await session.execute(stmt)
             jobs_dao = result.all()
-            print("jure")
-            print(jobs_dao)
             return [to_domain(job[0]) for job in jobs_dao]
 
     async def list_all(self, statuses: list[Status] | None = None, user_id: UserId | None = None) -> list[Job]:
@@ -119,7 +117,6 @@ class JobsRepositorySqlite(JobsRepository):
         stmt = self._select().where(dao.Job.id == job_id)
         result = await session.execute(stmt)
         job_dao = result.scalar_one_or_none()
-        print(job_dao)
         return to_domain(job_dao) if job_dao else None
 
     def _select(self) -> Select[Tuple[dao.Job]]:

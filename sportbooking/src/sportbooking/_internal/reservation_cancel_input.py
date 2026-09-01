@@ -62,6 +62,5 @@ if __name__ == "__main__":
                 cancellation_url='otkazivanjerezervacije.php?idbroj=151962'
             )
 
-            print(result)
 
     asyncio.run(main())

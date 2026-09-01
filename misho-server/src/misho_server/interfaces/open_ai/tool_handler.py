@@ -33,7 +33,7 @@ class OpenAiToolHandler:
         func_name = tool_call.function.name
         args = json.loads(tool_call.function.arguments)
 
-        print(f"Function call: {func_name} with arguments: {args}")
+        logging.debug(f"Function call: {func_name} with arguments: {args}")
 
         async def call(coroutine: Awaitable[T], *, context: str = "unknown") -> Union[T, str]:
             try:
