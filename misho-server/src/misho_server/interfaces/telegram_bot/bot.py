@@ -1,9 +1,11 @@
 import logging
 from misho_server.core.user import User
 from misho_server.interfaces.telegram_bot import TelegramBot
+from misho_server.interfaces.telegram_bot.common import get_chat_id
 from misho_server.interfaces.telegram_bot.telegram_handler import TelegramHandler
 from misho_server.service.notification_service import NotificationService
-from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler
+from telegram import Update
+from telegram.ext import filters, ContextTypes, MessageHandler, ApplicationBuilder, CommandHandler
 
 
 class TelegramBotImpl(TelegramBot):
@@ -26,6 +28,8 @@ class TelegramBotImpl(TelegramBot):
 
         signup_handler = CommandHandler("signup", handler.signup_handler)
         self._application.add_handler(signup_handler)
+
+        self._application.add_error_handler(self._error_handler)  # type: ignore
 
         notification_service.subscribe(self._handle_notification)
 
@@ -52,3 +56,31 @@ class TelegramBotImpl(TelegramBot):
                 chat_id=chat_id,
                 text=message
             )
+
+    async def _error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Catch anything an update handler raises.
+
+        Without this, python-telegram-bot only logs "No error handlers are
+        registered" and the user is left with silence, which is
+        indistinguishable from the bot being down.
+        """
+        logging.error("Unhandled exception while processing update",
+                      exc_info=context.error)
+
+        if not isinstance(update, Update):
+            return
+
+        chat_id = get_chat_id(update)
+        if chat_id is None:
+            return
+
+        try:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="Došlo je do greške. Pokušaj ponovno za koji trenutak."
+            )
+        except Exception:
+            # An error handler that raises is swallowed, putting us back to
+            # silence -- so this must never propagate.
+            logging.exception(
+                "Failed to deliver error message to chat %s", chat_id)

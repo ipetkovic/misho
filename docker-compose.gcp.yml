@@ -1,0 +1,15 @@
+# Server-only overlay. Ships container stdout straight to Cloud Logging, with no
+# Ops Agent and no extra RAM on a 1 GB machine. The VM's service account already
+# carries roles/logging.logWriter and the logging.write scope, and the driver
+# reads project/zone/instance from the GCE metadata server, so there is nothing
+# to configure here.
+#
+# Applied by deploy.py:
+#   docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d
+#
+# Kept out of docker-compose.yml so that a local `docker compose up` still works
+# off the machine, where the metadata server is unreachable.
+services:
+  misho:
+    logging:
+      driver: gcplogs

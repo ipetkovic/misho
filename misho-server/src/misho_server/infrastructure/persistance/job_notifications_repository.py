@@ -57,7 +57,6 @@ class JobNotificationsRepositorySqlite(JobNotificationsRepository):
 
             result = await session.execute(stmt)
             rows = result.all()
-            print(rows)
             notifications = [
                 _to_domain(
                     job_notification_id=row[0],

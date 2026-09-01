@@ -54,7 +54,10 @@ async def start():
 
     logging.getLogger("core").setLevel(CONFIG.logging.level)
 
-    print(CONFIG.database_path)
+    # httpx logs full request URLs at INFO, and the Telegram bot token
+    # is embedded in the path of every api.telegram.org call.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
     engine = create_async_engine(
         "sqlite+aiosqlite:///./" + CONFIG.database_path, echo=False)

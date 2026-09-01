@@ -45,6 +45,5 @@ class AvailableJobReservationSlotRepositorySqlite(AvailableJobReservationSlotRep
 
             result = await session.execute(stmt)
             rows = result.all()
-            print(rows)
             return [AvailableJobReservationSlot(
                 jobs_repository.to_domain(row[0]), row[1]) for row in rows]

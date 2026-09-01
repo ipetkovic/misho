@@ -71,11 +71,15 @@ resource "google_compute_disk" "data" {
   type = "pd-standard"
   size = var.data_disk_gb
   zone = var.zone
+
+  depends_on = [google_project_service.compute]
 }
 
 data "google_compute_image" "debian" {
   family  = "debian-12"
   project = "debian-cloud"
+
+  depends_on = [google_project_service.compute]
 }
 
 # --- Instance ----------------------------------------------------------------

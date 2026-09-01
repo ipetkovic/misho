@@ -38,7 +38,7 @@ class SessionTokenFetchService:
 
         token = await self._sportbooking.login(user.username, user.password)
 
-        logging.debug(f"Login response for user {user_id}: {token}")
+        logging.debug(f"Obtained session token for user {user_id}")
 
         await self._user_token_repository.set_user_token(user_id, token)
 
