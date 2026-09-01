@@ -187,7 +187,7 @@ slots are two hours long (17–19, 19–21, 21–23); the rest are one.
 | `terraform/` | GCP provisioning |
 | `build.py` | Builds and pushes the Docker image |
 | `deploy.py` | Ships compose file + `.env` to the VM and restarts it |
-| `CLAUDE.md` | Architecture notes — layering, conventions, how the pieces connect |
+| `AGENTS.md` | Architecture notes for coding agents — layering, conventions, how the pieces connect |
 
 ## License
 
