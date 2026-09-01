@@ -157,6 +157,30 @@ The host stays on UTC. `TZ=Europe/Berlin` is set on the *container* in `docker-c
 the one that matters — the midnight new-day branch in `ReservationMonitoring` reads `datetime.now()`
 inside the container.
 
+### Logs
+
+Container stdout goes to Cloud Logging via Docker's `gcplogs` driver, applied by the
+server-only `docker-compose.gcp.yml` overlay. No Ops Agent, so nothing extra competes
+for the 1 GB of RAM.
+
+```bash
+# application logs
+gcloud logging read 'logName:"gcplogs-docker-driver"' \
+  --project=misho-bot-4821 --limit=50 --freshness=1h \
+  --format="value(timestamp,jsonPayload.message)"
+
+# boot / provisioning, shipped by the built-in guest agent
+gcloud logging read 'logName:"google_metadata_script_runner"' \
+  --project=misho-bot-4821 --limit=50 --freshness=1h --format="value(textPayload)"
+```
+
+Docker's dual-logging cache keeps `docker logs` working too, so the SSH route is still
+available and is the quickest way to tail:
+
+```bash
+ssh misho@$MISHO_HOST 'cd /opt/misho && docker compose logs -f'
+```
+
 ### Backups
 
 `/opt/misho/db/sportbooking.db` is the only state, and it holds every linked account and pending job:

@@ -14,6 +14,9 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # lands on it.
 REMOTE_APP_DIR = "/opt/misho"
 
+# Merged over docker-compose.yml on the server only; see the file's header.
+COMPOSE_OVERLAY = "docker-compose.gcp.yml"
+
 
 def create_ssh_client(host, port, username, key_file=None, password=None):
     ssh = paramiko.SSHClient()
@@ -37,6 +40,10 @@ def deploy(host, username, docker_compose_path, key_file, tag):
         scp.put(docker_compose_path,
                 remote_path=f"{REMOTE_APP_DIR}/docker-compose.yml")
 
+        # server-only overlay: routes container stdout to Cloud Logging
+        scp.put(os.path.join(_SCRIPT_DIR, COMPOSE_OVERLAY),
+                remote_path=f"{REMOTE_APP_DIR}/{COMPOSE_OVERLAY}")
+
         # compose reads .env for both container env and ${MISHO_ENVIRONMENT}
         # substitution, so it has to exist on the host.
         if os.path.isfile(env_path):
@@ -48,7 +55,8 @@ def deploy(host, username, docker_compose_path, key_file, tag):
 
     commands = [
         f"docker pull {tag}",
-        f"cd {REMOTE_APP_DIR} && docker compose up -d",
+        f"cd {REMOTE_APP_DIR} && docker compose -f docker-compose.yml "
+        f"-f {COMPOSE_OVERLAY} up -d",
     ]
 
     failed = False
