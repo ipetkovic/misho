@@ -1,0 +1,11 @@
+project_id = "my-gcp-project"
+
+# Free-tier regions only: us-west1 | us-central1 | us-east1
+region = "us-central1"
+zone   = "us-central1-a"
+
+ssh_user            = "misho"
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+
+# Strongly recommended: replace with "<your.ip.here>/32"
+ssh_source_ranges = ["0.0.0.0/0"]
