@@ -38,10 +38,9 @@ class TelegramStandardHandler(TelegramHandler):
         self._user_telegram_integration_repository = user_telegram_integration_repository
 
     async def start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        username = get_username(update)
         chat_id = get_chat_id(update)
 
-        if username is None or chat_id is None:
+        if chat_id is None:
             return
 
         message = (
@@ -50,10 +49,6 @@ class TelegramStandardHandler(TelegramHandler):
             "Možeš mi postaviti pitanja ili zatražiti pomoć oko rezervacija.\n"
         )
 
-        await self._update_user_chat_id(
-            username=username,
-            chat_id=chat_id
-        )
         await context.bot.send_message(chat_id=chat_id, text=message)
 
     async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -102,9 +97,3 @@ class TelegramStandardHandler(TelegramHandler):
 
     async def _get_user_telegram_data_by_user_id(self, user_id: UserId) -> UserTelegramData | None:
         return await self._user_telegram_integration_repository.get_user_telegram_data_by_user_id(user_id)
-
-    async def _update_user_chat_id(self, username: str, chat_id: int) -> None:
-        await self._user_telegram_integration_repository.update_user_telegram_chat_id(
-            username=username,
-            chat_id=chat_id
-        )

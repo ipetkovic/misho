@@ -95,6 +95,9 @@ VALUES ('their_telegram_username', 1, datetime('now'), datetime('now'));
 Misho verifies the credentials against the site, reads their display name from it, and links the
 accounts. Quote any value containing spaces: `/signup "korisničko ime" "lozinka"`.
 
+`/start` is optional — `chat_id`, which every outbound notification needs, is refreshed from any
+update the user sends, so signing up is enough to start receiving them.
+
 ## Deployment
 
 The bot runs as a single container on a GCP `e2-micro`, provisioned by `terraform/`. It makes only
