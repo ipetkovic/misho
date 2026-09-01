@@ -43,7 +43,12 @@ class UserTelegramIntegrationRepositorySqlite(UserTelegramIntegrationRepository)
                 dao.UserTelegramIntegration.username == username
             ).values(user_id=user_id)
 
-            await session.execute(stmt)
+            result = await session.execute(stmt)
+            if result.rowcount == 0:
+                # Silently updating nothing is how a signup came to report
+                # success while leaving the user stuck in onboarding.
+                raise ValueError(
+                    f"No Telegram integration row for username: {username}")
             await session.commit()
 
     async def update_user_telegram_chat_id(self, username: str, chat_id: int) -> None:
