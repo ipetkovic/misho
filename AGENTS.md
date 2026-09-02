@@ -39,7 +39,7 @@ docker compose up --build                  # local container run; override.yml b
 curl -s localhost:8000/healthz             # scheduler + Telegram polling + SQLite
 
 gh workflow run deploy.yml -f tag=<sha>    # redeploy or roll forward an existing image by hand
-gcloud compute ssh misho --zone <zone> --tunnel-through-iap   # debug on the VM (then `sudo docker ...`)
+gcloud compute ssh misho --project <project> --zone <zone> --tunnel-through-iap  # debug (then `sudo docker ...`)
 terraform -chdir=terraform apply           # provision; see README for the two-phase first run
 ```
 
