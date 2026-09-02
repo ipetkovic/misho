@@ -1,11 +1,12 @@
 [project]
 name = "misho"
 version = "0.1.0"
+# Tooling only. paramiko and scp went with deploy.py -- the VM is reached
+# through `gcloud compute ssh --tunnel-through-iap` now, and rollouts happen
+# in .github/workflows/deploy.yml.
 dependencies = [
     "nodejs>=0.1.1",
-    "paramiko>=3.5.1",
     "pyright>=1.1.403",
-    "scp>=0.15.0",
 ]
 
 [tool.uv.workspace]
@@ -13,3 +14,12 @@ members = [
     "sportbooking",
     "misho-server",
 ]
+
+# Pinned explicitly so the CI gate cannot drift. AGENTS.md describes the
+# project as written for strict mode, but nothing configured it, so pyright
+# has in fact been running at basic. Raising it is a separate change with its
+# own error backlog to work through -- not something to discover mid-deploy.
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.12"
+include = ["misho-server/src", "sportbooking/src"]

@@ -44,27 +44,39 @@ Everything runs **from the repository root**. Both `alembic.ini` and `CONFIG.dat
 relative path `db/sportbooking.db`, so running from elsewhere silently uses a different database.
 
 ```bash
-uv sync
-mkdir -p db          # gitignored, and SQLite won't create the directory itself
+uv sync --all-packages     # a bare `uv sync` installs only the root tooling deps
+cp .env.example .env       # then fill it in
+mkdir -p db                # gitignored, and SQLite won't create the directory itself
 source .env
 uv run misho-server
 ```
 
+Or in a container, which is what production runs — `docker-compose.override.yml` is loaded
+automatically and builds from source:
+
+```bash
+docker compose up --build
+curl -s localhost:8000/healthz | jq
+```
+
 Startup runs the migrations, seeds reference data, starts the schedulers, and begins polling Telegram.
 
-Three environment variables matter:
+Four environment variables matter:
 
 | Variable | |
 |---|---|
-| `MISHO_ENVIRONMENT` | `DEV` or `PROD` — selects `config/dev.py` or `config/prod.py`. Anything else falls back to dev. |
+| `MISHO_ENVIRONMENT` | `TEST` or `PROD`, selecting `config/test.py` or `config/prod.py`. **Anything else is a fatal startup error** — it used to fall back to the dev config silently, so a typo ran test settings against the live site. |
 | `TELEGRAM_BOT_TOKEN` | From [@BotFather](https://t.me/botfather). |
 | `OPENAI_API_KEY` | Read implicitly by the OpenAI SDK. |
+| `MISHO_ADMIN_TELEGRAM_USERNAME` | Allow-listed on startup; the only user who may run `/invite`. |
 
-While developing against the live site, set `dummy_reservation = True` in the active config. Everything
-runs normally except the final reserve/cancel HTTP call, so you can exercise the whole flow without
-actually booking a court.
+> **Use a second BotFather bot locally.** Telegram delivers each update exactly once per token, so a
+> local instance sharing the production token silently steals real users' messages.
 
-Type checking (the project is written for pyright strict):
+`TEST` sets `dummy_reservation=True`: everything runs normally except the final reserve/cancel HTTP
+call, so the whole flow is exercisable without booking a real court. `PROD` books for real.
+
+Type checking:
 
 ```bash
 uv run pyright
@@ -74,11 +86,23 @@ uv run pyright
 
 The bot ignores anyone it doesn't already know — `TelegramHandlerDelegator` treats an unrecognised
 Telegram username as blacklisted and silently drops the message. There's deliberately no self-serve
-path, so onboarding somebody is two steps.
+path: an open bot would let any stranger spend your OpenAI budget and book real courts. So onboarding
+somebody is two steps.
 
-**1. Whitelist their Telegram username.** No code path inserts this row, so add it by hand.
-`enable_notifications`, `created_at` and `updated_at` are `NOT NULL` without defaults, so they all have
-to be supplied:
+**1. Invite their Telegram username**, from inside Telegram:
+
+```
+/invite their_telegram_username
+```
+
+Only `MISHO_ADMIN_TELEGRAM_USERNAME` may run this; for anyone else the command stays silent, exactly
+like the blacklist. The username has to match the casing Telegram reports, and a leading `@` is
+stripped for you.
+
+That admin row is itself seeded on every startup, so the deployer is never locked out of their own
+bot. Leave the variable unset and `/invite` is disabled — the allow-list then has to be seeded by
+hand, remembering that `enable_notifications`, `created_at` and `updated_at` are `NOT NULL` without
+database-level defaults:
 
 ```sql
 INSERT INTO user_telegram_notifications
@@ -95,11 +119,17 @@ VALUES ('their_telegram_username', 1, datetime('now'), datetime('now'));
 Misho verifies the credentials against the site, reads their display name from it, and links the
 accounts. Quote any value containing spaces: `/signup "korisničko ime" "lozinka"`.
 
+`/start` is optional — `chat_id`, which every outbound notification needs, is refreshed from any
+update the user sends, so signing up is enough to start receiving them.
+
 ## Deployment
 
 The bot runs as a single container on a GCP `e2-micro`, provisioned by `terraform/`. It makes only
-outbound connections — Telegram long polling, OpenAI, sportbooking.info — so nothing listens and SSH is
-the only open port.
+outbound connections — Telegram long polling, OpenAI, sportbooking.info — so nothing listens
+publicly. SSH arrives through an IAP tunnel; port 22 is closed to the internet.
+
+Pushing to `main` builds, verifies and rolls out automatically
+(`.github/workflows/deploy.yml`). There is no manual deploy script.
 
 ### Cost
 
@@ -113,33 +143,124 @@ Free tier requires all of:
 - Machine type `e2-micro`, one instance
 - `pd-standard` disks totalling ≤ 30 GB (defaults here: 20 GB boot + 10 GB data)
 
+`ghcr.io` is free for public packages, with no storage or bandwidth quota.
+
 ### First run
+
+Apply in two phases. The single apply enables OS Login *and* closes public SSH at the same time, so
+if the OS Login grants are wrong you lose both ways in at once.
 
 ```bash
 gcloud auth application-default login
 
 cd terraform
-cp terraform.tfvars.example terraform.tfvars   # set project_id; narrow ssh_source_ranges
+cp terraform.tfvars.example terraform.tfvars   # set project_id
+
+# Phase 1 — build the IAP/OS Login/WIF machinery, keeping the old way in.
 terraform init
+terraform apply -var='ssh_source_ranges=["0.0.0.0/0"]'
+
+# Verify the tunnel works BEFORE giving up the public route.
+gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap
+
+# Phase 2 — close port 22 to the internet (ssh_source_ranges defaults to []).
 terraform apply
 ```
 
-`ssh_source_ranges` defaults to `0.0.0.0/0`. Narrow it to your own address.
-
-### Build and ship
+If phase 1's SSH check fails, grant yourself OS Login with sudo and retry:
 
 ```bash
-uv run ./build.py --push -t mojo28/misho:latest
-export MISHO_HOST=$(terraform -chdir=terraform output -raw external_ip)
-uv run ./deploy.py ~/.ssh/id_ed25519 --username misho
+gcloud projects add-iam-policy-binding "$PROJECT" \
+  --member="user:$(gcloud config get-value account)" --role=roles/compute.osAdminLogin
 ```
 
-> **Set `MISHO_ENVIRONMENT=PROD` in `.env` first.** `deploy.py` copies `.env` to the server verbatim,
-> and the local value is `DEV` — deploy as-is and the VM gets debug logging and a 10-second monitoring
-> cron instead of 30.
+### Wiring up GitHub
 
-`deploy.py` copies `docker-compose.yml` and `.env` into `/opt/misho` and runs `docker compose up -d`
-there, so the compose file's relative `./db` volume lands on the mounted data disk.
+`terraform output github_actions_variables` prints everything the workflow needs. Under
+**Settings → Secrets and variables → Actions**:
+
+*Variables* (identifiers, not secrets — Workload Identity Federation grants nothing without a signed
+OIDC token whose `repository` claim matches):
+
+| Variable | Source |
+| --- | --- |
+| `GCP_PROJECT_ID` | `terraform output` |
+| `GCP_ZONE` | `terraform output` |
+| `GCP_INSTANCE` | `terraform output` |
+| `GCP_WIF_PROVIDER` | `terraform output` |
+| `GCP_DEPLOY_SA` | `terraform output` |
+
+*Secrets*: `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`, `MISHO_ADMIN_TELEGRAM_USERNAME`.
+
+`MISHO_ENVIRONMENT=PROD` is written by the workflow itself, not stored.
+
+> **After the first successful push, set the package to public.** A new `ghcr.io` package is private
+> even when the repository is public, and the VM pulls anonymously — so the first rollout fails with
+> `unauthorized` until you change it. Go to the repository's **Packages** → `misho` → **Package
+> settings** → **Change visibility** → Public. Public packages have no storage or bandwidth quota;
+> private ones would need a long-lived pull token on the VM, defeating the point of OIDC.
+
+> Secrets live only in GitHub, so a Terraform-replaced instance comes up with an empty
+> `TELEGRAM_BOT_TOKEN` and fails its healthcheck until a deploy re-runs. `/opt/misho` sits on the
+> boot disk; only `/opt/misho/db` is the persistent one.
+
+### How a deploy works
+
+`.github/workflows/deploy.yml`, on push to `main` or `workflow_dispatch`:
+
+1. `uv run pyright`.
+2. Build `linux/amd64` and **load without pushing**.
+3. Smoke-test that image: run Alembic migrations in a throwaway container, and check the PROD config
+   loads. There is no test suite, so this is the only gate on the app being able to start — and
+   nothing is published until it passes.
+4. Push `ghcr.io/ipetkovic/misho:<sha>` and `:latest`.
+5. Authenticate to GCP by OIDC, render `.env` from secrets, and stage it with the compose files onto
+   the VM through the IAP tunnel.
+6. Run `deploy/remote-deploy.sh`, which pulls, restarts, and **polls `/healthz` until healthy —
+   restoring the previous tag if it never gets there.** The last three images are kept on the VM, so
+   a rollback needs no network.
+
+This is not a rolling update. The bot consumes Telegram updates by long polling, so two live
+containers would fight over `getUpdates` (HTTP 409) and run two reservation schedulers racing for the
+same court. The swap is stop-then-start, costing a few seconds of downtime.
+
+Redeploy an existing tag, or roll forward by hand:
+
+```bash
+gh workflow run deploy.yml -f tag=<sha>
+```
+
+### Health and self-healing
+
+The container serves `GET /healthz` on port 8000, asserting that the APScheduler is running, the
+Telegram updater is polling, and SQLite answers `SELECT 1`. It is never published through the
+firewall — the Docker `HEALTHCHECK` and the rollout script both probe it from inside.
+
+`restart: unless-stopped` only reacts to the process *exiting*, and Docker does not act on an
+unhealthy status by itself. The `autoheal` sidecar in `docker-compose.gcp.yml` watches the health
+status and restarts the container. It is deliberately a separate container: an in-process supervisor
+cannot rescue a blocked event loop, which is exactly the failure that leaves the process up while the
+bot has gone deaf.
+
+### Debugging on the VM
+
+```bash
+gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap
+
+sudo docker ps
+sudo docker inspect -f '{{json .State.Health}}' misho
+sudo docker logs --tail 100 misho
+sudo cat /opt/misho/.env | grep MISHO_IMAGE_TAG   # which build is live
+```
+
+Container logs also go to Cloud Logging via the `gcplogs` driver.
+
+Back up the database:
+
+```bash
+gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
+  --zone us-central1-a --tunnel-through-iap
+```
 
 ### What Terraform sets up
 
@@ -149,7 +270,15 @@ there, so the compose file's relative `./db` volume lands on the mounted data di
   rather it fail loudly.
 - **`startup.sh`, on every boot**, idempotently: formats the data disk on first boot only, adds 1 GB of
   swap (the e2-micro has 1 GB of RAM), installs Docker, and creates `/opt/misho` owned by the deploy user.
-- **Minimal networking.** A dedicated VPC and subnet, plus one firewall rule for SSH.
+- **Minimal networking.** A dedicated VPC and subnet, with SSH reachable only from IAP's
+  `35.235.240.0/20`. The direct-SSH rule exists but is created only when `ssh_source_ranges` is
+  non-empty, which it is not by default.
+- **Workload Identity Federation** (`terraform/github.tf`) so GitHub Actions authenticates with a
+  short-lived OIDC token instead of a stored key, restricted by an attribute condition to this
+  repository. The deployer gets `iap.tunnelResourceAccessor`, `compute.viewer` and
+  `compute.osAdminLogin` — the last because an OS Login service account logs in as
+  `sa_<numeric-uid>`, which is not the `misho` user, is not in the `docker` group, and needs sudo to
+  write to `/opt/misho`.
 
 ### Timezone
 
@@ -178,7 +307,8 @@ Docker's dual-logging cache keeps `docker logs` working too, so the SSH route is
 available and is the quickest way to tail:
 
 ```bash
-ssh misho@$MISHO_HOST 'cd /opt/misho && docker compose logs -f'
+gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap \
+  --command 'sudo docker logs -f misho'
 ```
 
 ### Backups
@@ -186,7 +316,8 @@ ssh misho@$MISHO_HOST 'cd /opt/misho && docker compose logs -f'
 `/opt/misho/db/sportbooking.db` is the only state, and it holds every linked account and pending job:
 
 ```bash
-scp misho@$MISHO_HOST:/opt/misho/db/sportbooking.db ./backup.db
+gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
+  --zone us-central1-a --tunnel-through-iap
 ```
 
 ## Database
@@ -208,9 +339,9 @@ slots are two hours long (17–19, 19–21, 21–23); the rest are one.
 |---|---|
 | `misho-server/` | The application |
 | `sportbooking/` | Standalone sportbooking.info client |
-| `terraform/` | GCP provisioning |
-| `build.py` | Builds and pushes the Docker image |
-| `deploy.py` | Ships compose file + `.env` to the VM and restarts it |
+| `terraform/` | GCP provisioning, including the GitHub Actions identity federation |
+| `.github/workflows/deploy.yml` | Build, verify and roll out on push to `main` |
+| `deploy/remote-deploy.sh` | Runs on the VM: swaps the image, verifies health, rolls back on failure |
 | `AGENTS.md` | Architecture notes for coding agents — layering, conventions, how the pieces connect |
 
 ## License

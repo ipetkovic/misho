@@ -1,18 +1,23 @@
-version: "3.9"
-
+# Base definition, shared by the local run and the VM.
+#
+# Local:  docker compose up                 (docker-compose.override.yml is auto-loaded)
+# VM:     docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d
 services:
   misho:
+    # Fixed name so the rollout script can `docker inspect misho` for health
+    # without guessing at a compose-generated name.
+    container_name: misho
+    # Pinned by tag rather than floating on :latest -- rollback needs an
+    # immutable reference to the previous build.
+    image: ghcr.io/ipetkovic/misho:${MISHO_IMAGE_TAG:-latest}
     env_file: ".env"
-    restart: unless-stopped
     environment:
       - TZ=Europe/Berlin
-    image: mojo28/misho
-    build:
-      context: .
-      dockerfile: ./misho-server/Dockerfile
-      args:
-        MISHO_ENVIRONMENT: ${MISHO_ENVIRONMENT}
+    restart: unless-stopped
     volumes:
       - ./db:/root/db
-    ports:
-      - "8000:8000"
+    labels:
+      # Watched by the autoheal sidecar in docker-compose.gcp.yml. `restart:
+      # unless-stopped` above only reacts to the process exiting, never to an
+      # unhealthy healthcheck.
+      - autoheal=true

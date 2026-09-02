@@ -1,9 +1,10 @@
 import os
 from apscheduler.triggers.cron import CronTrigger
 
-from misho_server.config.model import Config, JobCreateConfig, JobExpiredHandlerConfig, JobNotifierConfig, LoggingConfig, ReservationCalendarSyncConfig, ReservationMonitoringConfig, ReservationNotificationServiceConfig
+from misho_server.config.model import Config, HealthConfig, JobCreateConfig, JobExpiredHandlerConfig, JobNotifierConfig, LoggingConfig, ReservationCalendarSyncConfig, ReservationMonitoringConfig, ReservationNotificationServiceConfig
 
 _TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+_ADMIN_TELEGRAM_USERNAME = os.getenv('MISHO_ADMIN_TELEGRAM_USERNAME', '')
 
 
 CONFIG_PROD = Config(
@@ -12,6 +13,9 @@ CONFIG_PROD = Config(
     update_job_status=True,
     logging=LoggingConfig(
         level='INFO'
+    ),
+    health=HealthConfig(
+        port=8000
     ),
     reservation_monitoring=ReservationMonitoringConfig(
         cron=CronTrigger(hour='*', minute='*', second='0, 30')
@@ -30,6 +34,7 @@ CONFIG_PROD = Config(
         notify_before_minutes=(10 * 60, 8 * 60 + 30)
     ),
     telegram_bot_token=_TELEGRAM_TOKEN,
+    admin_telegram_username=_ADMIN_TELEGRAM_USERNAME,
     job_create_config=JobCreateConfig(
         default_reserve_job_expire_before_hours=10
     )

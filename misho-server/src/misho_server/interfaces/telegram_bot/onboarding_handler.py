@@ -40,14 +40,14 @@ class TelegramOnboardingHandler(TelegramHandler):
         return None
 
     async def signup_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        username = get_username(update)
+        telegram_username = get_username(update)
         message = get_message_text(update)
         chat_id = get_chat_id(update)
 
         logging.info(
-            f"Signup handler called for user {username}")
+            f"Signup handler called for user {telegram_username}")
 
-        if not username or not message or not chat_id:
+        if not telegram_username or not message or not chat_id:
             return
 
         text = message.partition(' ')[2]
@@ -58,10 +58,11 @@ class TelegramOnboardingHandler(TelegramHandler):
 
         try:
             args = shlex.split(text)
-            username, password = args
-            user = await self._signup_service.sign_up(username=username, password=password)
+            sportbooking_username, password = args
+            user = await self._signup_service.sign_up(
+                username=sportbooking_username, password=password)
             await self._user_telegram_integration_repository.update_user_telegram_user_id(
-                username,
+                telegram_username,
                 user.id
             )
             logging.info(f"Sign-up successful for user {user}")

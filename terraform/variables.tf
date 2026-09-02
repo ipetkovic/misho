@@ -21,21 +21,35 @@ variable "zone" {
 }
 
 variable "ssh_user" {
-  description = "Linux user created on the VM and used by deploy.py."
+  description = "Linux user created on the VM, and owner of /opt/misho."
   type        = string
   default     = "misho"
 }
 
+variable "github_repository" {
+  description = "owner/repo allowed to impersonate the deployer service account."
+  type        = string
+  default     = "ipetkovic/misho"
+}
+
 variable "ssh_public_key_path" {
-  description = "Public key installed for ssh_user."
+  description = <<-EOT
+    Public key installed for ssh_user. Inert while OS Login is enabled, which
+    it is by default -- kept as a break-glass route. Normal access is
+    `gcloud compute ssh misho --tunnel-through-iap`.
+  EOT
   type        = string
   default     = "~/.ssh/id_ed25519.pub"
 }
 
 variable "ssh_source_ranges" {
-  description = "CIDRs allowed to reach port 22. Narrow this to your own IP."
+  description = <<-EOT
+    CIDRs allowed to reach port 22 directly from the internet. Empty by
+    default: access goes through the IAP tunnel, which is allow-listed
+    separately. Set this only to break the glass, and set it back afterwards.
+  EOT
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = []
 }
 
 # Free tier covers 30 GB-months of *standard* PD in total, so

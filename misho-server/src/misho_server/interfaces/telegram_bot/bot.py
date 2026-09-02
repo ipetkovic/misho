@@ -1,6 +1,7 @@
 import logging
 from misho_server.core.user import User
 from misho_server.interfaces.telegram_bot import TelegramBot
+from misho_server.interfaces.telegram_bot.admin_handler import TelegramAdminHandler
 from misho_server.interfaces.telegram_bot.common import get_chat_id
 from misho_server.interfaces.telegram_bot.telegram_handler import TelegramHandler
 from misho_server.service.notification_service import NotificationService
@@ -13,6 +14,7 @@ class TelegramBotImpl(TelegramBot):
         self,
         telegram_token: str,
         handler: TelegramHandler,
+        admin_handler: TelegramAdminHandler,
         notification_service: NotificationService
     ):
         self._handler = handler
@@ -28,6 +30,9 @@ class TelegramBotImpl(TelegramBot):
 
         signup_handler = CommandHandler("signup", handler.signup_handler)
         self._application.add_handler(signup_handler)
+
+        invite_handler = CommandHandler("invite", admin_handler.invite_handler)
+        self._application.add_handler(invite_handler)
 
         self._application.add_error_handler(self._error_handler)  # type: ignore
 
@@ -45,8 +50,21 @@ class TelegramBotImpl(TelegramBot):
             await self._application.shutdown()
             raise
 
+    def is_polling(self) -> bool:
+        updater = self._application.updater
+        return updater is not None and updater.running
+
     async def stop(self):
         logging.info("Stopping Telegram bot application...")
+        # python-telegram-bot requires this order: stop consuming updates, then
+        # stop the application, then release resources. Calling shutdown()
+        # first, while the updater was still polling, left the poll loop
+        # running against a torn-down application.
+        updater = self._application.updater
+        if updater is not None and updater.running:
+            await updater.stop()
+        if self._application.running:
+            await self._application.stop()
         await self._application.shutdown()
 
     async def _handle_notification(self, user: User, message: str) -> None:

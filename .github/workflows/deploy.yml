@@ -1,0 +1,176 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing image tag to deploy (blank = build and deploy HEAD)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+# Two overlapping deploys would fight over /opt/misho/.env and the container
+# itself. Queue them instead, and never cancel one mid-rollout.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  build:
+    name: check, build and verify
+    runs-on: ubuntu-latest
+    # Skipped when redeploying an already-published tag by hand.
+    if: github.event_name != 'workflow_dispatch' || inputs.tag == ''
+    outputs:
+      tag: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync workspace
+        # --all-packages, not a bare `uv sync`: at a workspace root the latter
+        # installs only the root package's tooling deps, leaving pyright unable
+        # to resolve the app's imports and reporting ~118 phantom errors.
+        run: uv sync --all-packages --frozen
+
+      - name: Type check
+        run: uv run pyright
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Built and loaded rather than pushed, so the smoke test below runs
+      # against this exact image before it is ever published. A broken build
+      # never gets a tag.
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./misho-server/Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The repo has no test suite, so this is the only pre-production gate on
+      # the app actually being able to start: it catches import errors, missing
+      # dependencies and broken Alembic migrations. Needs no secrets.
+      - name: Smoke test — migrations run in a fresh container
+        run: |
+          mkdir -p "${RUNNER_TEMP}/smoke-db"
+          docker run --rm \
+            -e MISHO_ENVIRONMENT=TEST \
+            -v "${RUNNER_TEMP}/smoke-db:/root/db" \
+            "${IMAGE}:${GITHUB_SHA}" \
+            /root/.venv/bin/python -c \
+            'from misho_server.infrastructure.persistance.migration import migrate; migrate()'
+          test -s "${RUNNER_TEMP}/smoke-db/sportbooking.db"
+
+      - name: Smoke test — production config loads
+        run: |
+          docker run --rm -e MISHO_ENVIRONMENT=PROD "${IMAGE}:${GITHUB_SHA}" \
+            /root/.venv/bin/python -c \
+            'from misho_server.config import CONFIG; assert CONFIG.dummy_reservation is False'
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push
+        run: |
+          docker tag "${IMAGE}:${GITHUB_SHA}" "${IMAGE}:latest"
+          docker push "${IMAGE}:${GITHUB_SHA}"
+          docker push "${IMAGE}:latest"
+
+  deploy:
+    name: roll out to prod
+    runs-on: ubuntu-latest
+    needs: [build]
+    # `always()` so a manual redeploy of an existing tag, which skips `build`,
+    # still runs. Any *failure* in build must still block the rollout.
+    if: always() && needs.build.result != 'failure' && needs.build.result != 'cancelled'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tag to deploy
+        id: tag
+        run: |
+          tag="${{ inputs.tag }}"
+          echo "tag=${tag:-$GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      # No long-lived credentials: GitHub mints a short-lived OIDC token that
+      # GCP exchanges for the deploy service account.
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Stage deploy artifacts
+        env:
+          # Rendered here rather than kept on the VM, so a rebuilt instance
+          # gets a correct .env on the next deploy.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MISHO_ADMIN_TELEGRAM_USERNAME: ${{ secrets.MISHO_ADMIN_TELEGRAM_USERNAME }}
+        run: |
+          mkdir -p stage
+          cp docker-compose.yml docker-compose.gcp.yml deploy/remote-deploy.sh stage/
+          # docker-compose.override.yml is deliberately NOT copied -- it builds
+          # from source and publishes port 8000, neither of which belongs here.
+          # MISHO_IMAGE_TAG is deliberately absent: remote-deploy.sh is its
+          # single owner, so that the file never advertises a tag that is not
+          # actually running.
+          {
+            echo "MISHO_ENVIRONMENT=PROD"
+            echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}"
+            echo "OPENAI_API_KEY=${OPENAI_API_KEY}"
+            echo "MISHO_ADMIN_TELEGRAM_USERNAME=${MISHO_ADMIN_TELEGRAM_USERNAME}"
+          } > stage/.env
+          chmod 600 stage/.env
+
+      - name: Copy to VM
+        run: |
+          gcloud compute ssh "${{ vars.GCP_INSTANCE }}" \
+            --zone "${{ vars.GCP_ZONE }}" --tunnel-through-iap \
+            --command 'rm -rf /tmp/misho-deploy && mkdir -p /tmp/misho-deploy'
+          # Explicit file list rather than --recurse: `stage/.` recursion
+          # semantics differ between gcloud versions, and a silently missing
+          # .env would fail much later, on the VM.
+          gcloud compute scp \
+            stage/docker-compose.yml \
+            stage/docker-compose.gcp.yml \
+            stage/remote-deploy.sh \
+            stage/.env \
+            "${{ vars.GCP_INSTANCE }}:/tmp/misho-deploy/" \
+            --zone "${{ vars.GCP_ZONE }}" --tunnel-through-iap
+
+      # The rollout script verifies health and rolls back on its own, so a
+      # non-zero exit here means "prod is on the previous image", not "prod is
+      # broken" -- read its log output for which.
+      - name: Roll out
+        run: |
+          gcloud compute ssh "${{ vars.GCP_INSTANCE }}" \
+            --zone "${{ vars.GCP_ZONE }}" --tunnel-through-iap \
+            --command "sudo bash /tmp/misho-deploy/remote-deploy.sh ${{ steps.tag.outputs.tag }}"
