@@ -221,6 +221,12 @@ OIDC token whose `repository` claim matches):
 > `TELEGRAM_BOT_TOKEN` and fails its healthcheck until a deploy re-runs. `/opt/misho` sits on the
 > boot disk; only `/opt/misho/db` is the persistent one.
 
+> **All three secrets are required, including `MISHO_ADMIN_TELEGRAM_USERNAME`.** An unset secret
+> interpolates to an empty string, so a missing one would otherwise deploy a container that cannot
+> start — an invalid bot token raises `telegram.error.InvalidToken`, and a missing admin username
+> leaves nobody allow-listed, so the bot ignores every message. The workflow's first step checks all
+> eight secrets and variables and fails in seconds rather than taking production down to find out.
+
 ### How a deploy works
 
 `.github/workflows/deploy.yml`, on push to `main` or `workflow_dispatch`:
