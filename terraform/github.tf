@@ -17,6 +17,18 @@ resource "google_project_service" "deploy" {
   disable_on_destroy = false
 }
 
+# NOTE: `terraform destroy` only *soft*-deletes a pool. It sits in state
+# DELETED for 30 days with its ID still reserved, so the next apply fails with
+# "Error 409: Requested entity already exists". Recover with:
+#
+#   gcloud iam workload-identity-pools undelete github --location=global
+#   terraform import google_iam_workload_identity_pool.github \
+#     projects/<project>/locations/global/workloadIdentityPools/github
+#
+# (and the same undelete/import pair for the provider below, if it comes back
+# DELETED rather than absent). The ID is kept stable on purpose: it appears in
+# GCP_WIF_PROVIDER in the GitHub repository variables, and a generated suffix
+# would silently invalidate that on every recreate.
 resource "google_iam_workload_identity_pool" "github" {
   workload_identity_pool_id = "github"
   display_name              = "GitHub Actions"

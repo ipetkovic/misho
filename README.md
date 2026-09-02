@@ -161,11 +161,28 @@ terraform init
 terraform apply -var='ssh_source_ranges=["0.0.0.0/0"]'
 
 # Verify the tunnel works BEFORE giving up the public route.
-gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap
+# --project is not optional: without it gcloud uses whatever `gcloud config
+# get-value project` returns, and a 404 for instance "misho" in some other
+# project is the confusing result.
+gcloud compute ssh misho --project misho-bot-4821 --zone us-central1-a --tunnel-through-iap
 
 # Phase 2 — close port 22 to the internet (ssh_source_ranges defaults to []).
 terraform apply
 ```
+
+> **`terraform destroy` leaves the Workload Identity Pool behind.** It is soft-deleted for 30 days
+> with its ID reserved, so a later apply fails with `Error 409: Requested entity already exists`.
+> Undelete it and import it rather than renaming anything:
+>
+> ```bash
+> gcloud iam workload-identity-pools undelete github --location=global
+> terraform -chdir=terraform import google_iam_workload_identity_pool.github \
+>   projects/$PROJECT/locations/global/workloadIdentityPools/github
+> ```
+>
+> Check `gcloud iam workload-identity-pools providers list --workload-identity-pool=github
+> --location=global` too; if the provider also came back `DELETED`, undelete and import it the same
+> way. Service accounts, by contrast, recreate cleanly under the same ID.
 
 If phase 1's SSH check fails, grant yourself OS Login with sudo and retry:
 
@@ -245,7 +262,7 @@ bot has gone deaf.
 ### Debugging on the VM
 
 ```bash
-gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap
+gcloud compute ssh misho --project misho-bot-4821 --zone us-central1-a --tunnel-through-iap
 
 sudo docker ps
 sudo docker inspect -f '{{json .State.Health}}' misho
@@ -259,7 +276,7 @@ Back up the database:
 
 ```bash
 gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
-  --zone us-central1-a --tunnel-through-iap
+  --project misho-bot-4821 --zone us-central1-a --tunnel-through-iap
 ```
 
 ### What Terraform sets up
@@ -307,8 +324,8 @@ Docker's dual-logging cache keeps `docker logs` working too, so the SSH route is
 available and is the quickest way to tail:
 
 ```bash
-gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap \
-  --command 'sudo docker logs -f misho'
+gcloud compute ssh misho --project misho-bot-4821 --zone us-central1-a \
+  --tunnel-through-iap --command 'sudo docker logs -f misho'
 ```
 
 ### Backups
@@ -317,7 +334,7 @@ gcloud compute ssh misho --zone us-central1-a --tunnel-through-iap \
 
 ```bash
 gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
-  --zone us-central1-a --tunnel-through-iap
+  --project misho-bot-4821 --zone us-central1-a --tunnel-through-iap
 ```
 
 ## Database
