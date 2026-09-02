@@ -50,8 +50,21 @@ class TelegramBotImpl(TelegramBot):
             await self._application.shutdown()
             raise
 
+    def is_polling(self) -> bool:
+        updater = self._application.updater
+        return updater is not None and updater.running
+
     async def stop(self):
         logging.info("Stopping Telegram bot application...")
+        # python-telegram-bot requires this order: stop consuming updates, then
+        # stop the application, then release resources. Calling shutdown()
+        # first, while the updater was still polling, left the poll loop
+        # running against a torn-down application.
+        updater = self._application.updater
+        if updater is not None and updater.running:
+            await updater.stop()
+        if self._application.running:
+            await self._application.stop()
         await self._application.shutdown()
 
     async def _handle_notification(self, user: User, message: str) -> None:

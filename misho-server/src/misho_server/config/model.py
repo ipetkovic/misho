@@ -34,6 +34,14 @@ class LoggingConfig:
 
 
 @dataclass
+class HealthConfig:
+    # Port for the /healthz endpoint. Only ever reached from inside the
+    # container -- the Docker HEALTHCHECK and the deploy rollout poll it -- so
+    # it is deliberately not exposed through the GCP firewall.
+    port: int
+
+
+@dataclass
 class JobCreateConfig:
     default_reserve_job_expire_before_hours: int
 
@@ -44,6 +52,7 @@ class Config:
     dummy_reservation: bool
     update_job_status: bool
     logging: LoggingConfig
+    health: HealthConfig
     job_create_config: JobCreateConfig
     reservation_monitoring: ReservationMonitoringConfig
     reservation_calendar_sync: ReservationCalendarSyncConfig

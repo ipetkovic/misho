@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timedelta
 import datetime
+import signal
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -17,6 +18,7 @@ from misho_server.infrastructure.persistance.time_slot_repository import TimeSlo
 from misho_server.infrastructure.persistance.user_repository import UserRepositorySqlite
 from misho_server.infrastructure.persistance.user_telegram_integration_repository import UserTelegramIntegrationRepositorySqlite
 from misho_server.infrastructure.persistance.user_token_repository import UserTokenRepositorySqlite
+from misho_server.interfaces.health.server import HealthServer
 from misho_server.interfaces.open_ai.tool_handler import OpenAiToolHandler
 from misho_server.interfaces.telegram_bot.admin_handler import TelegramAdminHandler
 from misho_server.interfaces.telegram_bot.blacklisted_handler import TelegramBlacklistedUserHandler
@@ -241,8 +243,25 @@ async def start():
             handler=telegram_handler_delegator,
             admin_handler=telegram_admin_handler,
             notification_service=notification_service
-        ):
-            await _sleep_forever()
+        ) as telegram_bot:
+            health_server = HealthServer(
+                engine=engine,
+                scheduler=scheduler,
+                telegram_bot=telegram_bot,
+                port=CONFIG.health.port,
+            )
+            # Started only once the bot is polling, so /healthz never reports
+            # healthy for a process that is not actually serving anyone.
+            await health_server.start()
+
+            try:
+                await _wait_for_shutdown_signal()
+            finally:
+                await health_server.stop()
+                # Never called before: the process was SIGKILLed after the stop
+                # grace period, abandoning any in-flight reserve attempt
+                # mid-HTTP-call. wait=True lets a running job finish.
+                scheduler.shutdown(wait=True)
 
 
 async def _invite_admin(telegram_invite_service: TelegramInviteService) -> None:
@@ -264,8 +283,26 @@ async def _invite_admin(telegram_invite_service: TelegramInviteService) -> None:
         logging.info("Allow-listed admin Telegram user: %s", admin_username)
 
 
-async def _sleep_forever():
-    await asyncio.Event().wait()
+async def _wait_for_shutdown_signal() -> None:
+    """Block until the container is asked to stop.
+
+    Docker sends SIGTERM and waits ten seconds before SIGKILL. Without a
+    handler nothing unwound in that window, so every deploy cost the full
+    grace period and then killed the process outright.
+    """
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        try:
+            loop.add_signal_handler(sig, stop.set)
+        except NotImplementedError:
+            # Not available on every platform (Windows); the default handler
+            # still unwinds, just less gracefully.
+            logging.warning("Cannot install handler for %s", sig.name)
+
+    await stop.wait()
+    logging.info("Shutdown signal received, stopping.")
 
 
 def main():

@@ -1,0 +1,18 @@
+# The build context is the repo root, so without this every build ships the
+# virtualenv, the live database and the secrets file to the daemon.
+.venv/
+.git/
+.github/
+db/
+dist/
+build/
+terraform/
+node_modules/
+__pycache__/
+**/__pycache__/
+*.pyc
+.env
+.vscode/
+.DS_Store
+**/.DS_Store
+*.db

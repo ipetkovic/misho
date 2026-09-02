@@ -1,0 +1,16 @@
+# Local development. Compose loads this automatically, so `docker compose up`
+# builds from source instead of pulling the published image. It is never
+# copied to the VM, so it cannot leak into production.
+services:
+  misho:
+    build:
+      context: .
+      dockerfile: ./misho-server/Dockerfile
+    # Tagged separately so a local build cannot be mistaken for -- or pushed
+    # over -- a real released image.
+    image: misho:local
+    # Published only locally, for `curl localhost:8000/healthz`. In production
+    # the healthcheck runs inside the container and the firewall exposes no
+    # app port at all.
+    ports:
+      - "8000:8000"

@@ -4,12 +4,33 @@
 # reads project/zone/instance from the GCE metadata server, so there is nothing
 # to configure here.
 #
-# Applied by deploy.py:
+# Applied by .github/workflows/deploy.yml:
 #   docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d
 #
 # Kept out of docker-compose.yml so that a local `docker compose up` still works
 # off the machine, where the metadata server is unreachable.
 services:
   misho:
+    logging:
+      driver: gcplogs
+
+  # Docker marks a container unhealthy but will not act on it -- `restart:
+  # unless-stopped` only fires when the process exits. This watches the health
+  # status and restarts the container itself. Deliberately external to the app:
+  # an in-process supervisor cannot rescue a blocked event loop, which is the
+  # failure mode that leaves the process up but the bot deaf.
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    restart: always
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - AUTOHEAL_INTERVAL=15
+      # Must not undercut the Dockerfile's --start-period, or a slow boot
+      # (migrations plus 100 days of time slots on a shared core) reads as a
+      # failure and gets restarted into a loop.
+      - AUTOHEAL_START_PERIOD=120
+      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=20
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     logging:
       driver: gcplogs

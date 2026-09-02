@@ -1,18 +1,21 @@
 import os
 from apscheduler.triggers.cron import CronTrigger
 
-from misho_server.config.model import Config, JobCreateConfig, JobExpiredHandlerConfig, JobNotifierConfig, LoggingConfig, ReservationCalendarSyncConfig, ReservationMonitoringConfig, ReservationNotificationServiceConfig
+from misho_server.config.model import Config, HealthConfig, JobCreateConfig, JobExpiredHandlerConfig, JobNotifierConfig, LoggingConfig, ReservationCalendarSyncConfig, ReservationMonitoringConfig, ReservationNotificationServiceConfig
 
 _TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 _ADMIN_TELEGRAM_USERNAME = os.getenv('MISHO_ADMIN_TELEGRAM_USERNAME', '')
 
 
-CONFIG_DEV = Config(
+CONFIG_TEST = Config(
     database_path='db/sportbooking.db',
-    dummy_reservation=False,
+    dummy_reservation=True,
     update_job_status=True,
     logging=LoggingConfig(
         level='DEBUG'
+    ),
+    health=HealthConfig(
+        port=8000
     ),
     reservation_monitoring=ReservationMonitoringConfig(
         cron=CronTrigger(hour='*', minute='*', second='0,10,20,30,40,50'),

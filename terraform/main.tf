@@ -22,7 +22,10 @@ resource "google_project_service" "compute" {
 
 # --- Network -----------------------------------------------------------------
 # The app makes only outbound connections (Telegram long polling, OpenAI,
-# sportbooking.info). Nothing listens, so SSH is the only ingress rule.
+# sportbooking.info). Nothing listens, so SSH is the only ingress -- and it
+# arrives through the IAP tunnel rather than from the open internet. The
+# /healthz port is deliberately not exposed: the Docker healthcheck and the
+# rollout script both probe it from inside the container.
 
 resource "google_compute_network" "misho" {
   name                    = "misho-net"
@@ -37,7 +40,26 @@ resource "google_compute_subnetwork" "misho" {
   network       = google_compute_network.misho.id
 }
 
-resource "google_compute_firewall" "ssh" {
+# IAP terminates the tunnel and forwards from this fixed Google-owned range.
+# This is the only path in by default.
+resource "google_compute_firewall" "ssh_iap" {
+  name          = "misho-allow-ssh-iap"
+  network       = google_compute_network.misho.name
+  source_ranges = ["35.235.240.0/20"]
+  target_tags   = ["misho-ssh"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+}
+
+# Direct SSH from the internet, off unless ssh_source_ranges is non-empty.
+# Kept only as a break-glass route for the case where IAP or OS Login is
+# misconfigured and the tunnel will not open.
+resource "google_compute_firewall" "ssh_direct" {
+  count = length(var.ssh_source_ranges) > 0 ? 1 : 0
+
   name          = "misho-allow-ssh"
   network       = google_compute_network.misho.name
   source_ranges = var.ssh_source_ranges
@@ -113,6 +135,12 @@ resource "google_compute_instance" "misho" {
   }
 
   metadata = {
+    # Required for service-account SSH, which is how GitHub Actions gets in.
+    enable-oslogin = "TRUE"
+
+    # Inert while OS Login is enabled -- it takes precedence over per-instance
+    # keys. Retained as the break-glass route: set enable-oslogin to "FALSE"
+    # and this key works again over google_compute_firewall.ssh_direct.
     ssh-keys = "${var.ssh_user}:${trimspace(file(pathexpand(var.ssh_public_key_path)))}"
   }
 

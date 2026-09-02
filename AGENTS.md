@@ -14,11 +14,11 @@ All commands run from the **repo root** — `alembic.ini` and `CONFIG.database_p
 `db/sportbooking.db`, so running elsewhere silently creates/uses a different database.
 
 ```bash
-uv sync                        # install workspace (root + sportbooking + misho-server)
-source .env                    # TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, MISHO_ENVIRONMENT,
-                               # MISHO_ADMIN_TELEGRAM_USERNAME
+uv sync --all-packages         # a bare `uv sync` installs ONLY the root tooling deps,
+                               # which leaves pyright unable to resolve the app's imports
+source .env                    # see .env.example; MISHO_ENVIRONMENT must be TEST or PROD
 uv run misho-server            # run the whole app (migrations + schedulers + bot)
-uv run pyright                 # type check — the project is written for pyright strict mode
+uv run pyright                 # type check — [tool.pyright] in pyproject.toml pins basic mode
 ```
 
 Migrations (Alembic, models in `infrastructure/persistance/model.py`):
@@ -31,22 +31,34 @@ uv run alembic -c misho-server/src/misho_server/alembic.ini upgrade head
 `migrate()` runs automatically on startup and also seeds `hour_slots` and `courts` (ids 4–8) — seed data lives in
 `infrastructure/persistance/migration.py`, not in a migration.
 
-Build & deploy — the host is a GCP `e2-micro` provisioned by `terraform/` (see
-`terraform/README.md` for the free-tier constraints and first-run steps):
+Deploy — **pushing to `main` deploys**. There is no manual deploy script; `build.py` and `deploy.py`
+were deleted along with the paramiko/scp dependencies.
 
 ```bash
-terraform -chdir=terraform apply           # provision the VM
-uv run ./build.py --push -t mojo28/misho:latest   # buildx, linux/amd64, context = repo root
-export MISHO_HOST=$(terraform -chdir=terraform output -raw external_ip)
-uv run ./deploy.py ~/.ssh/id_ed25519              # scp compose + .env to /opt/misho, pull, compose up
-docker compose up                          # local container run; mounts ./db, reads .env
+docker compose up --build                  # local container run; override.yml builds from source
+curl -s localhost:8000/healthz             # scheduler + Telegram polling + SQLite
+
+gh workflow run deploy.yml -f tag=<sha>    # redeploy or roll forward an existing image by hand
+gcloud compute ssh misho --zone <zone> --tunnel-through-iap   # debug on the VM (then `sudo docker ...`)
+terraform -chdir=terraform apply           # provision; see README for the two-phase first run
 ```
 
-`deploy.py` requires `--host` or `$MISHO_HOST`. On the VM the app lives in
-`/opt/misho`, where `./db` is a separately-managed persistent disk — the SQLite
-file survives instance replacement but not `terraform destroy`.
+`.github/workflows/deploy.yml` type-checks, builds `linux/amd64` **without pushing**, smoke-tests
+that image (Alembic migrations in a throwaway container + the PROD config loading), and only then
+publishes `ghcr.io/ipetkovic/misho:<sha>`. It authenticates to GCP by OIDC — Workload Identity
+Federation, no stored key — and reaches the VM through an IAP tunnel; port 22 is closed to the
+internet. `deploy/remote-deploy.sh` then does the swap on the VM and **restores the previous tag if
+`/healthz` never goes healthy**, keeping the last three images locally so a rollback needs no network.
 
-There is no test suite.
+Not a rolling update: the bot long-polls Telegram, so two live containers would fight over
+`getUpdates` (409) and run two schedulers racing for the same court.
+
+On the VM the app lives in `/opt/misho`, where `./db` is a separately-managed persistent disk — the
+SQLite file survives instance replacement but not `terraform destroy`. **`/opt/misho/.env` does not**:
+it is on the boot disk and is re-rendered from GitHub secrets on every deploy, so a replaced instance
+stays down until a deploy runs.
+
+There is no test suite. The CI smoke test is the only automated check that the app can start.
 
 ## Workspace layout
 
@@ -58,7 +70,7 @@ uv workspace with two members:
   HTML body (e.g. login checks for `window.location.replace('main/clan.php')`), so site markup changes break it silently.
 - **`misho-server/`** — the application. Entry point `misho_server:main`.
 
-Root `pyproject.toml` holds only the workspace definition and tooling for `build.py`/`deploy.py`.
+Root `pyproject.toml` holds only the workspace definition and the pyright config/dependency.
 
 ## misho-server architecture
 
@@ -71,11 +83,19 @@ Four layers under `misho-server/src/misho_server/`:
 - **`infrastructure/persistance/`** — SQLAlchemy async (aiosqlite) implementations, named `<Thing>RepositorySqlite`.
   Each module exports a module-level `to_domain(dao) -> domain` function that other repositories import and reuse
   (e.g. `jobs_repository` imports `time_slot_repository.to_domain`). `model.py` is the ORM layer, imported as `dao`.
-- **`interfaces/`** — inbound adapters: `telegram_bot/` and `open_ai/`.
+- **`interfaces/`** — inbound adapters: `telegram_bot/`, `open_ai/`, and `health/` (the only real
+  inbound HTTP surface — `GET /healthz`, read by the Docker `HEALTHCHECK`, the autoheal sidecar and
+  the deploy rollout; never exposed through the firewall).
 
 **`__init__.py:start()` is the single composition root.** Every repository, service and adapter is constructed and
 wired by hand there, and the APScheduler jobs are registered there. Anything new must be added to that function —
 there is no DI container.
+
+`start()` ends by awaiting a `SIGTERM`/`SIGINT` event, not by sleeping forever, and tears down the
+health server and scheduler in a `finally`. The Dockerfile's `CMD` is exec-form so Python is PID 1 and
+actually receives the signal — under the old `uv run` form the signal reached `uv`, nothing unwound,
+and Docker SIGKILLed after the full 10s grace period, abandoning in-flight reservations. Anything
+long-running added to `start()` belongs in that teardown.
 
 ### The reservation flow
 
@@ -103,8 +123,10 @@ calendar), `job_expired_handler` (delete expired jobs, optionally spawn a follow
   with that user's session token); `ReservationCalendar` is the stripped, shared, persisted view (`reserved_by` only)
   that monitoring queries against. `ReservationCalendar.from_user_reservation_calendar` converts between them.
 - **`SessionTokenFetchService`** caches a sportbooking session cookie per user and re-logs in after 20 minutes.
-- **Config**: `MISHO_ENVIRONMENT` selects `config/dev.py` or `config/prod.py` (defaults to dev). `dummy_reservation`
-  skips the actual HTTP reserve/cancel call — use it when testing against the live site.
+- **Config**: `MISHO_ENVIRONMENT` selects `config/test.py` or `config/prod.py` and **raises on anything
+  else** — it used to fall back to dev silently, which meant a typo ran test settings in production.
+  `dummy_reservation` skips the actual HTTP reserve/cancel call and is `True` in TEST, so local runs
+  cannot book a real court; it is `False` in PROD.
 
 ### Telegram + OpenAI layer
 
