@@ -32,8 +32,12 @@ log() { printf '==> %s\n' "$*"; }
 
 current_tag() {
     # The deployed tag is recorded in .env, which is also where compose reads
-    # it from for interpolation.
-    sed -n 's/^MISHO_IMAGE_TAG=//p' "$APP_DIR/.env" 2>/dev/null | tail -1
+    # it from for interpolation. On the very first deploy the file does not
+    # exist yet, and the guard is load-bearing: GNU sed exits 2 on an
+    # unreadable file, `pipefail` propagates that through the pipe, and `set
+    # -e` would abort the whole rollout before it started.
+    [[ -f "$APP_DIR/.env" ]] || return 0
+    sed -n 's/^MISHO_IMAGE_TAG=//p' "$APP_DIR/.env" | tail -1
 }
 
 set_tag() {

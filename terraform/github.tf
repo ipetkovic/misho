@@ -69,6 +69,20 @@ resource "google_service_account_iam_member" "deployer_wif" {
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repository}"
 }
 
+# `gcloud compute ssh` to an instance that has a service account attached
+# requires actAs on *that* service account -- not just OS Login on the
+# instance. Without it the connection fails with
+# "PERMISSION_DENIED: User does not have iam.serviceAccounts.actAs permission
+# on the instance's service account".
+#
+# Bound to the misho-vm account specifically rather than granted at project
+# level, so the deployer can impersonate that one identity and nothing else.
+resource "google_service_account_iam_member" "deployer_act_as_vm" {
+  service_account_id = google_service_account.misho.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 resource "google_project_iam_member" "deployer" {
   for_each = toset([
     # Reach port 22 through the IAP tunnel rather than over the public internet.
