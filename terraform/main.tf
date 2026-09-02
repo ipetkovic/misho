@@ -95,6 +95,15 @@ resource "google_compute_disk" "data" {
   zone = var.zone
 
   depends_on = [google_project_service.compute]
+
+  # This disk is the only copy of every linked account and pending job, and
+  # startup.sh mkfs's a replacement on first boot -- so a destroy does not
+  # just detach it, it erases the data. `terraform destroy` now fails here
+  # instead. To genuinely tear the project down, back the database up, remove
+  # this block, then destroy.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 data "google_compute_image" "debian" {

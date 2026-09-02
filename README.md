@@ -221,6 +221,12 @@ OIDC token whose `repository` claim matches):
 > `TELEGRAM_BOT_TOKEN` and fails its healthcheck until a deploy re-runs. `/opt/misho` sits on the
 > boot disk; only `/opt/misho/db` is the persistent one.
 
+> **All three secrets are required, including `MISHO_ADMIN_TELEGRAM_USERNAME`.** An unset secret
+> interpolates to an empty string, so a missing one would otherwise deploy a container that cannot
+> start — an invalid bot token raises `telegram.error.InvalidToken`, and a missing admin username
+> leaves nobody allow-listed, so the bot ignores every message. The workflow's first step checks all
+> eight secrets and variables and fails in seconds rather than taking production down to find out.
+
 ### How a deploy works
 
 `.github/workflows/deploy.yml`, on push to `main` or `workflow_dispatch`:
@@ -282,9 +288,16 @@ gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
 ### What Terraform sets up
 
 - **A separate data disk.** `misho-data` is its own `google_compute_disk`, so replacing the instance —
-  image bump, machine type change, startup-script edit — leaves the database untouched. `terraform
-  destroy` *will* delete it; add `lifecycle { prevent_destroy = true }` to that resource if you'd
-  rather it fail loudly.
+  image bump, machine type change, startup-script edit — leaves the database untouched. It carries
+  `lifecycle { prevent_destroy = true }`, so **`terraform destroy` fails on it by design**: the disk
+  is the only copy of every linked account and pending job, and `startup.sh` reformats a replacement
+  on first boot, so destroying it erases the data rather than merely detaching it. To tear the
+  project down for real, back the database up first, then remove that block:
+
+  ```bash
+  gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
+    --project misho-bot-4821 --zone us-central1-a --tunnel-through-iap
+  ```
 - **`startup.sh`, on every boot**, idempotently: formats the data disk on first boot only, adds 1 GB of
   swap (the e2-micro has 1 GB of RAM), installs Docker, and creates `/opt/misho` owned by the deploy user.
 - **Minimal networking.** A dedicated VPC and subnet, with SSH reachable only from IAP's

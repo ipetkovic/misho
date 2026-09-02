@@ -107,6 +107,35 @@ jobs:
     if: always() && needs.build.result != 'failure' && needs.build.result != 'cancelled'
     environment: production
     steps:
+      # Fails in seconds, before anything touches the VM. An unset secret
+      # interpolates to an empty string, so without this the rollout happily
+      # ships a .env with a blank bot token and the first sign of trouble is
+      # production refusing to start.
+      - name: Check required secrets and variables
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MISHO_ADMIN_TELEGRAM_USERNAME: ${{ secrets.MISHO_ADMIN_TELEGRAM_USERNAME }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_ZONE: ${{ vars.GCP_ZONE }}
+          GCP_INSTANCE: ${{ vars.GCP_INSTANCE }}
+          GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_DEPLOY_SA: ${{ vars.GCP_DEPLOY_SA }}
+        run: |
+          missing=()
+          for name in TELEGRAM_BOT_TOKEN OPENAI_API_KEY MISHO_ADMIN_TELEGRAM_USERNAME \
+                      GCP_PROJECT_ID GCP_ZONE GCP_INSTANCE GCP_WIF_PROVIDER GCP_DEPLOY_SA; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error::Not configured: %s\n' "${missing[*]}"
+            echo "Secrets and variables live under Settings -> Secrets and variables -> Actions."
+            echo "MISHO_ADMIN_TELEGRAM_USERNAME is required, not optional: without it nobody is"
+            echo "allow-listed and the bot silently ignores every message."
+            exit 1
+          fi
+          echo "All 8 required secrets and variables are present."
+
       - uses: actions/checkout@v4
 
       - name: Resolve tag to deploy
