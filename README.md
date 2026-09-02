@@ -282,9 +282,16 @@ gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
 ### What Terraform sets up
 
 - **A separate data disk.** `misho-data` is its own `google_compute_disk`, so replacing the instance —
-  image bump, machine type change, startup-script edit — leaves the database untouched. `terraform
-  destroy` *will* delete it; add `lifecycle { prevent_destroy = true }` to that resource if you'd
-  rather it fail loudly.
+  image bump, machine type change, startup-script edit — leaves the database untouched. It carries
+  `lifecycle { prevent_destroy = true }`, so **`terraform destroy` fails on it by design**: the disk
+  is the only copy of every linked account and pending job, and `startup.sh` reformats a replacement
+  on first boot, so destroying it erases the data rather than merely detaching it. To tear the
+  project down for real, back the database up first, then remove that block:
+
+  ```bash
+  gcloud compute scp misho:/opt/misho/db/sportbooking.db ./backup.db \
+    --project misho-bot-4821 --zone us-central1-a --tunnel-through-iap
+  ```
 - **`startup.sh`, on every boot**, idempotently: formats the data disk on first boot only, adds 1 GB of
   swap (the e2-micro has 1 GB of RAM), installs Docker, and creates `/opt/misho` owned by the deploy user.
 - **Minimal networking.** A dedicated VPC and subnet, with SSH reachable only from IAP's
